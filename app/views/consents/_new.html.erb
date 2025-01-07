@@ -1,0 +1,194 @@
+<h1>Diagnóstico y Consentimiento Informado</h1>
+
+<%= form_with model: consent do |f| %>
+
+  <div class="form-floating mb-3">
+    <%= f.text_area :first_name, class: "form-control", id: "floatingFirstName", placeholder: "Escribe tu nombre aquí", required: true %>
+    <%= f.label :first_name, "Nombre(s)", for: "floatingFirstName" %>
+  </div>
+
+  <div class="form-floating mb-3">
+    <%= f.text_field :last_name, class: "form-control", id: "floatingLastName", placeholder: "Escribe tu apellido aquí", required: true %>
+    <%= f.label :last_name, "Apellido(s)", for: "floatingLastName" %>
+  </div>
+
+
+    <div class="form-floating mb-3">
+    <%= f.email_field :email, class: "form-control", id: "floatingEmail", placeholder: "name@example.com", required: true %>
+    <%= f.label :email, "Correo Electrónico", for: "floatingEmail" %>
+    </div>
+
+
+    <div class="form-floating mb-3">
+      <%= f.select :document_type, Consent.document_types.keys.map { |dt| [dt.humanize, dt] }, { include_blank: "Seleccione uno" }, { class: "form-select", id: "floatingDocumentType" } %>
+      <%= f.label :document_type, "Tipo de Documento", class: "form-label", for: "floatingDocumentType" %>
+    </div>
+
+
+  <div class="form-floating mb-3">
+    <%= f.text_field :document_number, class: "form-control", id: "floatingDocumentNumber", placeholder: "Escribe tu apellido aquí", required: true %>
+    <%= f.label :document_number, "Número de Documento", for: "floatingDocumentNumber" %>
+  </div>
+
+  <div class="form-floating mb-3">
+    <%= f.telephone_field :phone_number, class: "form-control", id: "floatingPhoneNumber", placeholder: "Escribe tu nombre aquí", required: true %>
+    <%= f.label :phone_number, "Número de Teléfono", for: "floatingPhoneNumber" %>
+  </div>
+
+  <div class="form-floating mb-3 position-relative">
+    <%= f.text_area :professional_diagnosis, 
+        class: "form-control", 
+        id: "floatingProfessionalDiagnostic", 
+        placeholder: "Habla para completar", 
+        data: { voice_input: true } %>
+    <%= f.label :professional_diagnosis, "Diagnóstico Profesional", for: "floatingProfessionalDiagnostic" %>
+    <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 me-2" id="voice-button-professional_diagnosis" 
+            onclick="startRecognition('floatingProfessionalDiagnostic')">
+      🎤
+    </button>
+  </div>
+
+
+  <div class="form-floating mb-3 position-relative">
+    <%= f.text_area :professional_observations, 
+        class: "form-control", 
+        id: "floatingProfessionalObservations", 
+        placeholder: "Habla para completar", 
+        data: { voice_input: true } %>
+    <%= f.label :professional_observations, "Observaciones Profesionales", for: "floatingProfessionalObservations" %>
+    <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 me-2" id="voice-button-observations" 
+            onclick="startRecognition('floatingProfessionalObservations')">
+      🎤
+    </button>
+  </div>
+
+  <p>
+    Agradecemos leer el texto completo del Consentimiento Informado Tratamiento Estético y Autorización de Uso de Imagen en el siguiente <%= link_to 'enlace', consentimiento_path, target: '_blank' %>.
+  </p>
+
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :procedure_authorization, class: "form-check-input", id: "flexSwitchProcedureAuthorization" %>
+    <%= f.label :procedure_authorization, "Autorizo el procedimiento", class: "form-check-label", for: "flexSwitchProcedureAuthorization" %>
+  </div>
+
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :procedure_acknowledgement, class: "form-check-input", id: "flexSwitchProcedureAcknowledgement" %>
+    <%= f.label :procedure_acknowledgement, "Reconozco los riesgos del procedimiento", class: "form-check-label", for: "flexSwitchProcedureAcknowledgement" %>
+  </div>
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :diagnosis_confirmation, class: "form-check-input", id: "flexSwitchDiagnosisConfirmation" %>
+    <%= f.label :diagnosis_confirmation, "Confirmo el diagnóstico", class: "form-check-label", for: "flexSwitchDiagnosisConfirmation" %>
+  </div>
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :image_use_authorization, class: "form-check-input", id: "flexSwitchImageUseAuthorization" %>
+    <%= f.label :image_use_authorization, "Autorizo el uso de imágenes", class: "form-check-label", for: "flexSwitchImageUseAuthorization" %>
+  </div>
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :service_cost_acceptance, class: "form-check-input", id: "flexSwitchServiceCostAcceptance" %>
+    <%= f.label :service_cost_acceptance, "Acepto el costo del servicio", class: "form-check-label", for: "flexSwitchServiceCostAcceptance" %>
+  </div>
+
+  <div class="form-check form-switch mb-2">
+    <%= f.check_box :informed_consent_acceptance, class: "form-check-input", id: "flexSwitchInformedConsentAcceptance" %>
+    <%= f.label :informed_consent_acceptance, "Acepto el consentimiento informado", class: "form-check-label", for: "flexSwitchInformedConsentAcceptance" %>
+  </div>
+
+  <div class="form-check form-switch mb-3">
+    <%= f.check_box :is_adult, class: "form-check-input", id: "flexSwitchIsAdult" %>
+    <%= f.label :is_adult, "Confirmo ser mayor de edad", class: "form-check-label", for: "flexSwitchIsAdult" %>
+  </div>
+  
+  <div class="mb-3">
+    <label for="signature-pad">Firma (use el dedo o mouse para firmar):</label>
+    <div id="signature-container">
+      <canvas id="signature-pad" width="500" height="200" style="border: 1px solid #000;"></canvas>
+    </div>
+    <div class="mt-2">
+      <button type="button" id="clear-signature" class="btn btn-outline-danger">Limpiar</button>
+    </div>
+  </div>
+
+
+
+  <div>
+    <%= f.submit "Guardar", class: "btn btn-outline-primary", id: "btn-check-outlined" %>
+  </div>
+
+<% end %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // === CONFIGURACIÓN PARA LA FIRMA ===
+    const canvas = document.getElementById("signature-pad");
+    const signaturePad = new SignaturePad(canvas);
+    const signatureField = document.getElementById("signature-field");
+    const clearButton = document.getElementById("clear-signature");
+
+    // Limpiar la firma
+    clearButton.addEventListener("click", function () {
+      signaturePad.clear();
+    });
+
+    // Antes de enviar el formulario, guarda la firma en el campo oculto
+    const form = document.querySelector("form");
+    form.addEventListener("submit", function (event) {
+      if (signaturePad.isEmpty()) {
+        event.preventDefault();
+        alert("Por favor, firme antes de enviar el formulario.");
+      } else {
+        // Guarda la firma como Base64 en el campo oculto
+        signatureField.value = signaturePad.toDataURL("image/png");
+      }
+    });
+
+    // === CONFIGURACIÓN PARA EL RECONOCIMIENTO DE VOZ ===
+    if (!("webkitSpeechRecognition" in window)) {
+      alert("Tu navegador no soporta el reconocimiento de voz. Intenta usar Google Chrome.");
+    } else {
+      // Define la función de reconocimiento de voz
+      function startRecognition(targetId) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "es-ES"; // Configura el idioma español
+        recognition.continuous = false; // No escucha continuamente
+        recognition.interimResults = false; // Solo resultados finales
+
+        recognition.onstart = function () {
+          console.log("Reconocimiento de voz iniciado...");
+        };
+
+        recognition.onspeechend = function () {
+          recognition.stop();
+          console.log("Reconocimiento de voz detenido.");
+        };
+
+        recognition.onerror = function (event) {
+          console.error("Error en el reconocimiento de voz:", event.error);
+          alert("Hubo un error con el reconocimiento de voz. Inténtalo nuevamente.");
+        };
+
+        recognition.onresult = function (event) {
+          const transcript = event.results[0][0].transcript;
+          console.log("Texto reconocido:", transcript);
+          const textarea = document.getElementById(targetId);
+          textarea.value = textarea.value ? textarea.value + " " + transcript : transcript;
+        };
+
+        recognition.start();
+      }
+
+      // Asocia botones con sus respectivos campos de texto
+      const voiceButtons = document.querySelectorAll("[data-voice-input]");
+      voiceButtons.forEach(button => {
+        button.addEventListener("click", function () {
+          const targetId = button.dataset.target;
+          startRecognition(targetId);
+        });
+      });
+    }
+  });
+</script>

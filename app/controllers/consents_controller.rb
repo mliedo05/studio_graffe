@@ -4,6 +4,7 @@ class ConsentsController < ApplicationController
   end
 
   def index
+    @consent_form2 = Consent.last
     @consent_form = Consent.new
   end
 
@@ -11,7 +12,7 @@ class ConsentsController < ApplicationController
   end
 
   def create
-    
+    byebug
     service = Consents::Create.new(consent_params).call 
     if service[:success]
       

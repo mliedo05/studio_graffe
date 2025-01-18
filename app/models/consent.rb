@@ -4,4 +4,6 @@ class Consent < ApplicationRecord
   validates :first_name, :last_name, :email, :document_number, presence: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
 
+  has_one_attached :signature
+
 end

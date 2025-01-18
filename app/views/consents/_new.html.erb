@@ -113,6 +113,9 @@
     </div>
   </div>
 
+  <%= f.hidden_field :signature, id: "signature-field" %>
+
+
 
 
   <div>
@@ -122,29 +125,37 @@
 <% end %>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // === CONFIGURACIÓN PARA LA FIRMA ===
-    const canvas = document.getElementById("signature-pad");
-    const signaturePad = new SignaturePad(canvas);
-    const signatureField = document.getElementById("signature-field");
-    const clearButton = document.getElementById("clear-signature");
+document.addEventListener("DOMContentLoaded", function () {
+  const canvas = document.getElementById("signature-pad");
+  const signaturePad = new SignaturePad(canvas);
+  const clearButton = document.getElementById("clear-signature");
 
-    // Limpiar la firma
-    clearButton.addEventListener("click", function () {
-      signaturePad.clear();
-    });
+  // Limpiar la firma
+  clearButton.addEventListener("click", function () {
+    signaturePad.clear();
+  });
 
-    // Antes de enviar el formulario, guarda la firma en el campo oculto
-    const form = document.querySelector("form");
-    form.addEventListener("submit", function (event) {
-      if (signaturePad.isEmpty()) {
-        event.preventDefault();
-        alert("Por favor, firme antes de enviar el formulario.");
-      } else {
-        // Guarda la firma como Base64 en el campo oculto
-        signatureField.value = signaturePad.toDataURL("image/png");
-      }
-    });
+  // Verificar si se puede dibujar
+  if (signaturePad.isEmpty()) {
+    console.log("El lienzo está vacío.");
+  } else {
+    console.log("El lienzo tiene firma.");
+  }
+
+  // Cuando se envía el formulario, capturamos la firma
+  const form = document.querySelector("form");
+  form.addEventListener("submit", function (event) {
+    if (signaturePad.isEmpty()) {
+      event.preventDefault();
+      alert("Por favor, firme antes de enviar el formulario.");
+    } else {
+      // Guarda la firma como Base64 en el campo oculto
+      const dataUrl = signaturePad.toDataURL("image/png");
+      const signatureField = document.getElementById("signature-field");
+      console.log(signatureField.value);
+      signatureField.value = dataUrl;
+    }
+  });
 
     // === CONFIGURACIÓN PARA EL RECONOCIMIENTO DE VOZ ===
     if (!("webkitSpeechRecognition" in window)) {

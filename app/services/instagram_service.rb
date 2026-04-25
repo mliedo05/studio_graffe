@@ -1,5 +1,4 @@
 require "net/http"
-require "openssl"
 require "json"
 require "uri"
 
@@ -37,8 +36,7 @@ class InstagramService
 
     uri  = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl     = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    http.use_ssl      = true
     http.open_timeout = 5
     http.read_timeout = 10
 

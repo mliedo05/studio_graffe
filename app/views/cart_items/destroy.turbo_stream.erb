@@ -1,0 +1,33 @@
+<% if @cart.order_items.empty? %>
+  <%# Carrito quedó vacío — reemplazar todo el contenido con estado vacío %>
+  <%= turbo_stream.replace "cart-content" do %>
+    <div id="cart-content">
+      <div class="py-24 text-center flex flex-col items-center gap-stack-md border-2 border-dashed border-outline-variant/20 rounded-xl mt-stack-lg">
+        <span class="material-symbols-outlined text-stone-200 text-6xl">shopping_basket</span>
+        <p class="font-h3 text-stone-400">Tu carrito está vacío</p>
+        <p class="font-body-md text-on-surface-variant">Agrega productos desde nuestra tienda</p>
+        <%= link_to "Ver tienda", shop_path,
+              class: "px-8 py-3 bg-primary text-on-primary rounded-full font-label-caps uppercase tracking-widest hover:scale-105 transition-transform",
+              data: { turbo_frame: "_top" } %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <%# Carrito aún tiene items — solo eliminar la fila y actualizar totales %>
+  <%= turbo_stream.remove "cart-item-#{@item.id}" %>
+  <%= turbo_stream.replace "cart-subtotal" do %>
+    <%= humanized_money_with_symbol(@cart.total) %>
+  <% end %>
+  <%= turbo_stream.replace "cart-total" do %>
+    <span id="cart-total" class="font-h2 text-h2 text-primary">
+      <%= humanized_money_with_symbol(@cart.total) %>
+    </span>
+  <% end %>
+<% end %>
+<%= turbo_stream.replace "cart-count" do %>
+  <%= turbo_frame_tag "cart-count" do %>
+    <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
+      <%= @cart.item_count %>
+    </span>
+  <% end %>
+<% end %>

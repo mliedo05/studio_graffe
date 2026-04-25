@@ -1,0 +1,27 @@
+admin:
+  first_name: Admin
+  last_name: Studio
+  email: admin@studiograffe.cl
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: admin
+
+valentina:
+  first_name: Valentina
+  last_name: Rojas
+  email: vale@studiograffe.cl
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: stylist
+
+camila:
+  first_name: Camila
+  last_name: Muñoz
+  email: cami@studiograffe.cl
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: stylist
+
+cliente:
+  first_name: María
+  last_name: González
+  email: maria@example.com
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: client

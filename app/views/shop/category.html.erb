@@ -1,0 +1,111 @@
+<main class="pt-20 min-h-screen flex">
+  <!-- SideNavBar -->
+  <aside class="hidden md:flex flex-col py-8 px-4 h-screen sticky top-20 w-64 border-r border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950">
+    <div class="mb-10 px-4">
+      <h2 class="text-lg font-bold text-black dark:text-white font-serif mb-1">Categorías</h2>
+      <p class="text-[10px] uppercase tracking-widest text-stone-400">Filtrar productos</p>
+    </div>
+    <nav class="space-y-1">
+      <%= link_to "Todos", shop_path,
+            class: "flex items-center gap-3 py-3 px-4 transition-all duration-200 ease-in-out font-serif text-sm uppercase tracking-widest text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900" %>
+      <% ProductCategory.all.each do |cat| %>
+        <%= link_to shop_category_path(cat.slug),
+              class: "flex items-center gap-3 py-3 px-4 transition-all duration-200 ease-in-out font-serif text-sm uppercase tracking-widest #{cat.slug == @category&.slug ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-50/50 dark:bg-amber-950/20' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900'}" do %>
+          <span class="material-symbols-outlined text-lg">label</span>
+          <%= cat.name %>
+        <% end %>
+      <% end %>
+    </nav>
+  </aside>
+
+  <!-- Main Content Area -->
+  <section class="flex-1 px-8 py-12 md:px-16 lg:px-24">
+    <div class="mb-12 border-b border-amber-200/50 pb-4">
+      <% if @category %>
+        <span class="font-label-caps text-label-caps text-on-secondary-container tracking-[0.3em] uppercase"><%= @category.name %></span>
+      <% end %>
+    </div>
+
+    <% if @products.empty? %>
+      <div class="py-24 text-center flex flex-col items-center gap-6 border-2 border-dashed border-outline-variant/20 rounded-xl">
+        <span class="material-symbols-outlined text-stone-200 text-6xl">shopping_basket</span>
+        <p class="font-h3 text-stone-400">No hay productos en esta categoría</p>
+        <%= link_to "Ver todas las categorías", shop_path,
+              class: "px-8 py-3 bg-primary text-on-primary rounded-full font-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
+      </div>
+    <% else %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+        <% @products.each do |product| %>
+          <article class="group" id="product-<%= product.id %>">
+            <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "block" do %>
+              <div class="aspect-square relative overflow-hidden bg-surface-container-low rounded-xl transition-transform duration-500 group-hover:scale-[1.01]">
+                <% if product.respond_to?(:image_url) && product.image_url.present? %>
+                  <img alt="<%= product.name %>" class="w-full h-full object-cover" src="<%= product.image_url %>"/>
+                <% else %>
+                  <div class="w-full h-full flex items-center justify-center bg-surface-container">
+                    <span class="material-symbols-outlined text-6xl text-stone-300">inventory_2</span>
+                  </div>
+                <% end %>
+                <% unless product.in_stock? %>
+                  <div class="absolute top-4 left-4">
+                    <span class="bg-stone-200 text-stone-500 px-3 py-1 font-label-caps text-[10px] tracking-widest uppercase">Sin stock</span>
+                  </div>
+                <% end %>
+              </div>
+              <div class="mt-6 space-y-1">
+                <h3 class="font-h3 text-h3 text-on-surface"><%= product.name %></h3>
+                <p class="font-body-md text-on-secondary-container"><%= humanized_money_with_symbol(product.price) %></p>
+              </div>
+            <% end %>
+            <% if product.in_stock? %>
+              <div class="mt-4">
+                <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
+                  <%= f.hidden_field :product_id, value: product.id %>
+                  <%= f.hidden_field :quantity, value: 1 %>
+                  <%= f.submit "Agregar al carrito",
+                        class: "w-full py-3 bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps uppercase tracking-[0.2em] rounded-lg hover:bg-tertiary-fixed-dim transition-all duration-300 cursor-pointer" %>
+                <% end %>
+              </div>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+
+      <% if @pagy && @pagy.pages > 1 %>
+        <nav class="mt-24 flex justify-center items-center gap-12 font-serif text-sm tracking-[0.2em] uppercase">
+          <% if @pagy.prev %>
+            <%= link_to shop_category_path(@category.slug, page: @pagy.prev), class: "text-black flex items-center gap-2 hover:-translate-x-1 transition-transform" do %>
+              <span class="material-symbols-outlined text-base">chevron_left</span>
+              Anterior
+            <% end %>
+          <% else %>
+            <span class="text-stone-300 cursor-not-allowed flex items-center gap-2">
+              <span class="material-symbols-outlined text-base">chevron_left</span>
+              Anterior
+            </span>
+          <% end %>
+          <div class="flex gap-6">
+            <% (1..@pagy.pages).each do |page| %>
+              <% if page == @pagy.page %>
+                <span class="text-amber-600 border-b border-amber-600 px-1"><%= page %></span>
+              <% else %>
+                <%= link_to page, shop_category_path(@category.slug, page: page), class: "text-stone-400 hover:text-black transition-colors" %>
+              <% end %>
+            <% end %>
+          </div>
+          <% if @pagy.next %>
+            <%= link_to shop_category_path(@category.slug, page: @pagy.next), class: "text-black flex items-center gap-2 hover:translate-x-1 transition-transform" do %>
+              Siguiente
+              <span class="material-symbols-outlined text-base">chevron_right</span>
+            <% end %>
+          <% else %>
+            <span class="text-stone-300 cursor-not-allowed flex items-center gap-2">
+              Siguiente
+              <span class="material-symbols-outlined text-base">chevron_right</span>
+            </span>
+          <% end %>
+        </nav>
+      <% end %>
+    <% end %>
+  </section>
+</main>

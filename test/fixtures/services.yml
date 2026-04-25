@@ -1,0 +1,31 @@
+corte_damas:
+  name: Corte Damas
+  category: Cortes
+  price_cents: 18000
+  duration_minutes: 60
+  active: true
+  position: 0
+
+tinte_completo:
+  name: Tinte Completo
+  category: Coloración
+  price_cents: 45000
+  duration_minutes: 120
+  active: true
+  position: 1
+
+manicure:
+  name: Manicure Básico
+  category: Uñas
+  price_cents: 12000
+  duration_minutes: 45
+  active: true
+  position: 2
+
+servicio_inactivo:
+  name: Servicio Antiguo
+  category: Cortes
+  price_cents: 5000
+  duration_minutes: 30
+  active: false
+  position: 99

@@ -1,0 +1,162 @@
+<main class="pt-32 pb-24 px-6 max-w-5xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-10 flex items-center justify-between">
+    <div>
+      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest block mb-2">Mi cuenta</span>
+      <h1 class="font-h1 text-h1 text-on-surface">Hola, <%= @user.first_name %> 👋</h1>
+    </div>
+    <%= link_to edit_profile_path, class: "flex items-center gap-2 px-5 py-3 border border-outline-variant rounded-full text-on-surface-variant hover:bg-surface-container transition-colors font-label-caps text-label-caps uppercase tracking-widest" do %>
+      <span class="material-symbols-outlined text-[18px]">edit</span>
+      Editar perfil
+    <% end %>
+  </div>
+
+  <!-- Datos personales -->
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 mb-8">
+    <h2 class="font-h2 text-h3 text-on-surface mb-6 pb-4 border-b border-outline-variant/20">Datos personales</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <p class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Nombre</p>
+        <p class="font-body-md text-on-surface"><%= @user.full_name rescue "#{@user.first_name} #{@user.last_name}" %></p>
+      </div>
+      <div>
+        <p class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Email</p>
+        <p class="font-body-md text-on-surface"><%= @user.email %></p>
+      </div>
+      <div>
+        <p class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Teléfono</p>
+        <p class="font-body-md text-on-surface"><%= @user.phone.present? ? @user.phone : "No registrado" %></p>
+      </div>
+      <div>
+        <p class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest mb-1">Miembro desde</p>
+        <p class="font-body-md text-on-surface"><%= @user.created_at.strftime("%B %Y").capitalize %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Próximas citas -->
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 mb-8">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/20">
+      <h2 class="font-h2 text-h3 text-on-surface">Próximas citas</h2>
+      <%= link_to appointments_path, class: "font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest hover:text-primary transition-colors" do %>
+        Ver todas →
+      <% end %>
+    </div>
+
+    <% if @upcoming_appointments.empty? %>
+      <div class="py-10 text-center">
+        <span class="material-symbols-outlined text-stone-300 text-5xl block mb-3">calendar_today</span>
+        <p class="font-body-md text-on-surface-variant">No tienes citas próximas.</p>
+        <%= link_to "Agendar cita", new_appointment_path, class: "mt-4 inline-block px-6 py-3 bg-primary text-on-primary rounded-full font-label-caps text-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <% @upcoming_appointments.each do |apt| %>
+          <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-tertiary-fixed/20 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-on-tertiary-container text-[18px]">content_cut</span>
+              </div>
+              <div>
+                <p class="font-body-md font-medium text-on-surface"><%= apt.service.name %></p>
+                <p class="font-body-sm text-on-surface-variant"><%= apt.stylist.first_name %> · <%= apt.starts_at.strftime("%d %b %Y, %H:%M") %></p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-[11px] font-label-caps uppercase tracking-widest
+              <%= apt.status == 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' %>">
+              <%= apt.status == 'confirmed' ? 'Confirmada' : 'Pendiente' %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Historial de compras -->
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 mb-8">
+    <h2 class="font-h2 text-h3 text-on-surface mb-6 pb-4 border-b border-outline-variant/20">Historial de compras</h2>
+
+    <% if @orders.empty? %>
+      <div class="py-10 text-center">
+        <span class="material-symbols-outlined text-stone-300 text-5xl block mb-3">shopping_bag</span>
+        <p class="font-body-md text-on-surface-variant">Aún no tienes compras.</p>
+        <%= link_to "Ver tienda", shop_path, class: "mt-4 inline-block px-6 py-3 bg-primary text-on-primary rounded-full font-label-caps text-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
+      </div>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant/20">
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Orden</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Fecha</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Productos</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-right">Total</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            <% @orders.each do |order| %>
+              <tr class="group">
+                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.number %></td>
+                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.created_at.strftime("%d/%m/%Y") %></td>
+                <td class="py-4">
+                  <div class="flex flex-wrap gap-1">
+                    <% order.order_items.each do |item| %>
+                      <span class="font-body-sm text-on-surface"><%= item.product.name %> ×<%= item.quantity %></span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="py-4 text-right font-body-md font-medium text-on-surface"><%= humanized_money_with_symbol(order.total) %></td>
+                <td class="py-4 text-center">
+                  <span class="px-3 py-1 rounded-full text-[11px] font-label-caps uppercase tracking-widest
+                    <%= case order.status
+                        when 'paid', 'shipped', 'delivered' then 'bg-green-100 text-green-700'
+                        when 'cancelled' then 'bg-red-100 text-red-600'
+                        else 'bg-stone-100 text-stone-500'
+                        end %>">
+                    <%= case order.status
+                        when 'paid'       then 'Pagado'
+                        when 'shipped'    then 'Enviado'
+                        when 'delivered'  then 'Entregado'
+                        when 'cancelled'  then 'Cancelado'
+                        when 'checkout'   then 'En proceso'
+                        else order.status
+                        end %>
+                  </span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Historial de citas pasadas -->
+  <% if @past_appointments.any? %>
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8">
+    <h2 class="font-h2 text-h3 text-on-surface mb-6 pb-4 border-b border-outline-variant/20">Citas anteriores</h2>
+    <div class="space-y-3">
+      <% @past_appointments.each do |apt| %>
+        <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl opacity-70">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-on-surface-variant text-[18px]">content_cut</span>
+            </div>
+            <div>
+              <p class="font-body-sm font-medium text-on-surface"><%= apt.service.name %></p>
+              <p class="font-body-sm text-on-surface-variant"><%= apt.stylist.first_name %> · <%= apt.starts_at.strftime("%d %b %Y, %H:%M") %></p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-[11px] font-label-caps uppercase tracking-widest
+            <%= apt.status == 'completed' ? 'bg-green-50 text-green-600' : 'bg-stone-100 text-stone-400' %>">
+            <%= apt.status == 'completed' ? 'Completada' : apt.status %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <% end %>
+
+</main>

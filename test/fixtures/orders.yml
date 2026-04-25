@@ -1,0 +1,17 @@
+carrito_maria:
+  user: cliente
+  number: ORD-CART01
+  status: cart
+  payment_status: pending
+  subtotal_cents: 0
+  total_cents: 0
+
+orden_pagada:
+  user: cliente
+  number: ORD-PAID01
+  status: paid
+  payment_status: paid
+  payment_method: webpay
+  transaction_id: AUTH123456
+  subtotal_cents: 18990
+  total_cents: 18990

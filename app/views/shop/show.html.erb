@@ -1,0 +1,119 @@
+<main class="pt-32 pb-section-padding px-gutter max-w-7xl mx-auto">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg items-start">
+    <!-- Left Column: Product Image -->
+    <div class="space-y-gutter">
+      <div class="aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-low">
+        <% if @product.image.attached? %>
+          <%= image_tag @product.image, alt: @product.name, class: "w-full h-full object-cover transition-transform duration-700 hover:scale-105" %>
+        <% else %>
+          <div class="w-full h-full flex items-center justify-center bg-surface-container">
+            <span class="material-symbols-outlined text-8xl text-stone-300">inventory_2</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Right Column: Product Info -->
+    <div class="flex flex-col gap-stack-md lg:pl-12">
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 mb-2">
+        <%= link_to "Tienda", shop_path, class: "font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase" %>
+        <span class="material-symbols-outlined text-sm text-outline-variant">chevron_right</span>
+        <% if @category.present? %>
+          <%= link_to @category.name, shop_category_path(@category.slug), class: "font-label-caps text-label-caps text-on-surface-variant hover:text-primary uppercase" %>
+          <span class="material-symbols-outlined text-sm text-outline-variant">chevron_right</span>
+        <% end %>
+        <span class="font-label-caps text-label-caps text-on-surface uppercase"><%= @product.name %></span>
+      </nav>
+
+      <!-- Brand & Name -->
+      <div class="space-y-2">
+        <% if @product.product_category.present? %>
+          <p class="font-label-caps text-label-caps text-amber-600 uppercase tracking-[0.2em]"><%= @product.product_category.name %></p>
+        <% end %>
+        <h1 class="font-h1 text-h1 text-on-surface tracking-tight"><%= @product.name %></h1>
+      </div>
+
+      <!-- Price -->
+      <p class="font-h2 text-h3 text-primary mt-2"><%= humanized_money_with_symbol(@product.price) %></p>
+
+      <div class="h-px w-full bg-outline-variant/30 my-2"></div>
+
+      <!-- Description -->
+      <% if @product.description.present? %>
+        <div class="space-y-4">
+          <h3 class="font-label-caps text-label-caps text-on-surface uppercase tracking-widest">Descripción</h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed"><%= @product.description %></p>
+        </div>
+      <% end %>
+
+      <!-- Add to Cart -->
+      <div class="mt-8 flex flex-col gap-4">
+        <% if @product.in_stock? %>
+          <span class="text-body-sm text-outline font-body-sm italic">Stock disponible</span>
+          <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
+            <%= f.hidden_field :product_id, value: @product.id %>
+            <%= f.hidden_field :quantity, value: 1 %>
+            <%= f.submit "Agregar al carrito",
+                  class: "w-full bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps py-5 uppercase tracking-[0.2em] rounded-lg shadow-sm hover:bg-tertiary-fixed-dim transition-all duration-300 scale-[1.01] flex items-center justify-center gap-3 cursor-pointer" %>
+          <% end %>
+        <% else %>
+          <div class="w-full py-5 bg-stone-100 text-stone-400 font-label-caps text-label-caps text-center uppercase tracking-[0.2em] rounded-lg">
+            Sin stock disponible
+          </div>
+        <% end %>
+
+        <%= link_to shop_path, class: "w-full text-center py-4 font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-2 group" do %>
+          <span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>
+          Volver a la tienda
+        <% end %>
+      </div>
+
+      <!-- Shipping info -->
+      <div class="mt-12 grid grid-cols-2 gap-6 border-t border-outline-variant/20 pt-8">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-amber-600">local_shipping</span>
+          <div>
+            <p class="font-label-caps text-[10px] text-on-surface uppercase">Envío Express</p>
+            <p class="text-body-sm text-on-surface-variant font-body-sm">24-48 horas en RM</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-amber-600">verified_user</span>
+          <div>
+            <p class="font-label-caps text-[10px] text-on-surface uppercase">Original Garantizado</p>
+            <p class="text-body-sm text-on-surface-variant font-body-sm">Producto 100% oficial</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  <% if @related.present? && @related.any? %>
+    <section class="mt-24 pt-16 border-t border-outline-variant/20">
+      <h2 class="font-h2 text-h2 text-on-surface mb-12">Productos relacionados</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+        <% @related.each do |product| %>
+          <article class="group">
+            <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "block" do %>
+              <div class="aspect-square relative overflow-hidden bg-surface-container-low rounded-xl transition-transform duration-500 group-hover:scale-[1.01]">
+                <% if product.respond_to?(:image_url) && product.image_url.present? %>
+                  <img alt="<%= product.name %>" class="w-full h-full object-cover" src="<%= product.image_url %>"/>
+                <% else %>
+                  <div class="w-full h-full flex items-center justify-center bg-surface-container">
+                    <span class="material-symbols-outlined text-4xl text-stone-300">inventory_2</span>
+                  </div>
+                <% end %>
+              </div>
+              <div class="mt-4 space-y-1">
+                <h3 class="font-h3 text-body-lg text-on-surface"><%= product.name %></h3>
+                <p class="font-body-md text-on-secondary-container"><%= humanized_money_with_symbol(product.price) %></p>
+              </div>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</main>

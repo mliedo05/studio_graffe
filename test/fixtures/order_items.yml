@@ -1,0 +1,6 @@
+item_orden_pagada:
+  order: orden_pagada
+  product: shampoo_wella
+  quantity: 1
+  unit_price_cents: 18990
+  total_price_cents: 18990

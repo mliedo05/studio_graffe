@@ -1,0 +1,65 @@
+<%= turbo_stream.replace "cart-item-#{@item.id}" do %>
+  <tr class="group transition-colors hover:bg-surface-container-low/50" id="cart-item-<%= @item.id %>">
+    <td class="py-8 px-6">
+      <div class="flex items-center gap-6">
+        <div class="w-20 h-24 bg-surface-container overflow-hidden rounded-lg flex-shrink-0 border border-outline-variant/20 flex items-center justify-center">
+          <% if @item.product.image.attached? %>
+            <%= image_tag @item.product.image, alt: @item.product.name, class: "w-full h-full object-cover" %>
+          <% else %>
+            <span class="material-symbols-outlined text-stone-300">inventory_2</span>
+          <% end %>
+        </div>
+        <div>
+          <h3 class="font-h3 text-body-lg text-on-surface mb-1"><%= @item.product.name %></h3>
+          <p class="font-body-sm text-body-sm text-on-surface-variant"><%= @item.product.product_category&.name %></p>
+          <%= button_to "Eliminar", cart_item_path(@item), method: :delete,
+                class: "mt-2 text-error text-label-caps font-label-caps uppercase hover:underline opacity-0 group-hover:opacity-100 transition-opacity",
+                data: { turbo_confirm: "¿Eliminar este producto?" } %>
+        </div>
+      </div>
+    </td>
+    <td class="py-8 px-6">
+      <div class="flex items-center justify-center">
+        <div class="flex items-center border border-outline-variant/40 rounded-full px-2 py-1 bg-surface gap-1">
+          <%= button_to update_cart_item_path(@item), method: :patch,
+                params: { quantity: [@item.quantity - 1, 0].max },
+                class: "w-8 h-8 flex items-center justify-center text-stone-500 hover:text-primary transition-colors",
+                form: { data: { turbo_stream: true } } do %>
+            <span class="material-symbols-outlined text-[18px]">remove</span>
+          <% end %>
+          <span class="w-12 text-center font-body-md text-on-surface"><%= @item.quantity %></span>
+          <%= button_to update_cart_item_path(@item), method: :patch,
+                params: { quantity: @item.quantity + 1 },
+                class: "w-8 h-8 flex items-center justify-center text-stone-500 hover:text-primary transition-colors",
+                form: { data: { turbo_stream: true } } do %>
+            <span class="material-symbols-outlined text-[18px]">add</span>
+          <% end %>
+        </div>
+      </div>
+    </td>
+    <td class="py-8 px-6 text-right">
+      <span class="font-body-md text-on-surface"><%= humanized_money_with_symbol(@item.product.price) %></span>
+    </td>
+    <td class="py-8 px-6 text-right">
+      <span class="font-h3 text-body-lg font-medium text-on-surface">
+        <%= humanized_money_with_symbol(@item.product.price * @item.quantity) %>
+      </span>
+    </td>
+  </tr>
+<% end %>
+
+<%= turbo_stream.replace "cart-subtotal" do %>
+  <span id="cart-subtotal"><%= humanized_money_with_symbol(@cart.total) %></span>
+<% end %>
+
+<%= turbo_stream.replace "cart-total" do %>
+  <span id="cart-total" class="font-h2 text-h2 text-primary"><%= humanized_money_with_symbol(@cart.total) %></span>
+<% end %>
+
+<%= turbo_stream.replace "cart-count" do %>
+  <%= turbo_frame_tag "cart-count" do %>
+    <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
+      <%= @cart.item_count %>
+    </span>
+  <% end %>
+<% end %>

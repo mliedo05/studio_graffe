@@ -1,0 +1,16 @@
+<%= turbo_stream.replace "cart-count" do %>
+  <%= turbo_frame_tag "cart-count" do %>
+    <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
+      <%= @cart.item_count %>
+    </span>
+  <% end %>
+<% end %>
+<%= turbo_stream.prepend "flash-messages" do %>
+  <div class="flex items-center gap-3 bg-white border border-green-200 text-green-800 px-5 py-4 rounded-xl shadow-lg shadow-black/5 font-body-sm">
+    <span class="material-symbols-outlined text-green-600 text-base">check_circle</span>
+    <span class="flex-1">Producto agregado al carrito</span>
+    <button onclick="this.parentElement.remove()" class="text-green-400 hover:text-green-700 ml-2">
+      <span class="material-symbols-outlined text-sm">close</span>
+    </button>
+  </div>
+<% end %>

@@ -1,0 +1,6 @@
+comision_confirmada:
+  stylist: valentina
+  appointment: cita_confirmada
+  amount_cents: 15750
+  percentage: 35
+  status: pending

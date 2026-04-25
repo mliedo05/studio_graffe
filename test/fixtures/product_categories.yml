@@ -1,0 +1,17 @@
+shampoo:
+  name: Shampoo y Acondicionador
+  slug: shampoo-acondicionador
+  active: true
+  position: 0
+
+tratamientos:
+  name: Tratamientos Capilares
+  slug: tratamientos-capilares
+  active: true
+  position: 1
+
+inactiva:
+  name: Categoría Inactiva
+  slug: categoria-inactiva
+  active: false
+  position: 99

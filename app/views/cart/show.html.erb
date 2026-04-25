@@ -1,0 +1,130 @@
+<%= turbo_frame_tag "cart" do %>
+<main class="flex-grow pt-32 pb-section-padding px-8 max-w-7xl mx-auto w-full">
+  <!-- Header -->
+  <header class="mb-stack-lg">
+    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-stack-sm block">Tu Selección</span>
+    <h1 class="font-h1 text-h1 tracking-tight text-on-surface">Carrito de Compras</h1>
+  </header>
+
+  <div id="cart-content">
+  <% if @cart.order_items.empty? %>
+    <!-- Empty Cart -->
+    <div class="py-24 text-center flex flex-col items-center gap-stack-md border-2 border-dashed border-outline-variant/20 rounded-xl mt-stack-lg">
+      <span class="material-symbols-outlined text-stone-200 text-6xl">shopping_basket</span>
+      <p class="font-h3 text-stone-400">Tu carrito está vacío</p>
+      <p class="font-body-md text-on-surface-variant">Agrega productos desde nuestra tienda</p>
+      <%= link_to "Ver tienda", shop_path,
+            class: "px-8 py-3 bg-primary text-on-primary rounded-full font-label-caps uppercase tracking-widest hover:scale-105 transition-transform",
+            data: { turbo_frame: "_top" } %>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+      <!-- Items Table -->
+      <div class="lg:col-span-8">
+        <div class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant/30">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-outline-variant/20">
+                <th class="py-6 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Producto</th>
+                <th class="py-6 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-center">Cantidad</th>
+                <th class="py-6 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-right">Precio unitario</th>
+                <th class="py-6 px-6 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              <% @cart.order_items.each do |item| %>
+                <tr class="group transition-colors hover:bg-surface-container-low/50" id="cart-item-<%= item.id %>">
+                  <td class="py-8 px-6">
+                    <div class="flex items-center gap-6">
+                      <div class="w-20 h-24 bg-surface-container overflow-hidden rounded-lg flex-shrink-0 border border-outline-variant/20">
+                        <% if item.product.image.attached? %>
+                          <%= image_tag item.product.image, alt: item.product.name, class: "w-full h-full object-cover" %>
+                        <% else %>
+                          <div class="w-full h-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-stone-300">inventory_2</span>
+                          </div>
+                        <% end %>
+                      </div>
+                      <div>
+                        <h3 class="font-h3 text-body-lg text-on-surface mb-1"><%= item.product.name %></h3>
+                        <% if item.product.product_category.present? %>
+                          <p class="font-body-sm text-body-sm text-on-surface-variant"><%= item.product.product_category.name %></p>
+                        <% end %>
+                        <%= button_to "Eliminar", cart_item_path(item), method: :delete,
+                              class: "mt-2 text-error text-label-caps font-label-caps uppercase hover:underline opacity-0 group-hover:opacity-100 transition-opacity",
+                              data: { turbo_confirm: "¿Eliminar este producto del carrito?" } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-8 px-6">
+                    <div class="flex items-center justify-center">
+                      <div class="flex items-center border border-outline-variant/40 rounded-full px-2 py-1 bg-surface">
+                        <%= button_to update_cart_item_path(item), method: :patch,
+                              params: { quantity: [item.quantity - 1, 0].max },
+                              class: "w-8 h-8 flex items-center justify-center text-stone-500 hover:text-primary transition-colors",
+                              form: { data: { turbo_stream: true } } do %>
+                          <span class="material-symbols-outlined text-[18px]">remove</span>
+                        <% end %>
+                        <span class="w-12 text-center font-body-md text-on-surface"><%= item.quantity %></span>
+                        <%= button_to update_cart_item_path(item), method: :patch,
+                              params: { quantity: item.quantity + 1 },
+                              class: "w-8 h-8 flex items-center justify-center text-stone-500 hover:text-primary transition-colors",
+                              form: { data: { turbo_stream: true } } do %>
+                          <span class="material-symbols-outlined text-[18px]">add</span>
+                        <% end %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-8 px-6 text-right">
+                    <span class="font-body-md text-on-surface"><%= humanized_money_with_symbol(item.product.price) %></span>
+                  </td>
+                  <td class="py-8 px-6 text-right">
+                    <span class="font-h3 text-body-lg font-medium text-on-surface" id="cart-item-total-<%= item.id %>">
+                      <%= humanized_money_with_symbol(item.product.price * item.quantity) %>
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary Column -->
+      <div class="lg:col-span-4">
+        <div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/20 sticky top-32">
+          <h2 class="font-h2 text-h3 mb-stack-md text-on-surface border-b border-outline-variant/20 pb-4">Resumen de Compra</h2>
+          <div class="space-y-4 mb-stack-lg">
+            <div class="flex justify-between font-body-md text-on-surface-variant">
+              <span>Subtotal</span>
+              <span id="cart-subtotal"><%= humanized_money_with_symbol(@cart.total) %></span>
+            </div>
+            <div class="flex justify-between font-body-md text-on-surface-variant">
+              <span>Envío</span>
+              <span class="text-amber-600 italic">Calculado en checkout</span>
+            </div>
+            <div class="pt-4 border-t border-outline-variant/20 flex justify-between items-baseline">
+              <span class="font-h3 text-on-surface">Total</span>
+              <span id="cart-total" class="font-h2 text-h2 text-primary"><%= humanized_money_with_symbol(@cart.total) %></span>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <%= link_to "Ir al checkout", checkout_path,
+                  class: "block w-full py-5 bg-primary text-on-primary rounded-full font-label-caps text-label-caps uppercase tracking-widest hover:bg-stone-800 transition-all shadow-lg shadow-black/5 hover:scale-[1.02] active:scale-[0.98] text-center" %>
+            <div class="flex items-center justify-center gap-3 text-on-surface-variant mt-6">
+              <span class="material-symbols-outlined text-[18px]">verified_user</span>
+              <span class="font-label-caps text-[10px] uppercase tracking-widest">Pago 100% Seguro</span>
+            </div>
+          </div>
+          <div class="mt-12 pt-8 border-t border-outline-variant/10">
+            <p class="font-body-sm text-[12px] text-stone-400 italic text-center">
+              "La belleza comienza en el momento en que decides ser tú misma."
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  </div>
+</main>
+<% end %>

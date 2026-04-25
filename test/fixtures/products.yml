@@ -1,0 +1,43 @@
+shampoo_wella:
+  product_category: shampoo
+  name: Shampoo Elements Renewing
+  brand: Wella
+  slug: wella-shampoo-elements-renewing
+  price_cents: 18990
+  stock_quantity: 10
+  featured: true
+  active: true
+  position: 0
+
+acondicionador_wella:
+  product_category: shampoo
+  name: Acondicionador Elements
+  brand: Wella
+  slug: wella-acondicionador-elements
+  price_cents: 16990
+  stock_quantity: 5
+  featured: false
+  active: true
+  position: 1
+
+olaplex:
+  product_category: tratamientos
+  name: "No.3 Hair Perfector"
+  brand: Olaplex
+  slug: olaplex-no3-hair-perfector
+  price_cents: 42990
+  stock_quantity: 0
+  featured: true
+  active: true
+  position: 2
+
+producto_inactivo:
+  product_category: shampoo
+  name: Producto Descontinuado
+  brand: OldBrand
+  slug: oldbrand-producto-descontinuado
+  price_cents: 1000
+  stock_quantity: 0
+  featured: false
+  active: false
+  position: 99

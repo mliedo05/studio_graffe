@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+  <title><%= content_for(:title) || "Studio Graffé" %></title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Studio Graffé">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%= yield :head %>
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed-variant": "#474747",
+            "secondary-container": "#e5e2dd",
+            "on-tertiary-fixed": "#241a00",
+            "background": "#fcf9f8",
+            "surface-container-low": "#f6f3f2",
+            "outline": "#7e7576",
+            "surface-container-highest": "#e5e2e1",
+            "secondary-fixed": "#e5e2dd",
+            "tertiary-container": "#241a00",
+            "primary": "#000000",
+            "on-error-container": "#93000a",
+            "surface-dim": "#dcd9d9",
+            "on-surface": "#1b1c1c",
+            "on-primary-fixed": "#1b1b1b",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#5e5e5e",
+            "on-primary": "#ffffff",
+            "primary-fixed": "#e2e2e2",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#f0eded",
+            "error": "#ba1a1a",
+            "on-tertiary-container": "#a08000",
+            "surface": "#fcf9f8",
+            "surface-bright": "#fcf9f8",
+            "on-secondary-container": "#656461",
+            "surface-variant": "#e5e2e1",
+            "inverse-surface": "#303030",
+            "secondary-fixed-dim": "#c8c6c2",
+            "primary-fixed-dim": "#c6c6c6",
+            "tertiary-fixed": "#ffe088",
+            "inverse-on-surface": "#f3f0ef",
+            "primary-container": "#1b1b1b",
+            "on-surface-variant": "#4c4546",
+            "on-secondary-fixed": "#1c1c19",
+            "outline-variant": "#cfc4c5",
+            "surface-container-high": "#eae7e7",
+            "inverse-primary": "#c6c6c6",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#574500",
+            "on-background": "#1b1c1c",
+            "secondary": "#5f5e5b",
+            "on-secondary": "#ffffff",
+            "tertiary": "#000000",
+            "tertiary-fixed-dim": "#e9c349",
+            "on-primary-container": "#848484",
+            "on-secondary-fixed-variant": "#474743"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "stack-md": "1.5rem",
+            "container-max": "1280px",
+            "stack-lg": "3rem",
+            "section-padding": "6rem",
+            "gutter": "1.5rem",
+            "stack-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "label-caps": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "h2": ["Noto Serif", "serif"],
+            "display": ["Noto Serif", "serif"],
+            "h3": ["Noto Serif", "serif"],
+            "h1": ["Noto Serif", "serif"]
+          },
+          "fontSize": {
+            "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "h2": ["32px", {"lineHeight": "1.3", "fontWeight": "400"}],
+            "display": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+            "h3": ["24px", {"lineHeight": "1.4", "fontWeight": "500"}],
+            "h1": ["48px", {"lineHeight": "1.2", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .tonal-layers {
+      background: linear-gradient(to bottom, #fcf9f8, #f6f3f2);
+    }
+    .backdrop-blur-md {
+      backdrop-filter: blur(12px);
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e2e1; border-radius: 10px; }
+  </style>
+
+  <%= javascript_importmap_tags %>
+</head>
+
+<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col selection:bg-tertiary-fixed selection:text-on-tertiary-fixed">
+
+<!-- Flash messages -->
+<div id="flash-messages" class="fixed top-24 right-4 z-[100] space-y-2 max-w-sm">
+  <% if notice %>
+    <div class="flex items-center gap-3 bg-white border border-green-200 text-green-800 px-5 py-4 rounded-xl shadow-lg shadow-black/5 font-body-sm" data-controller="flash">
+      <span class="material-symbols-outlined text-green-600 text-base">check_circle</span>
+      <span class="flex-1"><%= notice %></span>
+      <button onclick="this.parentElement.remove()" class="text-green-400 hover:text-green-700 ml-2">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+  <% end %>
+  <% if alert %>
+    <div class="flex items-center gap-3 bg-white border border-red-200 text-red-800 px-5 py-4 rounded-xl shadow-lg shadow-black/5 font-body-sm" data-controller="flash">
+      <span class="material-symbols-outlined text-red-500 text-base">error</span>
+      <span class="flex-1"><%= alert %></span>
+      <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-700 ml-2">
+        <span class="material-symbols-outlined text-sm">close</span>
+      </button>
+    </div>
+  <% end %>
+</div>
+
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-black/80 backdrop-blur-md border-b-[0.5px] border-amber-200/30 dark:border-amber-900/20 shadow-sm shadow-amber-900/5">
+  <div class="flex justify-between items-center px-8 h-20 max-w-screen-2xl mx-auto">
+    <!-- Navigation Links (left) -->
+    <nav class="flex items-center gap-8 font-serif tracking-tight">
+      <%= link_to "Tienda", shop_path,
+            class: "transition-colors duration-300 #{current_page?(shop_path) || request.path.start_with?('/tienda') ? 'text-amber-600 dark:text-amber-400 border-b border-amber-500' : 'text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-300'}" %>
+      <%= link_to "Citas", appointments_path,
+            class: "transition-colors duration-300 #{request.path.start_with?('/citas') ? 'text-amber-600 dark:text-amber-400 border-b border-amber-500' : 'text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-300'}" %>
+    </nav>
+
+    <!-- Brand Logo (center) -->
+    <div class="absolute left-1/2 -translate-x-1/2">
+      <%= link_to root_path, class: "block hover:opacity-80 transition-opacity duration-300" do %>
+        <%= image_tag "logo.png", alt: "Studio Graffé", class: "h-20 w-auto object-contain" %>
+      <% end %>
+    </div>
+
+    <!-- Trailing Icons (right) -->
+    <div class="flex items-center gap-6">
+      <% if user_signed_in? %>
+
+        <!-- User dropdown -->
+        <div class="relative" id="user-menu-wrapper">
+          <button id="user-menu-btn"
+                  onclick="toggleUserMenu()"
+                  class="flex items-center gap-2 text-stone-900 dark:text-stone-100 hover:text-amber-600 transition-colors focus:outline-none group">
+            <!-- Avatar circle with initials -->
+            <span class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-bold text-[13px] select-none group-hover:ring-2 group-hover:ring-amber-300 transition-all">
+              <%= current_user.first_name&.first&.upcase %><%= current_user.last_name&.first&.upcase %>
+            </span>
+            <span class="material-symbols-outlined text-[18px] text-stone-400 transition-transform duration-200" id="user-menu-chevron">expand_more</span>
+          </button>
+
+          <!-- Dropdown panel -->
+          <div id="user-menu-dropdown"
+               class="hidden absolute right-0 top-full mt-3 w-56 bg-white rounded-2xl shadow-xl shadow-black/10 border border-stone-100 overflow-hidden z-50 animate-in">
+
+            <!-- User info header -->
+            <div class="px-4 py-4 border-b border-stone-100 bg-stone-50">
+              <p class="font-body-sm font-semibold text-on-surface text-[14px]"><%= current_user.first_name %> <%= current_user.last_name %></p>
+              <p class="font-body-sm text-on-surface-variant text-[12px] truncate"><%= current_user.email %></p>
+            </div>
+
+            <!-- Menu items -->
+            <div class="py-2">
+              <%= link_to profile_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-stone-50 transition-colors group/item" do %>
+                <span class="material-symbols-outlined text-[20px] text-stone-400 group-hover/item:text-amber-600 transition-colors">history</span>
+                <span class="font-body-sm text-[14px]">Historial</span>
+              <% end %>
+
+              <%= link_to edit_profile_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-stone-50 transition-colors group/item" do %>
+                <span class="material-symbols-outlined text-[20px] text-stone-400 group-hover/item:text-amber-600 transition-colors">settings</span>
+                <span class="font-body-sm text-[14px]">Configuración</span>
+              <% end %>
+
+              <% if current_user.admin? %>
+                <%= link_to admin_root_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-stone-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-purple-400 group-hover/item:text-purple-600 transition-colors">admin_panel_settings</span>
+                  <span class="font-body-sm text-[14px] text-purple-600">Panel Admin</span>
+                <% end %>
+              <% end %>
+            </div>
+
+            <!-- Sign out -->
+            <div class="border-t border-stone-100 py-2">
+              <%= button_to destroy_user_session_path, method: :delete,
+                    class: "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-50 transition-colors group/item" do %>
+                <span class="material-symbols-outlined text-[20px] text-stone-300 group-hover/item:text-red-500 transition-colors">logout</span>
+                <span class="font-body-sm text-[14px] text-stone-500 group-hover/item:text-red-600 transition-colors">Cerrar sesión</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart icon -->
+        <%= link_to cart_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors" do %>
+          <span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+          <%= turbo_frame_tag "cart-count" do %>
+            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
+              <%= current_user ? (current_user.current_cart&.item_count || 0) : 0 %>
+            </span>
+          <% end %>
+        <% end %>
+
+      <% else %>
+        <%= link_to new_user_session_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 hover:text-amber-600 transition-colors" do %>
+          <span class="material-symbols-outlined" data-icon="person">person</span>
+        <% end %>
+        <%= link_to cart_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors" do %>
+          <span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<div class="flex-1">
+  <%= yield %>
+</div>
+
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-stone-200 dark:border-stone-900 bg-stone-50 dark:bg-black mt-auto">
+  <div class="flex flex-col items-center gap-6 max-w-7xl mx-auto px-8">
+    <%= link_to root_path do %>
+      <%= image_tag "logo.png", alt: "Studio Graffé", class: "h-10 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" %>
+    <% end %>
+    <nav class="flex flex-wrap justify-center gap-8 font-serif text-xs tracking-widest uppercase text-stone-400 dark:text-stone-600">
+      <a class="hover:text-black dark:hover:text-white transition-opacity opacity-80 hover:opacity-100" href="#">Privacidad</a>
+      <a class="hover:text-black dark:hover:text-white transition-opacity opacity-80 hover:opacity-100" href="#">Términos</a>
+      <a class="hover:text-black dark:hover:text-white transition-opacity opacity-80 hover:opacity-100" href="#">Contacto</a>
+      <a class="hover:text-black dark:hover:text-white transition-opacity opacity-80 hover:opacity-100" href="#">Soporte</a>
+    </nav>
+    <p class="text-[10px] text-stone-400 uppercase tracking-widest">© 2024 Studio Graffé. Urban Elegance.</p>
+  </div>
+</footer>
+
+<script>
+  function toggleUserMenu() {
+    const dropdown = document.getElementById('user-menu-dropdown');
+    const chevron  = document.getElementById('user-menu-chevron');
+    const isHidden = dropdown.classList.contains('hidden');
+    dropdown.classList.toggle('hidden', !isHidden);
+    chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  // Close when clicking outside
+  document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('user-menu-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      const dropdown = document.getElementById('user-menu-dropdown');
+      const chevron  = document.getElementById('user-menu-chevron');
+      if (dropdown) dropdown.classList.add('hidden');
+      if (chevron)  chevron.style.transform = 'rotate(0deg)';
+    }
+  });
+
+  // Re-attach on Turbo navigation
+  document.addEventListener('turbo:load', function() {
+    const dropdown = document.getElementById('user-menu-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+  });
+</script>
+
+</body>
+</html>

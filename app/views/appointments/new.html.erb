@@ -1,0 +1,294 @@
+<main class="pt-32 pb-24 px-6 max-w-5xl mx-auto" data-controller="appointment-wizard">
+  <!-- Header -->
+  <div class="mb-12">
+    <h1 class="font-h1 text-h1 text-primary mb-2">Agendar Cita</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">Selecciona tu servicio, estilista y horario preferido.</p>
+  </div>
+
+  <!-- Wizard Progress -->
+  <div class="mb-16 flex items-center justify-between max-w-2xl mx-auto relative" data-appointment-wizard-target="progress">
+    <div class="absolute top-1/2 left-0 w-full h-[1px] bg-outline-variant -z-10"></div>
+
+    <!-- Step 1 -->
+    <div class="flex flex-col items-center gap-3" data-step="1">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center border text-sm font-bold step-indicator-1 bg-primary border-primary text-on-primary ring-4 ring-tertiary-fixed/30">
+        <span>1</span>
+      </div>
+      <span class="font-label-caps text-label-caps text-on-tertiary-container uppercase">Servicio</span>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="flex flex-col items-center gap-3" data-step="2">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center border text-sm font-bold step-indicator-2 bg-secondary-fixed border-outline-variant text-on-secondary-fixed">
+        <span>2</span>
+      </div>
+      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Estilista</span>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="flex flex-col items-center gap-3" data-step="3">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center border text-sm font-bold step-indicator-3 bg-secondary-fixed border-outline-variant text-on-secondary-fixed">
+        <span>3</span>
+      </div>
+      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Fecha y Hora</span>
+    </div>
+  </div>
+
+  <%= form_with url: appointments_path, method: :post, model: @appointment, data: { appointment_wizard_target: "form" } do |f| %>
+    <%= f.hidden_field :service_id, data: { appointment_wizard_target: "serviceIdField" } %>
+    <%= f.hidden_field :stylist_id, data: { appointment_wizard_target: "stylistIdField" } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <!-- Main Selection Area -->
+      <div class="lg:col-span-8 space-y-8">
+
+        <!-- Step 1: Services -->
+        <div data-appointment-wizard-target="step1" class="space-y-8">
+          <h2 class="font-h2 text-h2 text-on-surface">Elige tu servicio</h2>
+
+          <% @services.each do |category, services| %>
+            <div>
+              <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4"><%= category %></h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <% services.each do |service| %>
+                  <button type="button"
+                          class="service-card text-left p-6 border border-outline-variant rounded-xl cursor-pointer hover:bg-surface-container-low hover:border-primary transition-all duration-200 group"
+                          data-service-id="<%= service.id %>"
+                          data-service-name="<%= service.name %>"
+                          data-action="click->appointment-wizard#selectService"
+                          onclick="window.selectService && window.selectService(this)">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <p class="font-h3 text-body-lg text-on-surface font-medium"><%= service.name %></p>
+                        <% if service.respond_to?(:duration_minutes) && service.duration_minutes.present? %>
+                          <p class="font-body-sm text-on-surface-variant mt-1"><%= service.duration_minutes %> min</p>
+                        <% end %>
+                      </div>
+                      <% if service.respond_to?(:price) && service.price.present? %>
+                        <span class="font-label-caps text-label-caps text-amber-600"><%= humanized_money_with_symbol(service.price) %></span>
+                      <% end %>
+                    </div>
+                    <% if service.description.present? %>
+                      <p class="font-body-sm text-on-surface-variant mt-2 line-clamp-2"><%= service.description %></p>
+                    <% end %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="flex justify-end">
+            <button type="button" id="go-to-step2"
+                    class="px-8 py-4 bg-primary text-on-primary rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+              Siguiente: Elegir estilista
+              <span class="material-symbols-outlined text-sm ml-2">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Stylists -->
+        <div data-appointment-wizard-target="step2" class="space-y-8 hidden">
+          <h2 class="font-h2 text-h2 text-on-surface">Elige tu estilista</h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <% @stylists.each do |stylist| %>
+              <% stylist_name = stylist.respond_to?(:full_name) ? stylist.full_name : stylist.user.email %>
+              <button type="button"
+                      class="stylist-card text-left p-6 border border-outline-variant rounded-xl cursor-pointer hover:bg-surface-container-low hover:border-primary transition-all duration-200"
+                      data-stylist-id="<%= stylist.id %>"
+                      data-stylist-name="<%= stylist_name %>"
+                      data-action="click->appointment-wizard#selectStylist"
+                      onclick="window.selectStylist && window.selectStylist(this)">
+                <div class="flex items-center gap-4">
+                  <div class="w-14 h-14 rounded-full bg-surface-container overflow-hidden flex-shrink-0 border border-amber-200">
+                    <div class="w-full h-full flex items-center justify-center bg-stone-100">
+                      <span class="material-symbols-outlined text-stone-400">person</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="font-h3 text-body-lg text-on-surface font-medium"><%= stylist_name %></p>
+                    <% if stylist.respond_to?(:specialties) && stylist.specialties.present? %>
+                      <p class="font-body-sm text-on-surface-variant mt-1"><%= stylist.specialties %></p>
+                    <% end %>
+                  </div>
+                </div>
+              </button>
+            <% end %>
+          </div>
+
+          <div class="flex justify-between">
+            <button type="button" id="back-to-step1"
+                    class="px-6 py-3 border border-outline-variant text-on-surface-variant rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
+              Volver
+            </button>
+            <button type="button" id="go-to-step3"
+                    class="px-8 py-4 bg-primary text-on-primary rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+              Siguiente: Elegir horario
+              <span class="material-symbols-outlined text-sm ml-2">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Date & Time -->
+        <div data-appointment-wizard-target="step3" class="space-y-8 hidden">
+          <h2 class="font-h2 text-h2 text-on-surface">Elige fecha y hora</h2>
+
+          <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-stone-100">
+            <div class="space-y-6">
+              <div class="relative border-b border-outline focus-within:border-primary transition-all pb-1">
+                <label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Fecha y Hora</label>
+                <%= f.datetime_local_field :starts_at,
+                      class: "w-full bg-transparent border-none p-0 focus:ring-0 font-body-md text-on-surface",
+                      min: Date.today.to_s,
+                      data: { appointment_wizard_target: "dateTimeField" } %>
+              </div>
+
+              <div class="relative border-b border-outline focus-within:border-primary transition-all pb-1">
+                <label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Notas (Opcional)</label>
+                <%= f.text_area :notes,
+                      class: "w-full bg-transparent border-none p-0 focus:ring-0 font-body-md text-on-surface resize-none",
+                      rows: 3,
+                      placeholder: "Instrucciones especiales, alergias, preferencias..." %>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-amber-50/30 rounded-xl border border-amber-100 flex items-start gap-4">
+            <span class="material-symbols-outlined text-amber-600">info</span>
+            <p class="text-body-sm text-stone-600 leading-relaxed">
+              Por favor, llega 5 minutos antes de tu cita para asegurar la mejor experiencia.
+            </p>
+          </div>
+
+          <div class="flex justify-between">
+            <button type="button" id="back-to-step2"
+                    class="px-6 py-3 border border-outline-variant text-on-surface-variant rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
+              Volver
+            </button>
+            <%= f.submit "Confirmar Reserva",
+                  class: "px-8 py-4 bg-primary text-on-primary rounded-lg font-label-caps text-label-caps uppercase tracking-widest hover:scale-[1.02] transition-transform cursor-pointer" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Card -->
+      <div class="lg:col-span-4 sticky top-32">
+        <div class="bg-surface-container-highest/50 backdrop-blur-sm p-8 rounded-2xl border border-stone-200/50">
+          <h3 class="font-h3 text-h3 mb-8">Resumen</h3>
+          <div class="space-y-6 mb-8">
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="font-label-caps text-[10px] text-stone-500 uppercase mb-1">Servicio</span>
+                <span id="summary-service" class="font-h3 text-body-lg text-stone-400 italic">Sin seleccionar</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="font-label-caps text-[10px] text-stone-500 uppercase mb-1">Estilista</span>
+                <span id="summary-stylist" class="font-h3 text-body-lg text-stone-400 italic">Sin seleccionar</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="font-label-caps text-[10px] text-stone-500 uppercase mb-1">Fecha y Hora</span>
+                <span id="summary-datetime" class="font-h3 text-body-lg text-stone-400 italic">Sin seleccionar</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-center mt-6 text-[11px] text-stone-400 uppercase tracking-widest">Pago en el local</p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</main>
+
+<script>
+  // Simple multi-step wizard without Stimulus dependency
+  let selectedServiceId = null;
+  let selectedStylistId = null;
+
+  function showStep(n) {
+    document.querySelectorAll('[data-appointment-wizard-target^="step"]').forEach(el => el.classList.add('hidden'));
+    const target = document.querySelector('[data-appointment-wizard-target="step' + n + '"]');
+    if (target) target.classList.remove('hidden');
+    // Update progress indicators
+    for (let i = 1; i <= 3; i++) {
+      const indicator = document.querySelector('.step-indicator-' + i);
+      if (!indicator) continue;
+      if (i < n) {
+        indicator.className = indicator.className.replace(/bg-\S+|border-\S+|text-\S+|ring-\S+/g, '').trim();
+        indicator.className += ' bg-secondary-fixed border-outline-variant text-on-secondary-fixed step-indicator-' + i;
+        indicator.innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+      } else if (i === n) {
+        indicator.className = indicator.className.replace(/bg-\S+|border-\S+|text-\S+|ring-\S+/g, '').trim();
+        indicator.className += ' bg-primary border-primary text-on-primary ring-4 ring-tertiary-fixed/30 step-indicator-' + i;
+        indicator.innerHTML = '<span>' + i + '</span>';
+      } else {
+        indicator.className = indicator.className.replace(/bg-\S+|border-\S+|text-\S+|ring-\S+/g, '').trim();
+        indicator.className += ' bg-secondary-fixed border-outline-variant text-on-secondary-fixed step-indicator-' + i;
+        indicator.innerHTML = '<span>' + i + '</span>';
+      }
+    }
+  }
+
+  window.selectService = function(btn) {
+    document.querySelectorAll('.service-card').forEach(c => {
+      c.classList.remove('border-primary', 'bg-surface-container');
+      c.classList.add('border-outline-variant');
+    });
+    btn.classList.add('border-primary', 'bg-surface-container');
+    selectedServiceId = btn.dataset.serviceId;
+    document.querySelector('[data-appointment-wizard-target="serviceIdField"]').value = selectedServiceId;
+    document.getElementById('summary-service').textContent = btn.dataset.serviceName;
+    document.getElementById('summary-service').classList.remove('text-stone-400', 'italic');
+    const nextBtn = document.getElementById('go-to-step2');
+    if (nextBtn) { nextBtn.disabled = false; nextBtn.classList.remove('disabled:opacity-40'); }
+  };
+
+  window.selectStylist = function(btn) {
+    document.querySelectorAll('.stylist-card').forEach(c => {
+      c.classList.remove('border-primary', 'bg-surface-container');
+      c.classList.add('border-outline-variant');
+    });
+    btn.classList.add('border-primary', 'bg-surface-container');
+    selectedStylistId = btn.dataset.stylistId;
+    document.querySelector('[data-appointment-wizard-target="stylistIdField"]').value = selectedStylistId;
+    document.getElementById('summary-stylist').textContent = btn.dataset.stylistName;
+    document.getElementById('summary-stylist').classList.remove('text-stone-400', 'italic');
+    const nextBtn = document.getElementById('go-to-step3');
+    if (nextBtn) { nextBtn.disabled = false; nextBtn.classList.remove('disabled:opacity-40'); }
+  };
+
+  function initWizard() {
+    const go2 = document.getElementById('go-to-step2');
+    const go3 = document.getElementById('go-to-step3');
+    const back1 = document.getElementById('back-to-step1');
+    const back2 = document.getElementById('back-to-step2');
+    const dtField = document.querySelector('[data-appointment-wizard-target="dateTimeField"]');
+
+    if (go2) go2.addEventListener('click', () => showStep(2));
+    if (go3) go3.addEventListener('click', () => showStep(3));
+    if (back1) back1.addEventListener('click', () => showStep(1));
+    if (back2) back2.addEventListener('click', () => showStep(2));
+
+    if (dtField) {
+      dtField.addEventListener('change', function() {
+        const val = this.value;
+        if (val) {
+          const dt = new Date(val);
+          document.getElementById('summary-datetime').textContent = dt.toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' });
+          document.getElementById('summary-datetime').classList.remove('text-stone-400', 'italic');
+        }
+      });
+    }
+
+    showStep(1);
+  }
+
+  document.addEventListener('DOMContentLoaded', initWizard);
+  document.addEventListener('turbo:load', initWizard);
+</script>

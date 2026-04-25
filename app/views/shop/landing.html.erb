@@ -1,0 +1,345 @@
+<% content_for :title, "Studio Graffé — Belleza con intención" %>
+
+<% content_for :head do %>
+<style>
+  .hero-overlay { background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.55) 100%); }
+  .service-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+  .product-card:hover { transform: translateY(-3px); }
+  .ig-card:hover .ig-overlay { opacity: 1; }
+  .ig-overlay { transition: opacity 0.3s ease; }
+  .scroll-snap { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  .scroll-snap > * { scroll-snap-align: start; }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeInUp 0.7s ease both; }
+  .fade-in-2 { animation: fadeInUp 0.7s 0.15s ease both; }
+  .fade-in-3 { animation: fadeInUp 0.7s 0.3s ease both; }
+</style>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════
+     HERO — Full screen
+════════════════════════════════════════════════ -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+  <!-- Background image placeholder — reemplazar src con foto real del salón -->
+  <div class="absolute inset-0 bg-stone-800"
+       style="background-image: url('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=80'); background-size:cover; background-position:center;">
+  </div>
+  <div class="hero-overlay absolute inset-0"></div>
+
+  <div class="relative z-10 text-center px-6 max-w-4xl mx-auto fade-in">
+    <p class="font-label-caps text-[11px] tracking-[0.25em] text-amber-300 uppercase mb-6">Santiago · Chile</p>
+    <h1 class="text-white mb-6" style="font-family:'Noto Serif',serif; font-size:clamp(2.5rem,7vw,5rem); line-height:1.1; letter-spacing:-0.02em;">
+      Belleza con intención.<br>Estilo con identidad.
+    </h1>
+    <p class="text-white/80 text-lg mb-12 max-w-xl mx-auto fade-in-2" style="font-family:'Inter',sans-serif;">
+      Un espacio donde cada detalle importa y cada clienta es única.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center fade-in-3">
+      <%= link_to new_appointment_path,
+            class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105",
+            style: "background:#C9A96E; color:#fff; border-radius:2px;" do %>
+        Reservar Cita
+      <% end %>
+      <%= link_to shop_path,
+            class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase border border-white/70 text-white hover:bg-white/10 transition-all duration-300",
+            style: "border-radius:2px;" do %>
+        Ver Productos
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50">
+    <span class="font-label-caps text-[10px] tracking-widest uppercase">Descubrir</span>
+    <div class="w-px h-12 bg-white/30 animate-pulse"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SOBRE NOSOTRAS
+════════════════════════════════════════════════ -->
+<section class="py-32 px-6 bg-[#FAFAF8]">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <!-- Texto -->
+    <div>
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-6" style="color:#C9A96E;">Nuestra historia</p>
+      <h2 class="mb-8" style="font-family:'Noto Serif',serif; font-size:2.5rem; line-height:1.2; color:#1A1A1A;">
+        Donde el arte<br>y el cuidado<br>se encuentran.
+      </h2>
+      <p class="text-stone-500 text-lg leading-relaxed mb-8" style="font-family:'Inter',sans-serif;">
+        Studio Graffé nace del amor por el detalle y la transformación. Somos un espacio donde cada clienta es única, cada servicio es un ritual y cada visita deja una huella.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <% ["Confianza", "Creatividad", "Cuidado", "Exclusividad"].each do |valor| %>
+          <span class="px-4 py-2 border text-xs font-medium tracking-wider uppercase"
+                style="border-color:#C9A96E; color:#C9A96E; font-family:'Inter',sans-serif; letter-spacing:0.1em;">
+            <%= valor %>
+          </span>
+        <% end %>
+      </div>
+    </div>
+    <!-- Imagen con marco dorado offset -->
+    <div class="relative">
+      <div class="absolute -top-4 -right-4 w-full h-full border"
+           style="border-color:#C9A96E; border-width:1px;"></div>
+      <div class="relative overflow-hidden aspect-[4/5] bg-stone-200">
+        <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80"
+             alt="Equipo Studio Graffé"
+             class="w-full h-full object-cover">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SERVICIOS DESTACADOS
+════════════════════════════════════════════════ -->
+<section class="py-28 px-6" style="background:#F5F3F0;">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que ofrecemos</p>
+      <h2 style="font-family:'Noto Serif',serif; font-size:2.5rem; color:#1A1A1A;">Nuestros Servicios</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <% @featured_services.each do |service| %>
+        <div class="service-card bg-white p-8 transition-all duration-300 cursor-default" style="border:1px solid #E8E5E2;">
+          <div class="w-10 h-10 mb-6 flex items-center justify-center" style="border:1px solid #C9A96E;">
+            <span class="material-symbols-outlined text-lg" style="color:#C9A96E;">content_cut</span>
+          </div>
+          <h3 class="font-medium mb-2" style="font-family:'Noto Serif',serif; font-size:1.1rem; color:#1A1A1A;">
+            <%= service.name %>
+          </h3>
+          <p class="text-xs text-stone-400 mb-4 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
+            <%= service.duration_minutes %> min
+          </p>
+          <p class="font-medium" style="color:#C9A96E; font-family:'Inter',sans-serif; font-size:0.95rem;">
+            desde <%= number_to_currency(service.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="text-center mt-12">
+      <%= link_to "Ver todos los servicios →", new_appointment_path,
+            class: "font-label-caps text-xs tracking-widest uppercase border-b pb-1 transition-all hover:tracking-[0.3em]",
+            style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CARRUSEL PRODUCTOS DESTACADOS
+════════════════════════════════════════════════ -->
+<% if @featured_products.any? %>
+<section class="py-28 px-6 bg-[#FAFAF8]">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-3" style="color:#C9A96E;">Nuestra selección</p>
+        <h2 style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">Lo que usamos,<br>lo que vendemos.</h2>
+      </div>
+      <%= link_to "Ver tienda completa →", shop_path,
+            class: "hidden sm:block font-label-caps text-xs tracking-widest uppercase border-b pb-1 self-end mb-1",
+            style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
+    </div>
+
+    <div class="flex gap-6 overflow-x-auto scroll-snap pb-4 -mx-2 px-2" style="scrollbar-width:none;">
+      <% @featured_products.each do |product| %>
+        <%= link_to shop_product_path(product.product_category.slug, product.slug),
+              class: "product-card flex-none w-64 transition-all duration-300" do %>
+          <div class="aspect-square bg-stone-100 overflow-hidden mb-4 flex items-center justify-center">
+            <span class="material-symbols-outlined text-stone-300 text-5xl">inventory_2</span>
+          </div>
+          <% unless product.in_stock? %>
+            <span class="text-[10px] tracking-widest uppercase text-stone-400 font-medium"
+                  style="font-family:'Inter',sans-serif;">Sin stock</span>
+          <% end %>
+          <p class="font-medium text-stone-800 mb-1" style="font-family:'Inter',sans-serif; font-size:0.9rem;">
+            <%= product.name %>
+          </p>
+          <p class="text-xs text-stone-400 mb-2 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
+            <%= product.brand %>
+          </p>
+          <p class="font-medium" style="color:#1A1A1A; font-family:'Inter',sans-serif;">
+            <%= number_to_currency(product.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="text-center mt-8 sm:hidden">
+      <%= link_to "Ver tienda completa →", shop_path,
+            class: "font-label-caps text-xs tracking-widest uppercase border-b pb-1",
+            style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
+    </div>
+  </div>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════
+     INSTAGRAM FEED
+════════════════════════════════════════════════ -->
+<% ig_svg = capture do %>
+  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+<% end %>
+
+<section class="py-20" style="background:#F5F3F0;">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-10">
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-3" style="color:#C9A96E;">Síguenos</p>
+      <h2 style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">@studiograffe_</h2>
+    </div>
+
+    <div class="grid grid-cols-3 gap-1">
+      <% if @instagram_posts.any? %>
+        <%# ── Posts reales desde Instagram Graph API ── %>
+        <% @instagram_posts.each do |post| %>
+          <% image_url = post["media_type"] == "VIDEO" ? post["thumbnail_url"] : post["media_url"] %>
+          <a href="<%= post["permalink"] %>" target="_blank" rel="noopener"
+             class="ig-card relative overflow-hidden bg-stone-200 block group" style="aspect-ratio:4/5;">
+            <img src="<%= image_url %>"
+                 alt="<%= post["caption"]&.truncate(60) || 'Studio Graffé' %>"
+                 loading="lazy"
+                 referrerpolicy="no-referrer"
+                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                 style="background:rgba(0,0,0,0.45);">
+              <%= ig_svg %>
+              <% if post["media_type"] == "VIDEO" %>
+                <span class="text-white text-xs tracking-wider uppercase" style="font-family:'Inter',sans-serif;">Ver Reel</span>
+              <% else %>
+                <span class="text-white text-xs tracking-wider uppercase" style="font-family:'Inter',sans-serif;">Ver post</span>
+              <% end %>
+            </div>
+            <% if post["media_type"] == "VIDEO" %>
+              <div class="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                <span class="material-symbols-outlined text-white text-[16px]">play_circle</span>
+              </div>
+            <% end %>
+          </a>
+        <% end %>
+      <% else %>
+        <%# ── Placeholder: fotos de Unsplash hasta configurar el token ── %>
+        <% [
+          "photo-1562322140-8baeececf3df",
+          "photo-1522337360788-8b13dee7a37e",
+          "photo-1595476108010-b4d1f102b1b1",
+          "photo-1633681122467-a91b3dc24888",
+          "photo-1616394584738-fc6e612e71b9",
+          "photo-1560066984-138dadb4c035",
+          "photo-1492106087820-71f1a00d2b11",
+          "photo-1487412720507-e7ab37603c6f",
+          "photo-1519699047748-de8e457a634e"
+        ].each do |photo_id| %>
+          <a href="https://www.instagram.com/studiograffe_" target="_blank" rel="noopener"
+             class="ig-card relative overflow-hidden bg-stone-200 block group" style="aspect-ratio:4/5;">
+            <img src="https://images.unsplash.com/<%= photo_id %>?w=400&q=80"
+                 alt="Studio Graffé Instagram"
+                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                 style="background:rgba(0,0,0,0.45);">
+              <%= ig_svg %>
+              <span class="text-white text-xs tracking-wider uppercase" style="font-family:'Inter',sans-serif;">Ver en Instagram</span>
+            </div>
+          </a>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="text-center mt-10">
+      <a href="https://www.instagram.com/studiograffe_" target="_blank" rel="noopener"
+         class="inline-flex items-center gap-3 px-8 py-3 border font-label-caps text-xs tracking-widest uppercase transition-all hover:bg-black hover:text-white"
+         style="border-color:#1A1A1A; color:#1A1A1A; font-family:'Inter',sans-serif;">
+        <%= ig_svg %>
+        Ver más en Instagram
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     NUESTRAS ESTILISTAS
+════════════════════════════════════════════════ -->
+<section class="py-28 px-6 bg-[#FAFAF8]">
+  <div class="max-w-4xl mx-auto text-center">
+    <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">El equipo</p>
+    <h2 class="mb-16" style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">Nuestras Estilistas</h2>
+
+    <div class="flex flex-wrap justify-center gap-12">
+      <% @stylists.each do |stylist| %>
+        <%= link_to new_appointment_path, class: "group flex flex-col items-center gap-4 cursor-pointer" do %>
+          <div class="w-28 h-28 rounded-full overflow-hidden border-2 transition-all duration-300 group-hover:border-amber-400"
+               style="border-color:#E8E5E2;">
+            <div class="w-full h-full flex items-center justify-center text-3xl font-light text-white"
+                 style="background:linear-gradient(135deg, #C9A96E, #8B7355);">
+              <%= stylist.first_name[0] %>
+            </div>
+          </div>
+          <div>
+            <p class="font-medium text-stone-800 mb-1" style="font-family:'Noto Serif',serif; font-size:1.05rem;">
+              <%= stylist.full_name %>
+            </p>
+            <p class="text-xs text-stone-400 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
+              Estilista
+            </p>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     TESTIMONIOS
+════════════════════════════════════════════════ -->
+<section class="py-28 px-6" style="background:#F0EDEA;">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que dicen</p>
+      <h2 style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">Nuestras Clientas</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <% [
+        { quote: "Studio Graffé transformó mi cabello y mi confianza. El equipo entiende exactamente lo que necesitas sin que tengas que explicarlo demasiado.", name: "Catalina R.", stars: 5 },
+        { quote: "El ambiente es precioso y los productos que usan son de una calidad increíble. No cambiaría mi salón por nada del mundo.", name: "Valentina M.", stars: 5 },
+        { quote: "Llegué buscando un cambio y salí con una nueva versión de mí misma. Profesionalismo y calidez en cada detalle.", name: "Fernanda L.", stars: 5 }
+      ].each do |t| %>
+        <div class="bg-white p-8" style="border:1px solid #E8E5E2;">
+          <div class="flex gap-1 mb-6">
+            <% t[:stars].times do %>
+              <svg class="w-4 h-4" fill="#C9A96E" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+            <% end %>
+          </div>
+          <blockquote class="text-stone-600 leading-relaxed mb-6 italic"
+                       style="font-family:'Noto Serif',serif; font-size:1rem;">
+            "<%= t[:quote] %>"
+          </blockquote>
+          <p class="font-medium text-stone-800 text-sm" style="font-family:'Inter',sans-serif;">
+            — <%= t[:name] %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     CTA FINAL
+════════════════════════════════════════════════ -->
+<section class="py-28 px-6 text-center" style="background:#1A1A1A;">
+  <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-6" style="color:#C9A96E;">¿Lista para transformarte?</p>
+  <h2 class="text-white mb-8" style="font-family:'Noto Serif',serif; font-size:2.5rem; line-height:1.2;">
+    Tu próxima cita<br>te está esperando.
+  </h2>
+  <%= link_to new_appointment_path,
+        class: "inline-block px-12 py-4 font-label-caps text-[11px] tracking-[0.25em] uppercase transition-all duration-300 hover:scale-105",
+        style: "background:#C9A96E; color:#fff; font-family:'Inter',sans-serif;" do %>
+    Reservar Ahora
+  <% end %>
+</section>

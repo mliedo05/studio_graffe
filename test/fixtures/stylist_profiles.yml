@@ -1,0 +1,11 @@
+valentina_profile:
+  stylist: valentina
+  bio: Especialista en coloración y balayage
+  commission_percentage: 35
+  active: true
+
+camila_profile:
+  stylist: camila
+  bio: Experta en cortes y peinados
+  commission_percentage: 30
+  active: true

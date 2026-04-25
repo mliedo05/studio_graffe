@@ -55,7 +55,7 @@ gem "ransack"
 gem "money-rails"
 
 # Pagination
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.5"
 
 # Transbank payments (Chile)
 # gem "transbank-sdk"  # descomentar en Fase 4

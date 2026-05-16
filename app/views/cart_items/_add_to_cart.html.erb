@@ -1,19 +1,19 @@
 <%= turbo_frame_tag "cart-product-#{product.id}" do %>
   <% if cart_item&.persisted? %>
-    <div class="flex items-center w-full rounded-lg overflow-hidden border border-tertiary-fixed">
+    <div class="flex items-center justify-between w-full rounded-full bg-tertiary-fixed px-2 py-1.5 shadow-sm">
       <%= button_to update_cart_item_path(cart_item), method: :patch,
             params: { quantity: [ cart_item.quantity - 1, 0 ].max },
             form: { data: { turbo_stream: true } },
-            class: "px-4 py-3 bg-surface text-on-surface hover:bg-stone-100 transition-colors flex items-center justify-center flex-shrink-0" do %>
+            class: "w-9 h-9 rounded-full bg-white/30 hover:bg-white/50 text-on-tertiary-fixed transition-all duration-200 flex items-center justify-center flex-shrink-0 shadow-sm" do %>
         <span class="material-symbols-outlined text-[18px] leading-none">remove</span>
       <% end %>
-      <span class="flex-1 text-center font-label-caps text-sm text-on-tertiary-fixed bg-tertiary-fixed py-3 select-none">
-        <%= cart_item.quantity %> en carrito
+      <span class="flex-1 text-center text-on-tertiary-fixed text-lg font-bold select-none tracking-wide">
+        <%= cart_item.quantity %>
       </span>
       <%= button_to update_cart_item_path(cart_item), method: :patch,
             params: { quantity: cart_item.quantity + 1 },
             form: { data: { turbo_stream: true } },
-            class: "px-4 py-3 bg-surface text-on-surface hover:bg-stone-100 transition-colors flex items-center justify-center flex-shrink-0" do %>
+            class: "w-9 h-9 rounded-full bg-white/30 hover:bg-white/50 text-on-tertiary-fixed transition-all duration-200 flex items-center justify-center flex-shrink-0 shadow-sm" do %>
         <span class="material-symbols-outlined text-[18px] leading-none">add</span>
       <% end %>
     </div>

@@ -51,12 +51,7 @@
       <div class="mt-8 flex flex-col gap-4">
         <% if @product.in_stock? %>
           <span class="text-body-sm text-outline font-body-sm italic">Stock disponible</span>
-          <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
-            <%= f.hidden_field :product_id, value: @product.id %>
-            <%= f.hidden_field :quantity, value: 1 %>
-            <%= f.submit "Agregar al carrito",
-                  class: "w-full bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps py-5 uppercase tracking-[0.2em] rounded-lg shadow-sm hover:bg-tertiary-fixed-dim transition-all duration-300 scale-[1.01] flex items-center justify-center gap-3 cursor-pointer" %>
-          <% end %>
+          <%= render "cart_items/add_to_cart", product: @product, cart_item: @cart_item %>
         <% else %>
           <div class="w-full py-5 bg-stone-100 text-stone-400 font-label-caps text-label-caps text-center uppercase tracking-[0.2em] rounded-lg">
             Sin stock disponible

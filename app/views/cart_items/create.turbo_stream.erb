@@ -1,3 +1,7 @@
+<%= turbo_stream.replace "cart-product-#{@product.id}" do %>
+  <%= render "cart_items/add_to_cart", product: @product, cart_item: @cart_item %>
+<% end %>
+
 <%= turbo_stream.replace "cart-count" do %>
   <%= turbo_frame_tag "cart-count" do %>
     <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">

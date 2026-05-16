@@ -73,12 +73,7 @@
 
             <% if product.in_stock? %>
               <div class="mt-4">
-                <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
-                  <%= f.hidden_field :product_id, value: product.id %>
-                  <%= f.hidden_field :quantity, value: 1 %>
-                  <%= f.submit "Agregar al carrito",
-                        class: "w-full py-3 bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps uppercase tracking-[0.2em] rounded-lg hover:bg-tertiary-fixed-dim transition-all duration-300 cursor-pointer" %>
-                <% end %>
+                <%= render "cart_items/add_to_cart", product: product, cart_item: @cart_items_by_product[product.id] %>
               </div>
             <% end %>
           </article>

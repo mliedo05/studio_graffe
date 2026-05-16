@@ -11,17 +11,19 @@ class ShopController < ApplicationController
 
   def index
     data = ShopService.index_data(pagy_helper: method(:pagy))
-    @categories = data[:categories]
-    @featured   = data[:featured]
-    @pagy       = data[:pagy]
-    @products   = data[:products]
+    @categories            = data[:categories]
+    @featured              = data[:featured]
+    @pagy                  = data[:pagy]
+    @products              = data[:products]
+    @cart_items_by_product = cart_items_by_product
   end
 
   def category
     data = ShopService.category_data(slug: params[:category_slug], pagy_helper: method(:pagy))
-    @category = data[:category]
-    @pagy     = data[:pagy]
-    @products = data[:products]
+    @category              = data[:category]
+    @pagy                  = data[:pagy]
+    @products              = data[:products]
+    @cart_items_by_product = cart_items_by_product
   end
 
   def show
@@ -29,8 +31,17 @@ class ShopController < ApplicationController
       category_slug: params[:category_slug],
       product_slug:  params[:product_slug]
     )
-    @category = data[:category]
-    @product  = data[:product]
-    @related  = data[:related]
+    @category  = data[:category]
+    @product   = data[:product]
+    @related   = data[:related]
+    @cart_item = cart_items_by_product[@product.id]
+  end
+
+  private
+
+  def cart_items_by_product
+    return {} unless user_signed_in?
+
+    CartService.cart_for(current_user).order_items.index_by(&:product_id)
   end
 end

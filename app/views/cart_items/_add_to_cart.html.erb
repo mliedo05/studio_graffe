@@ -1,0 +1,28 @@
+<%= turbo_frame_tag "cart-product-#{product.id}" do %>
+  <% if cart_item&.persisted? %>
+    <div class="flex items-center w-full rounded-lg overflow-hidden border border-tertiary-fixed">
+      <%= button_to update_cart_item_path(cart_item), method: :patch,
+            params: { quantity: [ cart_item.quantity - 1, 0 ].max },
+            form: { data: { turbo_stream: true } },
+            class: "px-4 py-3 bg-surface text-on-surface hover:bg-stone-100 transition-colors flex items-center justify-center flex-shrink-0" do %>
+        <span class="material-symbols-outlined text-[18px] leading-none">remove</span>
+      <% end %>
+      <span class="flex-1 text-center font-label-caps text-sm text-on-tertiary-fixed bg-tertiary-fixed py-3 select-none">
+        <%= cart_item.quantity %> en carrito
+      </span>
+      <%= button_to update_cart_item_path(cart_item), method: :patch,
+            params: { quantity: cart_item.quantity + 1 },
+            form: { data: { turbo_stream: true } },
+            class: "px-4 py-3 bg-surface text-on-surface hover:bg-stone-100 transition-colors flex items-center justify-center flex-shrink-0" do %>
+        <span class="material-symbols-outlined text-[18px] leading-none">add</span>
+      <% end %>
+    </div>
+  <% else %>
+    <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
+      <%= f.hidden_field :product_id, value: product.id %>
+      <%= f.hidden_field :quantity, value: 1 %>
+      <%= f.submit "Agregar al carrito",
+            class: "w-full py-3 bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps uppercase tracking-[0.2em] rounded-lg hover:bg-tertiary-fixed-dim transition-all duration-300 cursor-pointer" %>
+    <% end %>
+  <% end %>
+<% end %>

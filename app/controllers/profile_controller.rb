@@ -14,7 +14,13 @@ class ProfileController < ApplicationController
 
   def update
     @user = current_user
-    if @user.update_with_password(user_params)
+    updated = if @user.oauth_user?
+      @user.update(user_params.except(:current_password, :password, :password_confirmation))
+    else
+      @user.update_with_password(user_params)
+    end
+
+    if updated
       bypass_sign_in(@user)
       redirect_to profile_path, notice: "Perfil actualizado correctamente."
     else

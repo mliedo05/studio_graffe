@@ -308,7 +308,12 @@ Devise.setup do |config|
   config.responder.error_status = :unprocessable_content
   config.responder.redirect_status = :see_other
 
-  # OmniAuth — configured in config/initializers/omniauth.rb
+  # ==> OmniAuth
+  config.omniauth :google_oauth2,
+                  Rails.application.credentials.dig(:google, :client_id)    || ENV["GOOGLE_CLIENT_ID"],
+                  Rails.application.credentials.dig(:google, :client_secret) || ENV["GOOGLE_CLIENT_SECRET"],
+                  scope: "email,profile",
+                  prompt: "select_account"
 
   # ==> Configuration for :registerable
 

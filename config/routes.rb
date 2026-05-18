@@ -45,6 +45,11 @@ Rails.application.routes.draw do
   get    "/perfil/editar", to: "profile#edit",   as: :edit_profile
   patch  "/perfil",        to: "profile#update"
 
+  # Direcciones guardadas
+  resources :addresses, path: "direcciones", only: [ :create, :update, :destroy ] do
+    member { patch :set_default }
+  end
+
   get "/inicio", to: "shop#landing", as: :landing
   root to: "shop#landing"
 end

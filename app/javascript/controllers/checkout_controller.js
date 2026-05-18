@@ -155,6 +155,66 @@ export default class extends Controller {
     }
   }
 
+  // ── Fill / clear saved address ────────────────────────────
+
+  fillAddress(event) {
+    const d = event.currentTarget.dataset
+    const set = (name, val) => {
+      const el = this.element.querySelector(`[name='order[${name}]']`)
+      if (el) el.value = val || ""
+    }
+    set("shipping_recipient_name", d.recipient)
+    set("shipping_city",           d.city)
+    set("shipping_street",         d.street)
+    set("shipping_street_number",  d.streetNumber)
+    set("shipping_apartment",      d.apartment)
+
+    // Region + comunas cascade
+    set("shipping_region", d.region)
+    if (this.hasRegionSelectTarget) {
+      this.regionSelectTarget.value = d.region
+      this.populateComunas(d.region, d.comuna)
+    }
+
+    // Phone: update number field
+    const phone = d.phone || ""
+    const knownPfx = ["+1809","+1","+7","+20","+27","+30","+31","+32","+33","+34",
+      "+36","+39","+40","+41","+43","+44","+45","+46","+47","+48","+49","+51","+52",
+      "+53","+54","+55","+56","+57","+58","+60","+61","+62","+63","+64","+65","+66",
+      "+81","+82","+84","+86","+90","+91","+92","+93","+94","+95","+98",
+      "+212","+213","+216","+221","+233","+234","+237","+244","+251","+254",
+      "+260","+263","+351","+352","+353","+355","+356","+357","+358","+359",
+      "+370","+371","+372","+373","+374","+380","+381","+385","+386","+387",
+      "+420","+421","+501","+502","+503","+504","+505","+506","+507","+509",
+      "+591","+593","+595","+598","+673","+855","+856","+880","+886",
+      "+961","+962","+963","+964","+965","+966","+967","+968","+971","+972",
+      "+973","+974","+977","+994","+995","+998"]
+    const pfx    = knownPfx.find(p => phone.startsWith(p)) || "+56"
+    const numStr = phone.slice(pfx.length).trim()
+    set("shipping_phone_number", numStr)
+
+    // Highlight selected card
+    event.currentTarget.closest("#saved-addresses")
+      ?.querySelectorAll("button")
+      .forEach(b => b.classList.remove("border-stone-900", "bg-stone-50"))
+    event.currentTarget.classList.add("border-stone-900", "bg-stone-50")
+  }
+
+  clearAddress() {
+    ["shipping_recipient_name","shipping_city","shipping_street",
+     "shipping_street_number","shipping_apartment"].forEach(name => {
+      const el = this.element.querySelector(`[name='order[${name}]']`)
+      if (el) el.value = ""
+    })
+    if (this.hasRegionSelectTarget) {
+      this.regionSelectTarget.value = ""
+      this.populateComunas("")
+    }
+    this.element.querySelector("#saved-addresses")
+      ?.querySelectorAll("button")
+      .forEach(b => b.classList.remove("border-stone-900", "bg-stone-50"))
+  }
+
   // ── Cascade región → comuna ──────────────────────────────
 
   regionChanged(event) {

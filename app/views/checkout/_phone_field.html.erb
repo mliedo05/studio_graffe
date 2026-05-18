@@ -1,326 +1,104 @@
 <%#
-  Partial: phone field with searchable country code selector (Tom Select)
+  Partial: phone field with custom country code picker
   Variables:
     f          - form builder
     field      - :billing_phone or :shipping_phone
-    label_text - string label
+    label_text - string
     required   - true/false
-    value      - current full phone value stored (e.g. "+56 9 1234 5678")
+    value      - current stored value (e.g. "+56 9 1234 5678")
 %>
-
 <%
   field      ||= :billing_phone
   label_text ||= "Teléfono"
   required   ||= false
 
-  stored           = value.to_s.strip
-  uid              = "phone_#{field}_#{SecureRandom.hex(3)}"
-  prefix_field     = :"#{field}_prefix"
-  number_field     = :"#{field}_number"
-
-  # Detect stored prefix to pre-select
-  all_codes = ["+1","+7","+20","+27","+30","+31","+32","+33","+34","+36","+39",
-               "+40","+41","+43","+44","+45","+46","+47","+48","+49","+51","+52",
-               "+53","+54","+55","+56","+57","+58","+60","+61","+62","+63","+64",
-               "+65","+66","+81","+82","+84","+86","+90","+91","+92","+93","+94",
-               "+95","+98","+212","+213","+216","+218","+220","+221","+222","+223",
-               "+224","+225","+226","+227","+228","+229","+230","+231","+232","+233",
-               "+234","+235","+236","+237","+238","+239","+240","+241","+242","+243",
-               "+244","+245","+246","+247","+248","+249","+250","+251","+252","+253",
-               "+254","+255","+256","+257","+258","+260","+261","+262","+263","+264",
-               "+265","+266","+267","+268","+269","+290","+291","+297","+298","+299",
-               "+350","+351","+352","+353","+354","+355","+356","+357","+358","+359",
-               "+370","+371","+372","+373","+374","+375","+376","+377","+378","+380",
-               "+381","+382","+385","+386","+387","+389","+420","+421","+423","+500",
-               "+501","+502","+503","+504","+505","+506","+507","+508","+509","+590",
-               "+591","+592","+593","+594","+595","+596","+597","+598","+599","+670",
-               "+672","+673","+674","+675","+676","+677","+678","+679","+680","+681",
-               "+682","+683","+685","+686","+687","+688","+689","+690","+691","+692",
-               "+850","+852","+853","+855","+856","+880","+886","+960","+961","+962",
-               "+963","+964","+965","+966","+967","+968","+970","+971","+972","+973",
-               "+974","+975","+976","+977","+992","+993","+994","+995","+996","+998"]
-  detected_prefix = all_codes.sort_by { |c| -c.length }.find { |p| stored.start_with?(p) } || "+56"
+  stored  = value.to_s.strip
+  # Detect stored prefix
+  known   = ["+1809","+1868","+1876","+1","+7","+20","+27","+30","+31","+32",
+             "+33","+34","+36","+39","+40","+41","+43","+44","+45","+46","+47",
+             "+48","+49","+51","+52","+53","+54","+55","+56","+57","+58","+60",
+             "+61","+62","+63","+64","+65","+66","+81","+82","+84","+86","+90",
+             "+91","+92","+93","+94","+95","+98","+212","+213","+216","+218",
+             "+221","+233","+234","+237","+244","+251","+254","+260","+263",
+             "+267","+351","+352","+353","+354","+355","+356","+357","+358",
+             "+359","+370","+371","+372","+373","+374","+375","+376","+377",
+             "+380","+381","+382","+385","+386","+387","+389","+420","+421",
+             "+423","+501","+502","+503","+504","+505","+506","+507","+509",
+             "+591","+592","+593","+595","+597","+598","+673","+855","+856",
+             "+880","+886","+960","+961","+962","+963","+964","+965","+966",
+             "+967","+968","+970","+971","+972","+973","+974","+975","+976",
+             "+977","+992","+993","+994","+995","+996","+998"]
+  detected_prefix = known.sort_by { |c| -c.length }.find { |p| stored.start_with?(p) } || "+56"
   detected_number = stored.delete_prefix(detected_prefix).strip
+
+  prefix_field = :"#{field}_prefix"
+  number_field = :"#{field}_number"
 %>
 
 <div class="border-b border-stone-300 focus-within:border-stone-900 transition-colors pb-1">
   <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">
     <%= label_text %><%= " *" if required %>
   </label>
+
   <div class="flex items-center gap-2">
 
-    <%# Searchable country code select %>
-    <select id="<%= uid %>"
-            name="<%= "order[#{prefix_field}]" %>"
-            class="ts-country-phone shrink-0"
-            style="width: 180px">
-    </select>
+    <%# ── Custom country picker ── %>
+    <div class="relative shrink-0"
+         data-controller="phone-country"
+         data-phone-country-selected-value="<%= detected_prefix %>">
 
-    <%# Local number input %>
+      <%# Hidden field that submits the prefix %>
+      <input type="hidden"
+             name="<%= "order[#{prefix_field}]" %>"
+             data-phone-country-target="hidden"
+             value="<%= detected_prefix %>">
+
+      <%# Trigger button %>
+      <button type="button"
+              data-action="click->phone-country#toggle"
+              data-phone-country-target="trigger"
+              class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg
+                     bg-stone-100 hover:bg-stone-200 transition-colors
+                     border border-stone-200 hover:border-stone-300
+                     focus:outline-none focus:ring-2 focus:ring-stone-400/30">
+        <span data-phone-country-target="triggerFlag" class="text-lg leading-none">🇨🇱</span>
+        <span data-phone-country-target="triggerCode" class="text-xs font-semibold text-stone-600 tabular-nums">+56</span>
+        <span class="material-symbols-outlined text-[13px] text-stone-400">expand_more</span>
+      </button>
+
+      <%# Dropdown %>
+      <div data-phone-country-target="dropdown"
+           class="hidden absolute left-0 top-full mt-1 z-50 w-72
+                  bg-white rounded-xl shadow-xl border border-stone-200
+                  overflow-hidden"
+           data-action="keydown->phone-country#onKeydown">
+
+        <%# Search %>
+        <div class="px-3 py-2.5 border-b border-stone-100">
+          <div class="flex items-center gap-2 bg-stone-50 rounded-lg px-3 py-1.5">
+            <span class="material-symbols-outlined text-[16px] text-stone-400">search</span>
+            <input type="text"
+                   data-phone-country-target="search"
+                   data-action="input->phone-country#filter"
+                   placeholder="Buscar país..."
+                   class="flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 text-stone-700">
+          </div>
+        </div>
+
+        <%# Country list %>
+        <div data-phone-country-target="list"
+             class="overflow-y-auto max-h-56 py-1">
+          <%# Populated by JS %>
+        </div>
+      </div>
+    </div>
+
+    <%# Phone number input %>
     <input type="tel"
            name="<%= "order[#{number_field}]" %>"
            value="<%= detected_number %>"
-           placeholder="Número local"
+           placeholder="9 1234 5678"
            <%= "required" if required %>
            class="flex-1 bg-transparent border-none p-0 focus:ring-0 text-base min-w-0">
-
   </div>
 </div>
-
-<%# Inline init — passes detected_prefix to JS %>
-<script>
-(function() {
-  var uid       = "<%= uid %>";
-  var selected  = "<%= detected_prefix %>";
-
-  var COUNTRIES = [
-    {c:"+93",  f:"🇦🇫", n:"Afganistán"},
-    {c:"+355", f:"🇦🇱", n:"Albania"},
-    {c:"+213", f:"🇩🇿", n:"Argelia"},
-    {c:"+376", f:"🇦🇩", n:"Andorra"},
-    {c:"+244", f:"🇦🇴", n:"Angola"},
-    {c:"+1268",f:"🇦🇬", n:"Antigua y Barbuda"},
-    {c:"+54",  f:"🇦🇷", n:"Argentina"},
-    {c:"+374", f:"🇦🇲", n:"Armenia"},
-    {c:"+61",  f:"🇦🇺", n:"Australia"},
-    {c:"+43",  f:"🇦🇹", n:"Austria"},
-    {c:"+994", f:"🇦🇿", n:"Azerbaiyán"},
-    {c:"+1242",f:"🇧🇸", n:"Bahamas"},
-    {c:"+973", f:"🇧🇭", n:"Baréin"},
-    {c:"+880", f:"🇧🇩", n:"Bangladesh"},
-    {c:"+1246",f:"🇧🇧", n:"Barbados"},
-    {c:"+375", f:"🇧🇾", n:"Bielorrusia"},
-    {c:"+32",  f:"🇧🇪", n:"Bélgica"},
-    {c:"+501", f:"🇧🇿", n:"Belice"},
-    {c:"+229", f:"🇧🇯", n:"Benín"},
-    {c:"+975", f:"🇧🇹", n:"Bután"},
-    {c:"+591", f:"🇧🇴", n:"Bolivia"},
-    {c:"+387", f:"🇧🇦", n:"Bosnia y Herzegovina"},
-    {c:"+267", f:"🇧🇼", n:"Botsuana"},
-    {c:"+55",  f:"🇧🇷", n:"Brasil"},
-    {c:"+673", f:"🇧🇳", n:"Brunéi"},
-    {c:"+359", f:"🇧🇬", n:"Bulgaria"},
-    {c:"+226", f:"🇧🇫", n:"Burkina Faso"},
-    {c:"+257", f:"🇧🇮", n:"Burundi"},
-    {c:"+238", f:"🇨🇻", n:"Cabo Verde"},
-    {c:"+855", f:"🇰🇭", n:"Camboya"},
-    {c:"+237", f:"🇨🇲", n:"Camerún"},
-    {c:"+1",   f:"🇨🇦", n:"Canadá"},
-    {c:"+236", f:"🇨🇫", n:"República Centroafricana"},
-    {c:"+235", f:"🇹🇩", n:"Chad"},
-    {c:"+56",  f:"🇨🇱", n:"Chile"},
-    {c:"+86",  f:"🇨🇳", n:"China"},
-    {c:"+57",  f:"🇨🇴", n:"Colombia"},
-    {c:"+269", f:"🇰🇲", n:"Comoras"},
-    {c:"+242", f:"🇨🇬", n:"Congo"},
-    {c:"+243", f:"🇨🇩", n:"Congo (RD)"},
-    {c:"+506", f:"🇨🇷", n:"Costa Rica"},
-    {c:"+385", f:"🇭🇷", n:"Croacia"},
-    {c:"+53",  f:"🇨🇺", n:"Cuba"},
-    {c:"+357", f:"🇨🇾", n:"Chipre"},
-    {c:"+420", f:"🇨🇿", n:"República Checa"},
-    {c:"+45",  f:"🇩🇰", n:"Dinamarca"},
-    {c:"+253", f:"🇩🇯", n:"Yibuti"},
-    {c:"+1767",f:"🇩🇲", n:"Dominica"},
-    {c:"+1809",f:"🇩🇴", n:"República Dominicana"},
-    {c:"+593", f:"🇪🇨", n:"Ecuador"},
-    {c:"+20",  f:"🇪🇬", n:"Egipto"},
-    {c:"+503", f:"🇸🇻", n:"El Salvador"},
-    {c:"+240", f:"🇬🇶", n:"Guinea Ecuatorial"},
-    {c:"+291", f:"🇪🇷", n:"Eritrea"},
-    {c:"+372", f:"🇪🇪", n:"Estonia"},
-    {c:"+268", f:"🇸🇿", n:"Esuatini"},
-    {c:"+251", f:"🇪🇹", n:"Etiopía"},
-    {c:"+679", f:"🇫🇯", n:"Fiyi"},
-    {c:"+358", f:"🇫🇮", n:"Finlandia"},
-    {c:"+33",  f:"🇫🇷", n:"Francia"},
-    {c:"+241", f:"🇬🇦", n:"Gabón"},
-    {c:"+220", f:"🇬🇲", n:"Gambia"},
-    {c:"+995", f:"🇬🇪", n:"Georgia"},
-    {c:"+233", f:"🇬🇭", n:"Ghana"},
-    {c:"+30",  f:"🇬🇷", n:"Grecia"},
-    {c:"+1473",f:"🇬🇩", n:"Granada"},
-    {c:"+502", f:"🇬🇹", n:"Guatemala"},
-    {c:"+224", f:"🇬🇳", n:"Guinea"},
-    {c:"+245", f:"🇬🇼", n:"Guinea-Bisáu"},
-    {c:"+592", f:"🇬🇾", n:"Guyana"},
-    {c:"+509", f:"🇭🇹", n:"Haití"},
-    {c:"+504", f:"🇭🇳", n:"Honduras"},
-    {c:"+36",  f:"🇭🇺", n:"Hungría"},
-    {c:"+354", f:"🇮🇸", n:"Islandia"},
-    {c:"+91",  f:"🇮🇳", n:"India"},
-    {c:"+62",  f:"🇮🇩", n:"Indonesia"},
-    {c:"+98",  f:"🇮🇷", n:"Irán"},
-    {c:"+964", f:"🇮🇶", n:"Irak"},
-    {c:"+353", f:"🇮🇪", n:"Irlanda"},
-    {c:"+972", f:"🇮🇱", n:"Israel"},
-    {c:"+39",  f:"🇮🇹", n:"Italia"},
-    {c:"+1876",f:"🇯🇲", n:"Jamaica"},
-    {c:"+81",  f:"🇯🇵", n:"Japón"},
-    {c:"+962", f:"🇯🇴", n:"Jordania"},
-    {c:"+7",   f:"🇰🇿", n:"Kazajistán"},
-    {c:"+254", f:"🇰🇪", n:"Kenia"},
-    {c:"+686", f:"🇰🇮", n:"Kiribati"},
-    {c:"+965", f:"🇰🇼", n:"Kuwait"},
-    {c:"+996", f:"🇰🇬", n:"Kirguistán"},
-    {c:"+856", f:"🇱🇦", n:"Laos"},
-    {c:"+371", f:"🇱🇻", n:"Letonia"},
-    {c:"+961", f:"🇱🇧", n:"Líbano"},
-    {c:"+266", f:"🇱🇸", n:"Lesoto"},
-    {c:"+231", f:"🇱🇷", n:"Liberia"},
-    {c:"+218", f:"🇱🇾", n:"Libia"},
-    {c:"+423", f:"🇱🇮", n:"Liechtenstein"},
-    {c:"+370", f:"🇱🇹", n:"Lituania"},
-    {c:"+352", f:"🇱🇺", n:"Luxemburgo"},
-    {c:"+261", f:"🇲🇬", n:"Madagascar"},
-    {c:"+265", f:"🇲🇼", n:"Malaui"},
-    {c:"+60",  f:"🇲🇾", n:"Malasia"},
-    {c:"+960", f:"🇲🇻", n:"Maldivas"},
-    {c:"+223", f:"🇲🇱", n:"Malí"},
-    {c:"+356", f:"🇲🇹", n:"Malta"},
-    {c:"+692", f:"🇲🇭", n:"Islas Marshall"},
-    {c:"+222", f:"🇲🇷", n:"Mauritania"},
-    {c:"+230", f:"🇲🇺", n:"Mauricio"},
-    {c:"+52",  f:"🇲🇽", n:"México"},
-    {c:"+691", f:"🇫🇲", n:"Micronesia"},
-    {c:"+373", f:"🇲🇩", n:"Moldavia"},
-    {c:"+377", f:"🇲🇨", n:"Mónaco"},
-    {c:"+976", f:"🇲🇳", n:"Mongolia"},
-    {c:"+382", f:"🇲🇪", n:"Montenegro"},
-    {c:"+212", f:"🇲🇦", n:"Marruecos"},
-    {c:"+258", f:"🇲🇿", n:"Mozambique"},
-    {c:"+95",  f:"🇲🇲", n:"Myanmar"},
-    {c:"+264", f:"🇳🇦", n:"Namibia"},
-    {c:"+674", f:"🇳🇷", n:"Nauru"},
-    {c:"+977", f:"🇳🇵", n:"Nepal"},
-    {c:"+31",  f:"🇳🇱", n:"Países Bajos"},
-    {c:"+64",  f:"🇳🇿", n:"Nueva Zelanda"},
-    {c:"+505", f:"🇳🇮", n:"Nicaragua"},
-    {c:"+227", f:"🇳🇪", n:"Níger"},
-    {c:"+234", f:"🇳🇬", n:"Nigeria"},
-    {c:"+47",  f:"🇳🇴", n:"Noruega"},
-    {c:"+968", f:"🇴🇲", n:"Omán"},
-    {c:"+92",  f:"🇵🇰", n:"Pakistán"},
-    {c:"+680", f:"🇵🇼", n:"Palaos"},
-    {c:"+970", f:"🇵🇸", n:"Palestina"},
-    {c:"+507", f:"🇵🇦", n:"Panamá"},
-    {c:"+675", f:"🇵🇬", n:"Papúa Nueva Guinea"},
-    {c:"+595", f:"🇵🇾", n:"Paraguay"},
-    {c:"+51",  f:"🇵🇪", n:"Perú"},
-    {c:"+63",  f:"🇵🇭", n:"Filipinas"},
-    {c:"+48",  f:"🇵🇱", n:"Polonia"},
-    {c:"+351", f:"🇵🇹", n:"Portugal"},
-    {c:"+974", f:"🇶🇦", n:"Catar"},
-    {c:"+40",  f:"🇷🇴", n:"Rumanía"},
-    {c:"+7",   f:"🇷🇺", n:"Rusia"},
-    {c:"+250", f:"🇷🇼", n:"Ruanda"},
-    {c:"+1869",f:"🇰🇳", n:"San Cristóbal y Nieves"},
-    {c:"+1758",f:"🇱🇨", n:"Santa Lucía"},
-    {c:"+1784",f:"🇻🇨", n:"San Vicente y las Granadinas"},
-    {c:"+685", f:"🇼🇸", n:"Samoa"},
-    {c:"+378", f:"🇸🇲", n:"San Marino"},
-    {c:"+239", f:"🇸🇹", n:"Santo Tomé y Príncipe"},
-    {c:"+966", f:"🇸🇦", n:"Arabia Saudita"},
-    {c:"+221", f:"🇸🇳", n:"Senegal"},
-    {c:"+381", f:"🇷🇸", n:"Serbia"},
-    {c:"+248", f:"🇸🇨", n:"Seychelles"},
-    {c:"+232", f:"🇸🇱", n:"Sierra Leona"},
-    {c:"+65",  f:"🇸🇬", n:"Singapur"},
-    {c:"+421", f:"🇸🇰", n:"Eslovaquia"},
-    {c:"+386", f:"🇸🇮", n:"Eslovenia"},
-    {c:"+677", f:"🇸🇧", n:"Islas Salomón"},
-    {c:"+252", f:"🇸🇴", n:"Somalia"},
-    {c:"+27",  f:"🇿🇦", n:"Sudáfrica"},
-    {c:"+82",  f:"🇰🇷", n:"Corea del Sur"},
-    {c:"+211", f:"🇸🇸", n:"Sudán del Sur"},
-    {c:"+34",  f:"🇪🇸", n:"España"},
-    {c:"+94",  f:"🇱🇰", n:"Sri Lanka"},
-    {c:"+249", f:"🇸🇩", n:"Sudán"},
-    {c:"+597", f:"🇸🇷", n:"Surinam"},
-    {c:"+46",  f:"🇸🇪", n:"Suecia"},
-    {c:"+41",  f:"🇨🇭", n:"Suiza"},
-    {c:"+963", f:"🇸🇾", n:"Siria"},
-    {c:"+886", f:"🇹🇼", n:"Taiwán"},
-    {c:"+992", f:"🇹🇯", n:"Tayikistán"},
-    {c:"+255", f:"🇹🇿", n:"Tanzania"},
-    {c:"+66",  f:"🇹🇭", n:"Tailandia"},
-    {c:"+670", f:"🇹🇱", n:"Timor-Leste"},
-    {c:"+228", f:"🇹🇬", n:"Togo"},
-    {c:"+676", f:"🇹🇴", n:"Tonga"},
-    {c:"+1868",f:"🇹🇹", n:"Trinidad y Tobago"},
-    {c:"+216", f:"🇹🇳", n:"Túnez"},
-    {c:"+90",  f:"🇹🇷", n:"Turquía"},
-    {c:"+993", f:"🇹🇲", n:"Turkmenistán"},
-    {c:"+688", f:"🇹🇻", n:"Tuvalu"},
-    {c:"+256", f:"🇺🇬", n:"Uganda"},
-    {c:"+380", f:"🇺🇦", n:"Ucrania"},
-    {c:"+971", f:"🇦🇪", n:"Emiratos Árabes Unidos"},
-    {c:"+44",  f:"🇬🇧", n:"Reino Unido"},
-    {c:"+1",   f:"🇺🇸", n:"Estados Unidos"},
-    {c:"+598", f:"🇺🇾", n:"Uruguay"},
-    {c:"+998", f:"🇺🇿", n:"Uzbekistán"},
-    {c:"+678", f:"🇻🇺", n:"Vanuatu"},
-    {c:"+58",  f:"🇻🇪", n:"Venezuela"},
-    {c:"+84",  f:"🇻🇳", n:"Vietnam"},
-    {c:"+967", f:"🇾🇪", n:"Yemen"},
-    {c:"+260", f:"🇿🇲", n:"Zambia"},
-    {c:"+263", f:"🇿🇼", n:"Zimbabue"},
-  ];
-
-  document.addEventListener("DOMContentLoaded", function() {
-    initPhoneSelect(uid, selected, COUNTRIES);
-  });
-  // Also init immediately in case DOM is already loaded
-  if (document.readyState !== "loading") {
-    initPhoneSelect(uid, selected, COUNTRIES);
-  }
-
-  function initPhoneSelect(id, selectedCode, countries) {
-    var el = document.getElementById(id);
-    if (!el || el.tomselect) return;
-
-    // Build options
-    countries.forEach(function(c) {
-      var opt = document.createElement("option");
-      opt.value = c.c;
-      opt.text  = c.f + " " + c.n + " (" + c.c + ")";
-      opt.dataset.flag = c.f;
-      opt.dataset.name = c.n;
-      opt.dataset.code = c.c;
-      if (c.c === selectedCode) opt.selected = true;
-      el.appendChild(opt);
-    });
-
-    new TomSelect(el, {
-      maxOptions: 300,
-      searchField: ["text"],   // searches flag + name + code
-      render: {
-        option: function(data) {
-          return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">' +
-                 '<span style="font-size:1.2em;line-height:1">' + data.flag + '</span>' +
-                 '<span style="flex:1">' + data.name + '</span>' +
-                 '<span style="color:#888;font-size:.85em;white-space:nowrap">' + data.code + '</span>' +
-                 '</div>';
-        },
-        item: function(data) {
-          return '<div style="display:flex;align-items:center;gap:6px">' +
-                 '<span>' + data.flag + '</span>' +
-                 '<span style="color:#555;font-size:.9em">' + data.code + '</span>' +
-                 '</div>';
-        }
-      },
-      onInitialize: function() {
-        // Fix Tom Select wrapper styles to match our design
-        var wrapper = el.nextElementSibling;
-        if (wrapper && wrapper.classList.contains("ts-wrapper")) {
-          wrapper.style.cssText = "border:none;box-shadow:none;min-width:90px;max-width:130px;cursor:pointer";
-          var control = wrapper.querySelector(".ts-control");
-          if (control) {
-            control.style.cssText = "border:none!important;box-shadow:none!important;background:transparent;padding:0;min-height:0;cursor:pointer";
-          }
-        }
-      }
-    });
-  }
-})();
-</script>

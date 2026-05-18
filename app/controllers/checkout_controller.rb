@@ -4,7 +4,8 @@ class CheckoutController < ApplicationController
   before_action :ensure_cart_not_empty
 
   def show
-    @order = @cart
+    @order     = @cart
+    @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
     prefill_billing
   end
 
@@ -22,6 +23,7 @@ class CheckoutController < ApplicationController
     @order = @cart
 
     if @order.update(combined_checkout_params)
+      maybe_save_address
       @order.checkout!
       @order.mark_paid!(
         transaction_id: "SIM-#{SecureRandom.hex(6).upcase}",
@@ -29,6 +31,7 @@ class CheckoutController < ApplicationController
       )
       redirect_to shop_path, notice: "¡Pedido confirmado! Te contactaremos pronto."
     else
+      @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
       render :show, status: :unprocessable_entity
     end
   rescue Order::EmptyCartError, Order::InvalidTransitionError => e
@@ -65,6 +68,24 @@ class CheckoutController < ApplicationController
     p["shipping_phone"] = "#{shipping_prefix} #{shipping_number}".strip if shipping_number.present?
 
     p
+  end
+
+  def maybe_save_address
+    return unless params[:save_address] == "1"
+    return unless @order.delivery?
+
+    current_user.addresses.create(
+      label:          params[:address_label].presence || "Mi dirección",
+      recipient_name: @order.shipping_recipient_name,
+      phone:          @order.shipping_phone,
+      region:         @order.shipping_region,
+      comuna:         @order.shipping_comuna,
+      city:           @order.shipping_city,
+      street:         @order.shipping_street,
+      street_number:  @order.shipping_street_number,
+      apartment:      @order.shipping_apartment,
+      default:        current_user.addresses.none?
+    )
   end
 
   def checkout_params

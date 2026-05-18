@@ -31,7 +31,9 @@ class CheckoutController < ApplicationController
       )
       # Persist billing phone back to user profile if not set yet
       current_user.update(phone: @order.billing_phone) if @order.billing_phone.present? && current_user.phone.blank?
-      redirect_to shop_path, notice: "¡Pedido confirmado! Te contactaremos pronto."
+      # Send confirmation email
+      OrderMailer.confirmation(@order).deliver_later
+      redirect_to shop_path, notice: "¡Pedido confirmado! Te enviamos un correo con el detalle."
     else
       @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
       render :show, status: :unprocessable_entity

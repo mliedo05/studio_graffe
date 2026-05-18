@@ -83,7 +83,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     cart_with_product
     post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
     assert_redirected_to shop_path
-    assert_equal "¡Pedido confirmado! Te contactaremos pronto.", flash[:notice]
+    assert_equal "¡Pedido confirmado! Te enviamos un correo con el detalle.", flash[:notice]
   end
 
   test "pago pickup cambia status de la orden a paid" do
@@ -244,6 +244,26 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
         order:          delivery_params,
         payment_method: "webpay"
         # sin save_address
+      }
+    end
+  end
+
+  # ── Email de confirmación ─────────────────────────────────────────
+  test "pago exitoso encola email de confirmación al cliente" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    assert_enqueued_emails 1 do
+      post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    end
+  end
+
+  test "pago fallido NO encola email" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    assert_no_enqueued_emails do
+      post checkout_payment_path, params: {
+        order:          billing_params.except(:billing_first_name),
+        payment_method: "webpay"
       }
     end
   end

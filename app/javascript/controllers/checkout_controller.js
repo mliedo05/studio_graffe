@@ -22,7 +22,7 @@ const REGIONS = {
 export default class extends Controller {
   static targets = [
     // Steps
-    "step", "stepIndicator",
+    "step", "stepIndicator", "errorBanner",
     // Billing
     "documentNumber", "documentSelect",
     // Shipping
@@ -48,6 +48,9 @@ export default class extends Controller {
 
   next() {
     if (!this.validateCurrentStep()) return
+    // Hide error banner of current step before advancing
+    const banner = this.errorBannerTargets[this.currentValue]
+    if (banner) banner.classList.add("hidden")
     if (this.currentValue < this.stepTargets.length - 1) {
       this.updateSummary()
       this.currentValue++
@@ -90,38 +93,77 @@ export default class extends Controller {
   // ── Validation ───────────────────────────────────────────
 
   validateCurrentStep() {
-    const step = this.stepTargets[this.currentValue]
-    const required = step.querySelectorAll("[required]")
-    let valid = true
+    const step        = this.stepTargets[this.currentValue]
+    const banner      = this.errorBannerTargets[this.currentValue]
+    let invalidFields = []
 
-    required.forEach(field => {
-      if (!field.value.trim()) {
-        field.classList.add("border-red-400")
+    // Mark a field wrapper as invalid
+    const markInvalid = (field) => {
+      const wrapper = field.closest(".border-b")
+      if (wrapper) {
+        wrapper.classList.add("border-red-400")
+        wrapper.classList.remove("border-stone-300")
+
+        // Add error hint if not already there
+        if (!wrapper.querySelector(".field-error-msg")) {
+          const msg = document.createElement("p")
+          msg.className = "field-error-msg text-[10px] text-red-500 mt-1"
+          msg.textContent = "Este campo es obligatorio"
+          wrapper.appendChild(msg)
+        }
+
+        // Remove error when user fills the field
+        const clear = () => {
+          if (field.value.trim()) {
+            wrapper.classList.remove("border-red-400")
+            wrapper.classList.add("border-stone-300")
+            wrapper.querySelector(".field-error-msg")?.remove()
+          }
+        }
+        field.addEventListener("input",  clear, { once: true })
+        field.addEventListener("change", clear, { once: true })
+      } else {
+        // Fallback for fields without wrapper (e.g. phone number input)
+        field.classList.add("border-b", "border-red-400")
         field.addEventListener("input", () => field.classList.remove("border-red-400"), { once: true })
-        valid = false
       }
-    })
-
-    if (!valid) {
-      // Scroll to first invalid field
-      const first = step.querySelector("[required]:placeholder-shown, [required]:invalid")
-      first?.scrollIntoView({ behavior: "smooth", block: "center" })
+      invalidFields.push(field)
     }
 
-    // Step 2: if delivery, validate address fields
+    // Validate all [required] fields in this step
+    step.querySelectorAll("[required]").forEach(field => {
+      if (!field.value.trim()) markInvalid(field)
+    })
+
+    // Step 2: extra address fields when delivery selected
     if (this.currentValue === 1) {
       const isDelivery = step.querySelector("[value='delivery']")?.checked
       if (isDelivery) {
-        const addressFields = ["shipping_region", "shipping_comuna", "shipping_city", "shipping_street", "shipping_street_number", "shipping_recipient_name", "shipping_phone"]
-        addressFields.forEach(name => {
+        const names = ["shipping_recipient_name", "shipping_region", "shipping_comuna",
+                       "shipping_city", "shipping_street", "shipping_street_number"]
+        names.forEach(name => {
           const el = step.querySelector(`[name='order[${name}]']`)
-          if (el && !el.value.trim()) {
-            el.classList.add("border-red-400")
-            el.addEventListener("input", () => el.classList.remove("border-red-400"), { once: true })
-            valid = false
-          }
+          if (el && !el.value.trim()) markInvalid(el)
         })
+        // Phone number field (custom component — check the number input)
+        const phoneNum = step.querySelector("[name='order[shipping_phone_number]']")
+        if (phoneNum && !phoneNum.value.trim()) markInvalid(phoneNum)
       }
+    }
+
+    const valid = invalidFields.length === 0
+
+    // Show / hide banner
+    if (banner) {
+      banner.classList.toggle("hidden", valid)
+      if (!valid) {
+        banner.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      }
+    }
+
+    // Scroll to first invalid field if no banner
+    if (!valid && !banner) {
+      invalidFields[0]?.scrollIntoView({ behavior: "smooth", block: "center" })
     }
 
     return valid

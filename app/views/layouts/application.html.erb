@@ -130,7 +130,8 @@
   <%= javascript_importmap_tags %>
 </head>
 
-<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col selection:bg-tertiary-fixed selection:text-on-tertiary-fixed">
+<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col selection:bg-tertiary-fixed selection:text-on-tertiary-fixed"
+      data-controller="cart-drawer">
 
 <!-- Flash messages -->
 <div id="flash-messages" class="fixed top-24 right-4 z-[100] space-y-2 max-w-sm">
@@ -229,15 +230,17 @@
           </div>
         </div>
 
-        <!-- Cart icon -->
-        <%= link_to cart_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors" do %>
+        <!-- Cart icon — opens drawer -->
+        <button type="button"
+                data-action="click->cart-drawer#toggle"
+                class="scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors">
           <span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
           <%= turbo_frame_tag "cart-count" do %>
             <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
               <%= current_user ? (current_user.current_cart&.item_count || 0) : 0 %>
             </span>
           <% end %>
-        <% end %>
+        </button>
 
       <% else %>
         <%= link_to new_user_session_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 hover:text-amber-600 transition-colors" do %>
@@ -250,6 +253,9 @@
     </div>
   </div>
 </header>
+
+<!-- Cart Drawer (rendered once in layout, toggled by JS) -->
+<%= render "cart/drawer" %>
 
 <!-- Main Content -->
 <div class="flex-1">

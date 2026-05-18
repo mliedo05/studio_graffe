@@ -35,15 +35,24 @@ class User < ApplicationRecord
   end
 
   def self.from_omniauth(auth)
-    user = find_or_initialize_by(provider: auth.provider, uid: auth.uid)
+    # 1. Buscar por provider+uid (ya vinculado anteriormente)
+    user = find_by(provider: auth.provider, uid: auth.uid)
 
+    # 2. Si no existe, buscar por email (cuenta local existente → vincular)
+    user ||= find_by(email: auth.info.email)
+
+    # 3. Si no existe por ninguna vía, crear cuenta nueva
+    user ||= new
+
+    user.provider   = auth.provider
+    user.uid        = auth.uid
     user.email      = auth.info.email
     user.first_name = auth.info.first_name.presence || auth.info.name.split.first
     user.last_name  = auth.info.last_name.presence  || auth.info.name.split.drop(1).join(" ")
     user.avatar_url = auth.info.image
     user.role     ||= "client"
 
-    # Usuarios OAuth no necesitan contraseña local
+    # Usuarios OAuth nuevos no necesitan contraseña local
     user.password = SecureRandom.hex(16) if user.new_record?
 
     user.save!

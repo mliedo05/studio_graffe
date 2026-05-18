@@ -5,6 +5,8 @@ Rails.application.routes.draw do
     sign_in:  "ingresar",
     sign_out: "salir",
     sign_up:  "registro"
+  }, controllers: {
+    omniauth_callbacks: "users/omniauth_callbacks"
   }
 
   # Tienda

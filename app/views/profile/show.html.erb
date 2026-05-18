@@ -211,6 +211,218 @@
     <% end %>
   </div>
 
+  <!-- Direcciones guardadas -->
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 mb-8">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/20">
+      <h2 class="font-h2 text-h3 text-on-surface">Direcciones guardadas</h2>
+      <button type="button"
+              onclick="document.getElementById('new-address-modal').showModal()"
+              class="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-stone-700 transition-colors">
+        <span class="material-symbols-outlined text-sm">add</span>
+        Nueva
+      </button>
+    </div>
+
+    <% if @addresses.empty? %>
+      <div class="py-10 text-center">
+        <span class="material-symbols-outlined text-stone-300 text-5xl block mb-3">location_off</span>
+        <p class="text-sm text-stone-500">No tienes direcciones guardadas todavía.</p>
+        <p class="text-xs text-stone-400 mt-1">Las puedes agregar al finalizar una compra o desde aquí.</p>
+      </div>
+    <% else %>
+      <div class="space-y-3">
+        <% @addresses.each do |addr| %>
+          <div class="flex items-start gap-4 p-4 rounded-xl border border-stone-200 hover:bg-stone-50 transition-colors group">
+            <span class="material-symbols-outlined text-stone-400 mt-0.5 shrink-0">location_on</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="font-semibold text-sm text-stone-800"><%= addr.label %></span>
+                <% if addr.default? %>
+                  <span class="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full font-semibold uppercase tracking-wide">Predeterminada</span>
+                <% end %>
+              </div>
+              <p class="text-xs text-stone-500"><%= addr.recipient_name %> · <%= addr.phone %></p>
+              <p class="text-xs text-stone-400 mt-0.5 truncate">
+                <%= addr.street %> <%= addr.street_number %><%= addr.apartment.present? ? ", #{addr.apartment}" : "" %>,
+                <%= addr.comuna %>, <%= addr.region %>
+              </p>
+            </div>
+            <!-- Acciones -->
+            <div class="flex items-center gap-2 shrink-0">
+              <% unless addr.default? %>
+                <%= button_to set_default_address_path(addr), method: :patch,
+                      class: "px-3 py-1.5 text-xs text-stone-500 hover:text-stone-800 border border-stone-200 rounded-lg transition-colors" do %>
+                  Predeterminar
+                <% end %>
+              <% end %>
+              <button type="button"
+                      onclick="document.getElementById('edit-address-modal-<%= addr.id %>').showModal()"
+                      class="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-800 border border-stone-200 rounded-lg transition-colors">
+                Editar
+              </button>
+              <%= button_to address_path(addr), method: :delete,
+                    data: { turbo_confirm: "¿Eliminar esta dirección?" },
+                    class: "px-3 py-1.5 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 rounded-lg transition-colors" do %>
+                Eliminar
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Modal editar dirección -->
+          <dialog id="edit-address-modal-<%= addr.id %>"
+                  class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
+                  onclick="if(event.target===this)this.close()">
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
+              <h3 class="font-semibold text-base">Editar dirección</h3>
+              <button onclick="this.closest('dialog').close()"
+                      class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
+              </button>
+            </div>
+            <%= form_with url: address_path(addr), method: :patch, class: "px-6 py-5 space-y-4" do |af| %>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Nombre de la dirección</label>
+                  <input type="text" name="address[label]" value="<%= addr.label %>"
+                         placeholder="Ej: Casa, Trabajo" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Destinatario</label>
+                  <input type="text" name="address[recipient_name]" value="<%= addr.recipient_name %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
+                  <input type="text" name="address[phone]" value="<%= addr.phone %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Región</label>
+                  <select name="address[region]" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm cursor-pointer">
+                    <% Address::REGIONS.keys.each do |r| %>
+                      <option value="<%= r %>" <%= "selected" if addr.region == r %>><%= r %></option>
+                    <% end %>
+                  </select>
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Comuna</label>
+                  <input type="text" name="address[comuna]" value="<%= addr.comuna %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Ciudad</label>
+                  <input type="text" name="address[city]" value="<%= addr.city %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Calle</label>
+                  <input type="text" name="address[street]" value="<%= addr.street %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Número</label>
+                  <input type="text" name="address[street_number]" value="<%= addr.street_number %>"
+                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Departamento / Piso (opcional)</label>
+                  <input type="text" name="address[apartment]" value="<%= addr.apartment %>"
+                         placeholder="Ej: Depto 4B" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+                </div>
+              </div>
+              <div class="flex gap-3 pt-2">
+                <button type="button" onclick="this.closest('dialog').close()"
+                        class="flex-1 py-3 border border-stone-200 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit"
+                        class="flex-[2] py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-700 transition-colors">
+                  Guardar cambios
+                </button>
+              </div>
+            <% end %>
+          </dialog>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Modal nueva dirección -->
+  <dialog id="new-address-modal"
+          class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
+          onclick="if(event.target===this)this.close()">
+    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
+      <h3 class="font-semibold text-base">Nueva dirección</h3>
+      <button onclick="this.closest('dialog').close()"
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
+        <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
+      </button>
+    </div>
+    <%= form_with url: addresses_path, method: :post, class: "px-6 py-5 space-y-4" do |af| %>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Nombre de la dirección</label>
+          <input type="text" name="address[label]" placeholder="Ej: Casa, Trabajo, Casa de mamá"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Destinatario</label>
+          <input type="text" name="address[recipient_name]" placeholder="Nombre de quien recibe"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
+          <input type="text" name="address[phone]" placeholder="+56 9 1234 5678"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Región</label>
+          <select name="address[region]" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm cursor-pointer">
+            <option value="">— Región —</option>
+            <% Address::REGIONS.keys.each do |r| %>
+              <option value="<%= r %>"><%= r %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Comuna</label>
+          <input type="text" name="address[comuna]" placeholder="Ej: Providencia"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Ciudad</label>
+          <input type="text" name="address[city]" placeholder="Ej: Santiago"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Calle</label>
+          <input type="text" name="address[street]" placeholder="Ej: Av. Providencia"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Número</label>
+          <input type="text" name="address[street_number]" placeholder="Ej: 1234"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
+          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Departamento / Piso (opcional)</label>
+          <input type="text" name="address[apartment]" placeholder="Ej: Depto 4B"
+                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="this.closest('dialog').close()"
+                class="flex-1 py-3 border border-stone-200 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit"
+                class="flex-[2] py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-700 transition-colors">
+          Guardar dirección
+        </button>
+      </div>
+    <% end %>
+  </dialog>
+
   <!-- Historial de citas pasadas -->
   <% if @past_appointments.any? %>
   <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8">

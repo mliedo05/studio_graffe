@@ -27,9 +27,10 @@ export default class extends Controller {
     "documentNumber", "documentSelect",
     // Shipping
     "regionSelect", "comunaSelect", "shippingSection", "apartmentField", "apartmentWrapper",
+    "addressForm",
     // Summary
     "summaryFirstName", "summaryLastName", "summaryDocument", "summaryEmail", "summaryPhone",
-    "summaryShipping", "summaryAddress"
+    "summaryShipping", "summaryAddress", "shippingCard"
   ]
 
   static values = { current: { type: Number, default: 0 } }
@@ -136,20 +137,26 @@ export default class extends Controller {
       this.summaryFirstNameTarget.textContent = `${get("billing_first_name")} ${get("billing_last_name")}`
       this.summaryDocumentTarget.textContent   = `${docType[get("billing_document_type")] || ""} ${get("billing_document_number")}`
       this.summaryEmailTarget.textContent      = get("billing_email")
-      this.summaryPhoneTarget.textContent      = `+56 ${get("billing_phone")}`
+      const prefix = this.element.querySelector("[name='order[billing_phone_prefix]']")?.value || "+56"
+      const number = this.element.querySelector("[name='order[billing_phone_number]']")?.value || get("billing_phone")
+      this.summaryPhoneTarget.textContent = number ? `${prefix} ${number}` : get("billing_phone") || "—"
     }
 
     if (this.hasSummaryShippingTarget) {
       const isDelivery = this.element.querySelector("[value='delivery']")?.checked
       this.summaryShippingTarget.textContent = isDelivery ? "Delivery a domicilio" : "Retiro en tienda"
 
+      // Show/hide shipping summary card
+      if (this.hasShippingCardTarget) {
+        this.shippingCardTarget.classList.toggle("hidden", !isDelivery)
+      }
+
       if (this.hasSummaryAddressTarget) {
         if (isDelivery) {
           const parts = [get("shipping_street"), get("shipping_street_number"), get("shipping_apartment"), get("shipping_comuna"), get("shipping_region")].filter(Boolean)
           this.summaryAddressTarget.textContent = parts.join(", ")
-          this.summaryAddressTarget.parentElement.classList.remove("hidden")
         } else {
-          this.summaryAddressTarget.parentElement.classList.add("hidden")
+          this.summaryAddressTarget.textContent = ""
         }
       }
     }
@@ -193,6 +200,11 @@ export default class extends Controller {
     const numStr = phone.slice(pfx.length).trim()
     set("shipping_phone_number", numStr)
 
+    // Show address form
+    if (this.hasAddressFormTarget) {
+      this.addressFormTarget.classList.remove("hidden")
+    }
+
     // Highlight selected card
     event.currentTarget.closest("#saved-addresses")
       ?.querySelectorAll("button")
@@ -200,7 +212,8 @@ export default class extends Controller {
     event.currentTarget.classList.add("border-stone-900", "bg-stone-50")
   }
 
-  clearAddress() {
+  // "Ingresar una dirección diferente" — clears form and shows it
+  newAddress() {
     ["shipping_recipient_name","shipping_city","shipping_street",
      "shipping_street_number","shipping_apartment"].forEach(name => {
       const el = this.element.querySelector(`[name='order[${name}]']`)
@@ -213,6 +226,18 @@ export default class extends Controller {
     this.element.querySelector("#saved-addresses")
       ?.querySelectorAll("button")
       .forEach(b => b.classList.remove("border-stone-900", "bg-stone-50"))
+
+    // Show form
+    if (this.hasAddressFormTarget) {
+      this.addressFormTarget.classList.remove("hidden")
+    }
+
+    // Scroll to form
+    this.addressFormTarget?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  clearAddress() {
+    this.newAddress()
   }
 
   // ── Cascade región → comuna ──────────────────────────────
@@ -250,10 +275,12 @@ export default class extends Controller {
 
   // ── Apartment toggle ─────────────────────────────────────
 
+  // Checkbox "Es casa" → HIDES the apartment field when checked
   toggleApartment(event) {
     if (!this.hasApartmentWrapperTarget) return
-    this.apartmentWrapperTarget.classList.toggle("hidden", !event.target.checked)
-    if (!event.target.checked && this.hasApartmentFieldTarget) {
+    const isHouse = event.target.checked
+    this.apartmentWrapperTarget.classList.toggle("hidden", isHouse)
+    if (isHouse && this.hasApartmentFieldTarget) {
       this.apartmentFieldTarget.value = ""
     }
   }

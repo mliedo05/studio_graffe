@@ -2,7 +2,8 @@ class ProfileController < ApplicationController
   before_action :authenticate_user!
 
   def show
-    @user = current_user
+    @user      = current_user
+    @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
     @upcoming_appointments = current_user.appointments_as_client.upcoming.active.includes(:service, :stylist).limit(5)
     @past_appointments     = current_user.appointments_as_client.past.includes(:service, :stylist).limit(10)
     @orders                = current_user.orders.where.not(status: "cart").order(created_at: :desc).includes(order_items: :product).limit(10)

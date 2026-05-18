@@ -29,6 +29,8 @@ class CheckoutController < ApplicationController
         transaction_id: "SIM-#{SecureRandom.hex(6).upcase}",
         payment_method: params[:payment_method].presence || "webpay"
       )
+      # Persist billing phone back to user profile if not set yet
+      current_user.update(phone: @order.billing_phone) if @order.billing_phone.present? && current_user.phone.blank?
       redirect_to shop_path, notice: "¡Pedido confirmado! Te contactaremos pronto."
     else
       @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
@@ -52,6 +54,7 @@ class CheckoutController < ApplicationController
     @order.billing_first_name ||= current_user.first_name
     @order.billing_last_name  ||= current_user.last_name
     @order.billing_email      ||= current_user.email
+    @order.billing_phone      ||= current_user.phone
     @order.shipping_type      ||= "pickup"
   end
 

@@ -7,10 +7,27 @@ class Order < ApplicationRecord
 
   STATUSES         = %w[cart checkout paid shipped delivered cancelled].freeze
   PAYMENT_STATUSES = %w[pending paid failed refunded].freeze
+  SHIPPING_TYPES   = %w[pickup delivery].freeze
+  DOCUMENT_TYPES   = %w[rut passport dni].freeze
 
   validates :number, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
+  validates :shipping_type, inclusion: { in: SHIPPING_TYPES }, allow_nil: true
+  validates :billing_document_type, inclusion: { in: DOCUMENT_TYPES }, allow_nil: true
+
+  validates :billing_first_name, :billing_last_name, :billing_document_type,
+            :billing_document_number, :billing_email, :billing_phone,
+            presence: true, if: :checkout?
+
+  validates :shipping_region, :shipping_comuna, :shipping_city,
+            :shipping_street, :shipping_street_number,
+            :shipping_recipient_name, :shipping_phone,
+            presence: true, if: -> { checkout? && delivery? }
+
+  def pickup?   = shipping_type == "pickup"
+  def delivery? = shipping_type == "delivery"
+  def checkout? = status == "checkout"
 
   scope :completed, -> { where.not(status: %w[cart cancelled]) }
 

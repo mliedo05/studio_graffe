@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_16_203257) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_154304) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -54,6 +54,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_203257) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "apartment"
+    t.string "city", null: false
+    t.string "comuna", null: false
+    t.datetime "created_at", null: false
+    t.boolean "default", default: false, null: false
+    t.string "label", default: "Mi dirección", null: false
+    t.string "phone", null: false
+    t.string "recipient_name", null: false
+    t.string "region", null: false
+    t.string "street", null: false
+    t.string "street_number", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "default"], name: "index_addresses_on_user_id_and_default"
+    t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
   create_table "appointments", force: :cascade do |t|
@@ -104,11 +122,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_203257) do
   end
 
   create_table "orders", force: :cascade do |t|
+    t.string "billing_document_number"
+    t.string "billing_document_type"
+    t.string "billing_email"
+    t.string "billing_first_name"
+    t.string "billing_last_name"
+    t.string "billing_phone"
     t.datetime "created_at", null: false
     t.string "number", null: false
     t.string "payment_method"
     t.string "payment_status", default: "pending", null: false
     t.string "payment_token"
+    t.string "shipping_apartment"
+    t.string "shipping_city"
+    t.string "shipping_comuna"
+    t.string "shipping_phone"
+    t.string "shipping_recipient_name"
+    t.string "shipping_region"
+    t.string "shipping_street"
+    t.string "shipping_street_number"
+    t.string "shipping_type", default: "pickup"
     t.string "status", default: "cart", null: false
     t.integer "subtotal_cents", default: 0, null: false
     t.integer "total_cents", default: 0, null: false
@@ -117,6 +150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_203257) do
     t.bigint "user_id", null: false
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["payment_status"], name: "index_orders_on_payment_status"
+    t.index ["shipping_type"], name: "index_orders_on_shipping_type"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
@@ -223,6 +257,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_203257) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "addresses", "users"
   add_foreign_key "appointments", "services"
   add_foreign_key "appointments", "users", column: "client_id"
   add_foreign_key "appointments", "users", column: "stylist_id"

@@ -1,9 +1,20 @@
 <%= turbo_frame_tag "cart" do %>
 <main class="flex-grow pt-32 pb-section-padding px-8 max-w-7xl mx-auto w-full">
   <!-- Header -->
-  <header class="mb-stack-lg">
-    <span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-stack-sm block">Tu Selección</span>
-    <h1 class="font-h1 text-h1 tracking-tight text-on-surface">Carrito de Compras</h1>
+  <header class="mb-stack-lg flex items-end justify-between gap-4">
+    <div>
+      <span class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-stack-sm block">Tu Selección</span>
+      <h1 class="font-h1 text-h1 tracking-tight text-on-surface">Carrito de Compras</h1>
+    </div>
+    <% unless @cart.order_items.empty? %>
+      <%= button_to cart_clear_path, method: :delete,
+            data: { turbo_confirm: "¿Vaciar todo el carrito?" },
+            class: "flex items-center gap-1.5 px-4 py-2 text-sm text-red-400 hover:text-red-600
+                    border border-red-100 hover:border-red-300 rounded-full transition-colors mb-1" do %>
+        <span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+        Vaciar carrito
+      <% end %>
+    <% end %>
   </header>
 
   <div id="cart-content">

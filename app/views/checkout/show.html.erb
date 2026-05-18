@@ -107,16 +107,11 @@
                   class: "w-full bg-transparent border-none p-0 focus:ring-0 text-base" %>
           </div>
 
-          <div class="border-b border-stone-300 focus-within:border-stone-900 transition-colors pb-1">
-            <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
-            <div class="flex items-end gap-2">
-              <span class="text-stone-400 text-base pb-0.5 shrink-0 select-none">+56</span>
-              <%= f.telephone_field :billing_phone,
-                    required: true, autocomplete: "tel-national",
-                    placeholder: "9 1234 5678",
-                    class: "flex-1 bg-transparent border-none p-0 focus:ring-0 text-base" %>
-            </div>
-          </div>
+          <%= render "checkout/phone_field",
+                f: f, field: :billing_phone,
+                label_text: "Teléfono",
+                required: true,
+                value: @order.billing_phone %>
 
         </div>
 
@@ -190,14 +185,12 @@
                       autocomplete: "name", placeholder: "Quien recibe",
                       class: "w-full bg-transparent border-none p-0 focus:ring-0 text-base" %>
               </div>
-              <div class="border-b border-stone-300 focus-within:border-stone-900 transition-colors pb-1">
-                <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
-                <div class="flex items-end gap-1.5">
-                  <span class="text-stone-400 text-sm pb-0.5 shrink-0">+56</span>
-                  <%= f.telephone_field :shipping_phone,
-                        placeholder: "9 1234 5678",
-                        class: "flex-1 bg-transparent border-none p-0 focus:ring-0 text-base" %>
-                </div>
+              <div>
+                <%= render "checkout/phone_field",
+                      f: f, field: :shipping_phone,
+                      label_text: "Teléfono",
+                      required: false,
+                      value: @order.shipping_phone %>
               </div>
             </div>
 

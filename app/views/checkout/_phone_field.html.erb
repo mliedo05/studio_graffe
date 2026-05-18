@@ -1,0 +1,77 @@
+<%#
+  Partial: phone field with country code selector
+  Variables:
+    f          - form builder
+    field      - :billing_phone or :shipping_phone
+    label_text - string label
+    required   - true/false
+    value      - current full phone value (e.g. "+56 9 1234 5678")
+%>
+
+<%
+  field      ||= :billing_phone
+  label_text ||= "Teléfono"
+  required   ||= false
+
+  # Split stored value back into prefix + number for display
+  stored = value.to_s.strip
+  known_prefixes = ["+56","+54","+591","+55","+57","+53","+593","+503","+34",
+                    "+502","+504","+52","+505","+507","+595","+51","+598","+58","+1"]
+  detected_prefix = known_prefixes.find { |p| stored.start_with?(p) } || "+56"
+  detected_number = stored.delete_prefix(detected_prefix).strip
+
+  prefix_field  = :"#{field}_prefix"
+  number_field  = :"#{field}_number"
+%>
+
+<div class="border-b border-stone-300 focus-within:border-stone-900 transition-colors pb-1">
+  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">
+    <%= label_text %><%= " *" if required %>
+  </label>
+  <div class="flex items-center gap-2">
+
+    <%# Country code select — NOT submitted with order[], controller combines them %>
+    <select name="<%= "order[#{prefix_field}]" %>"
+            id="<%= "order_#{prefix_field}" %>"
+            class="bg-transparent border-none p-0 focus:ring-0 text-base text-stone-600 cursor-pointer shrink-0 pr-1"
+            style="max-width: 90px;">
+      <% [
+        ["🇨🇱 +56",  "+56"],
+        ["🇦🇷 +54",  "+54"],
+        ["🇧🇴 +591", "+591"],
+        ["🇧🇷 +55",  "+55"],
+        ["🇨🇴 +57",  "+57"],
+        ["🇨🇺 +53",  "+53"],
+        ["🇪🇨 +593", "+593"],
+        ["🇸🇻 +503", "+503"],
+        ["🇪🇸 +34",  "+34"],
+        ["🇬🇹 +502", "+502"],
+        ["🇭🇳 +504", "+504"],
+        ["🇲🇽 +52",  "+52"],
+        ["🇳🇮 +505", "+505"],
+        ["🇵🇦 +507", "+507"],
+        ["🇵🇾 +595", "+595"],
+        ["🇵🇪 +51",  "+51"],
+        ["🇩🇴 +1809","+1809"],
+        ["🇺🇾 +598", "+598"],
+        ["🇻🇪 +58",  "+58"],
+        ["🇺🇸 +1",   "+1"],
+        ["🇬🇧 +44",  "+44"],
+        ["🇮🇹 +39",  "+39"],
+        ["🇵🇹 +351", "+351"],
+      ].each do |label, code| %>
+        <option value="<%= code %>" <%= "selected" if code == detected_prefix %>><%= label %></option>
+      <% end %>
+    </select>
+
+    <%# Local number — NOT submitted directly, controller builds full number %>
+    <input type="tel"
+           name="<%= "order[#{number_field}]" %>"
+           id="<%= "order_#{number_field}" %>"
+           value="<%= detected_number %>"
+           placeholder="9 1234 5678"
+           <%= "required" if required %>
+           class="flex-1 bg-transparent border-none p-0 focus:ring-0 text-base min-w-0">
+
+  </div>
+</div>

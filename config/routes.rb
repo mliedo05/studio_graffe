@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
   # Carrito
   get     "/carrito",                                to: "cart#show",         as: :cart
+  get     "/carrito/datos",                          to: "cart#drawer_data",  as: :cart_drawer_data
   delete  "/carrito/vaciar",                         to: "cart#clear",        as: :cart_clear
   post    "/carrito/agregar",                        to: "cart_items#create", as: :cart_add_item
   delete  "/carrito/items/:id",                      to: "cart_items#destroy", as: :cart_item

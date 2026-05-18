@@ -1,5 +1,24 @@
 <% content_for :title, "Finalizar Compra — Studio Graffé" %>
 
+<% content_for :head do %>
+  <!-- Tom Select — searchable country code picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+  <style>
+    /* Override Tom Select to match our minimal underline style */
+    .ts-wrapper.single .ts-control { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; min-height: 0 !important; cursor: pointer; }
+    .ts-wrapper.single.input-active .ts-control { background: transparent !important; }
+    .ts-wrapper { border: none !important; min-width: 90px; max-width: 140px; }
+    .ts-dropdown { border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.1); min-width: 280px; overflow: hidden; }
+    .ts-dropdown .ts-dropdown-content { max-height: 260px; }
+    .ts-dropdown .option { padding: 8px 12px; font-size: 14px; }
+    .ts-dropdown .option.active { background: #f5f5f4; color: inherit; }
+    .ts-dropdown .option:hover { background: #f5f5f4; }
+    .ts-wrapper .ts-control .item { font-size: 14px; display: flex; align-items: center; gap: 4px; }
+    .ts-wrapper input { font-size: 14px !important; }
+  </style>
+<% end %>
+
 <main class="pt-28 pb-20 px-4 sm:px-8 max-w-screen-lg mx-auto"
       data-controller="checkout">
 

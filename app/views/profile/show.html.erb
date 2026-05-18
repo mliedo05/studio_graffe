@@ -84,51 +84,129 @@
         <%= link_to "Ver tienda", shop_path, class: "mt-4 inline-block px-6 py-3 bg-primary text-on-primary rounded-full font-label-caps text-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
       </div>
     <% else %>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="border-b border-outline-variant/20">
-              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Orden</th>
-              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Fecha</th>
-              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Productos</th>
-              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-right">Total</th>
-              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-center">Estado</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-outline-variant/10">
-            <% @orders.each do |order| %>
-              <tr class="group">
-                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.number %></td>
-                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.created_at.strftime("%d/%m/%Y") %></td>
-                <td class="py-4">
-                  <div class="flex flex-wrap gap-1">
-                    <% order.order_items.each do |item| %>
-                      <span class="font-body-sm text-on-surface"><%= item.product.name %> ×<%= item.quantity %></span>
+      <div class="space-y-3">
+        <% @orders.each do |order| %>
+          <%
+            status_style = case order.status
+              when 'paid', 'shipped', 'delivered' then 'bg-green-100 text-green-700'
+              when 'cancelled'                    then 'bg-red-100 text-red-600'
+              when 'checkout'                     then 'bg-amber-100 text-amber-700'
+              else                                     'bg-stone-100 text-stone-500'
+            end
+            status_label = case order.status
+              when 'paid'      then 'Pagado'
+              when 'shipped'   then 'Enviado'
+              when 'delivered' then 'Entregado'
+              when 'cancelled' then 'Cancelado'
+              when 'checkout'  then 'En proceso'
+              else order.status
+            end
+          %>
+
+          <!-- Order row -->
+          <div class="flex items-center justify-between gap-4 px-5 py-4
+                      rounded-xl border border-outline-variant/30
+                      hover:bg-surface-container-low transition-colors">
+
+            <!-- Left: number + date -->
+            <div class="min-w-0">
+              <p class="font-medium text-sm text-on-surface truncate"><%= order.number %></p>
+              <p class="text-xs text-on-surface-variant mt-0.5"><%= order.created_at.strftime("%d/%m/%Y") %></p>
+            </div>
+
+            <!-- Center: product count pill -->
+            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant shrink-0">
+              <span class="material-symbols-outlined text-base">inventory_2</span>
+              <%= pluralize(order.order_items.sum(:quantity), "producto") %>
+            </div>
+
+            <!-- Right: total + status + button -->
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="font-semibold text-sm text-on-surface"><%= humanized_money_with_symbol(order.total) %></span>
+
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest <%= status_style %>">
+                <%= status_label %>
+              </span>
+
+              <!-- Button opens the <dialog> for this order -->
+              <button type="button"
+                      onclick="document.getElementById('order-modal-<%= order.id %>').showModal()"
+                      class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant
+                             text-xs font-medium text-on-surface-variant hover:bg-surface-container
+                             hover:text-on-surface transition-colors">
+                <span class="material-symbols-outlined text-[15px]">visibility</span>
+                Ver productos
+              </button>
+            </div>
+          </div>
+
+          <!-- ── Modal for this order (native <dialog>) ── -->
+          <dialog id="order-modal-<%= order.id %>"
+                  class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
+                  onclick="if(event.target===this)this.close()">
+
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
+              <div>
+                <h3 class="font-semibold text-base text-on-surface"><%= order.number %></h3>
+                <p class="text-xs text-stone-400 mt-0.5"><%= order.created_at.strftime("%d de %B, %Y") %></p>
+              </div>
+              <button onclick="this.closest('dialog').close()"
+                      class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
+              </button>
+            </div>
+
+            <!-- Products list -->
+            <div class="px-6 py-4 space-y-4 max-h-72 overflow-y-auto">
+              <% order.order_items.includes(:product).each do |item| %>
+                <div class="flex items-center gap-4">
+                  <!-- Thumbnail -->
+                  <div class="w-14 h-14 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-200">
+                    <% if item.product.image.attached? %>
+                      <%= image_tag item.product.image, alt: item.product.name,
+                            class: "w-full h-full object-cover" %>
+                    <% else %>
+                      <div class="w-full h-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-stone-300 text-lg">inventory_2</span>
+                      </div>
                     <% end %>
                   </div>
-                </td>
-                <td class="py-4 text-right font-body-md font-medium text-on-surface"><%= humanized_money_with_symbol(order.total) %></td>
-                <td class="py-4 text-center">
-                  <span class="px-3 py-1 rounded-full text-[11px] font-label-caps uppercase tracking-widest
-                    <%= case order.status
-                        when 'paid', 'shipped', 'delivered' then 'bg-green-100 text-green-700'
-                        when 'cancelled' then 'bg-red-100 text-red-600'
-                        else 'bg-stone-100 text-stone-500'
-                        end %>">
-                    <%= case order.status
-                        when 'paid'       then 'Pagado'
-                        when 'shipped'    then 'Enviado'
-                        when 'delivered'  then 'Entregado'
-                        when 'cancelled'  then 'Cancelado'
-                        when 'checkout'   then 'En proceso'
-                        else order.status
-                        end %>
-                  </span>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+
+                  <!-- Name + qty -->
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate"><%= item.product.name %></p>
+                    <p class="text-xs text-stone-400 mt-0.5">
+                      Precio unitario: <%= humanized_money_with_symbol(item.unit_price) %>
+                    </p>
+                  </div>
+
+                  <!-- Quantity badge + subtotal -->
+                  <div class="text-right shrink-0">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-xs font-semibold text-stone-600">
+                      ×<%= item.quantity %>
+                    </span>
+                    <p class="text-xs font-medium text-on-surface mt-1">
+                      <%= humanized_money_with_symbol(item.total_price) %>
+                    </p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Footer: total + status -->
+            <div class="px-6 py-4 border-t border-stone-100 flex items-center justify-between">
+              <div>
+                <p class="text-xs text-stone-400 uppercase tracking-widest font-semibold">Total</p>
+                <p class="text-lg font-bold text-on-surface mt-0.5"><%= humanized_money_with_symbol(order.total) %></p>
+              </div>
+              <span class="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest <%= status_style %>">
+                <%= status_label %>
+              </span>
+            </div>
+
+          </dialog>
+
+        <% end %>
       </div>
     <% end %>
   </div>

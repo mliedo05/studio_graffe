@@ -21,8 +21,9 @@ Rails.application.routes.draw do
   patch   "/carrito/items/:id",                      to: "cart_items#update",  as: :update_cart_item
 
   # Checkout
-  get  "/checkout",                                  to: "checkout#show",    as: :checkout
-  post "/checkout/pago",                             to: "checkout#payment", as: :checkout_payment
+  get   "/checkout",       to: "checkout#show",    as: :checkout
+  patch "/checkout",       to: "checkout#update",  as: :checkout_update
+  post  "/checkout/pago",  to: "checkout#payment", as: :checkout_payment
 
   # Citas
   resources :appointments, path: "citas", only: [ :index, :new, :create, :show ] do

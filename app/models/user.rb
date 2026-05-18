@@ -10,7 +10,8 @@ class User < ApplicationRecord
   has_many :stylist_blocked_times, foreign_key: :stylist_id, dependent: :destroy
   has_many :appointments_as_client, class_name: "Appointment", foreign_key: :client_id, dependent: :destroy
   has_many :stylist_appointments, class_name: "Appointment", foreign_key: :stylist_id, dependent: :destroy
-  has_many :orders, dependent: :destroy
+  has_many :orders,    dependent: :destroy
+  has_many :addresses, dependent: :destroy
   has_many :commissions, foreign_key: :stylist_id, dependent: :destroy
 
   validates :first_name, :last_name, presence: true

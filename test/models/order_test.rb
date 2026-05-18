@@ -12,6 +12,20 @@ class OrderTest < ActiveSupport::TestCase
     )
   end
 
+  # Añade los campos de facturación mínimos para poder llamar checkout!
+  def with_billing(order)
+    order.update_columns(
+      billing_first_name:      "Test",
+      billing_last_name:       "User",
+      billing_document_type:   "rut",
+      billing_document_number: "11.111.111-1",
+      billing_email:           "test@example.com",
+      billing_phone:           "+56 9 0000 0000",
+      shipping_type:           "pickup"
+    )
+    order
+  end
+
   # ── Validaciones básicas ──────────────────────────────────────────
   test "válido con atributos correctos" do
     assert Order.new(
@@ -102,14 +116,14 @@ class OrderTest < ActiveSupport::TestCase
 
   # ── checkout! ────────────────────────────────────────────────────
   test "checkout! cambia status a checkout" do
-    order = fresh_cart
+    order = with_billing(fresh_cart)
     order.add_product!(products(:shampoo_wella), 1)
     order.checkout!
     assert_equal "checkout", order.reload.status
   end
 
   test "checkout! lanza EmptyCartError si el carrito está vacío" do
-    assert_raises(Order::EmptyCartError) { fresh_cart.checkout! }
+    assert_raises(Order::EmptyCartError) { with_billing(fresh_cart).checkout! }
   end
 
   test "checkout! lanza InvalidTransitionError si el status no es cart" do
@@ -119,7 +133,7 @@ class OrderTest < ActiveSupport::TestCase
 
   # ── mark_paid! ───────────────────────────────────────────────────
   test "mark_paid! actualiza status y descuenta stock" do
-    order   = fresh_cart
+    order   = with_billing(fresh_cart)
     product = products(:shampoo_wella)
     stock_inicial = product.stock_quantity
     order.add_product!(product, 1)

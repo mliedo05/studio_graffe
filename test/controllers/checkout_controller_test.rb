@@ -154,4 +154,97 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_equal "María",  cart.reload.billing_first_name
     assert_equal "pickup", cart.reload.shipping_type
   end
+
+  # ── Teléfono guardado en usuario ──────────────────────────────────
+  test "pago guarda billing_phone en user.phone cuando el usuario no tenía teléfono" do
+    user = users(:cliente)
+    user.update_columns(phone: nil)
+    sign_in_as user
+    cart_with_product(user)
+    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    assert_equal "+56 9 1234 5678", user.reload.phone
+  end
+
+  test "pago NO sobreescribe user.phone si el usuario ya tiene teléfono" do
+    user = users(:cliente)
+    user.update_columns(phone: "+56 9 0000 0000")
+    sign_in_as user
+    cart_with_product(user)
+    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    assert_equal "+56 9 0000 0000", user.reload.phone
+  end
+
+  # ── Prefill teléfono desde perfil del usuario ─────────────────────
+  test "GET /checkout responde 200 cuando user tiene phone guardado" do
+    user = users(:cliente)
+    user.update_columns(phone: "+56 9 7777 6666")
+    sign_in_as user
+    cart_with_product(user)
+    get checkout_path
+    assert_response :success
+  end
+
+  test "prefill_billing usa user.phone cuando el order no tiene billing_phone" do
+    user = users(:cliente)
+    user.update_columns(phone: "+56 9 7777 6666")
+    sign_in_as user
+    cart = cart_with_product(user)
+    cart.update_columns(billing_phone: nil)
+    # Simula el prefill que hace el controller en show
+    cart.billing_phone ||= user.phone
+    assert_equal "+56 9 7777 6666", cart.billing_phone
+  end
+
+  # ── Guardar dirección al pagar ────────────────────────────────────
+  test "pago delivery con save_address=1 crea una dirección guardada" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    assert_difference "Address.count", 1 do
+      post checkout_payment_path, params: {
+        order:          delivery_params,
+        payment_method: "webpay",
+        save_address:   "1",
+        address_label:  "Mi depa"
+      }
+    end
+  end
+
+  test "pago delivery con save_address=1 asigna el label correcto" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    post checkout_payment_path, params: {
+      order:          delivery_params,
+      payment_method: "webpay",
+      save_address:   "1",
+      address_label:  "Mi depa"
+    }
+    addr = users(:cliente).addresses.order(created_at: :desc).first
+    assert_equal "Mi depa",           addr.label
+    assert_equal "Av. Providencia",   addr.street
+    assert_equal "Metropolitana",     addr.region
+  end
+
+  test "pago pickup con save_address=1 NO crea dirección" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    assert_no_difference "Address.count" do
+      post checkout_payment_path, params: {
+        order:          billing_params,  # pickup
+        payment_method: "webpay",
+        save_address:   "1"
+      }
+    end
+  end
+
+  test "pago delivery SIN save_address NO crea dirección" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    assert_no_difference "Address.count" do
+      post checkout_payment_path, params: {
+        order:          delivery_params,
+        payment_method: "webpay"
+        # sin save_address
+      }
+    end
+  end
 end

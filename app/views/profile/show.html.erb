@@ -193,15 +193,58 @@
               <% end %>
             </div>
 
-            <!-- Footer: total + status -->
-            <div class="px-6 py-4 border-t border-stone-100 flex items-center justify-between">
-              <div>
-                <p class="text-xs text-stone-400 uppercase tracking-widest font-semibold">Total</p>
-                <p class="text-lg font-bold text-on-surface mt-0.5"><%= humanized_money_with_symbol(order.total) %></p>
+            <!-- Footer: envío + pago + total -->
+            <div class="px-6 py-4 border-t border-stone-100 space-y-3">
+
+              <!-- Envío -->
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-stone-300 text-base mt-0.5 shrink-0">
+                  <%= order.shipping_type == "delivery" ? "local_shipping" : "storefront" %>
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] font-bold tracking-widest uppercase text-stone-400 mb-0.5">
+                    <%= order.shipping_type == "delivery" ? "Delivery" : "Retiro en tienda" %>
+                  </p>
+                  <% if order.shipping_type == "delivery" && order.shipping_street.present? %>
+                    <p class="text-xs text-stone-500 leading-relaxed">
+                      <%= [order.shipping_street, order.shipping_street_number, order.shipping_apartment].compact_blank.join(" ") %><% if order.shipping_comuna.present? %>,
+                      <%= order.shipping_comuna %><% end %><% if order.shipping_region.present? %>,
+                      <%= order.shipping_region %><% end %>
+                    </p>
+                  <% elsif order.shipping_type == "pickup" %>
+                    <p class="text-xs text-stone-400">Se retira directamente en el local</p>
+                  <% end %>
+                </div>
               </div>
-              <span class="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest <%= status_style %>">
-                <%= status_label %>
-              </span>
+
+              <!-- Método de pago -->
+              <% if order.payment_method.present? %>
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-stone-300 text-base shrink-0">
+                    <%= order.payment_method == "efectivo" ? "payments" : "credit_card" %>
+                  </span>
+                  <div>
+                    <p class="text-[10px] font-bold tracking-widest uppercase text-stone-400 mb-0.5">Método de pago</p>
+                    <p class="text-xs text-stone-500">
+                      <%= order.payment_method == "webpay" ? "Webpay Plus (débito / crédito)" :
+                          order.payment_method == "efectivo" ? "Efectivo" :
+                          order.payment_method.humanize %>
+                    </p>
+                  </div>
+                </div>
+              <% end %>
+
+              <!-- Total + estado -->
+              <div class="flex items-center justify-between pt-2 border-t border-stone-100">
+                <div>
+                  <p class="text-xs text-stone-400 uppercase tracking-widest font-semibold">Total</p>
+                  <p class="text-lg font-bold text-on-surface mt-0.5"><%= humanized_money_with_symbol(order.total) %></p>
+                </div>
+                <span class="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest <%= status_style %>">
+                  <%= status_label %>
+                </span>
+              </div>
+
             </div>
 
           </dialog>

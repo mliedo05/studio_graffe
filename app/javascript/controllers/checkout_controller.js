@@ -21,19 +21,142 @@ const REGIONS = {
 
 export default class extends Controller {
   static targets = [
-    "regionSelect", "comunaSelect", "comunaWrapper",
-    "shippingSection", "apartmentField", "apartmentWrapper",
-    "documentNumber", "documentPlaceholder"
+    // Steps
+    "step", "stepIndicator",
+    // Billing
+    "documentNumber", "documentSelect",
+    // Shipping
+    "regionSelect", "comunaSelect", "shippingSection", "apartmentField", "apartmentWrapper",
+    // Summary
+    "summaryFirstName", "summaryLastName", "summaryDocument", "summaryEmail", "summaryPhone",
+    "summaryShipping", "summaryAddress"
   ]
 
+  static values = { current: { type: Number, default: 0 } }
+
   connect() {
-    // Inicializar comunas si ya hay una región seleccionada (ej: edición)
+    this.showStep(this.currentValue)
+
+    // Populate comunas if region already set (on back navigation)
     if (this.hasRegionSelectTarget && this.regionSelectTarget.value) {
       this.populateComunas(this.regionSelectTarget.value, this.comunaSelectTarget?.dataset.selected)
     }
   }
 
-  // Cascade región → comuna
+  // ── Step navigation ──────────────────────────────────────
+
+  next() {
+    if (!this.validateCurrentStep()) return
+    if (this.currentValue < this.stepTargets.length - 1) {
+      this.updateSummary()
+      this.currentValue++
+      this.showStep(this.currentValue)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  back() {
+    if (this.currentValue > 0) {
+      this.currentValue--
+      this.showStep(this.currentValue)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  goToStep(event) {
+    const target = parseInt(event.currentTarget.dataset.step)
+    // Only allow going back to completed steps
+    if (target < this.currentValue) {
+      this.currentValue = target
+      this.showStep(this.currentValue)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  showStep(index) {
+    this.stepTargets.forEach((step, i) => {
+      step.classList.toggle("hidden", i !== index)
+    })
+    this.updateIndicators(index)
+  }
+
+  updateIndicators(activeIndex) {
+    this.stepIndicatorTargets.forEach((el, i) => {
+      el.dataset.state = i < activeIndex ? "done" : i === activeIndex ? "active" : "pending"
+    })
+  }
+
+  // ── Validation ───────────────────────────────────────────
+
+  validateCurrentStep() {
+    const step = this.stepTargets[this.currentValue]
+    const required = step.querySelectorAll("[required]")
+    let valid = true
+
+    required.forEach(field => {
+      if (!field.value.trim()) {
+        field.classList.add("border-red-400")
+        field.addEventListener("input", () => field.classList.remove("border-red-400"), { once: true })
+        valid = false
+      }
+    })
+
+    if (!valid) {
+      // Scroll to first invalid field
+      const first = step.querySelector("[required]:placeholder-shown, [required]:invalid")
+      first?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+
+    // Step 2: if delivery, validate address fields
+    if (this.currentValue === 1) {
+      const isDelivery = step.querySelector("[value='delivery']")?.checked
+      if (isDelivery) {
+        const addressFields = ["shipping_region", "shipping_comuna", "shipping_city", "shipping_street", "shipping_street_number", "shipping_recipient_name", "shipping_phone"]
+        addressFields.forEach(name => {
+          const el = step.querySelector(`[name='order[${name}]']`)
+          if (el && !el.value.trim()) {
+            el.classList.add("border-red-400")
+            el.addEventListener("input", () => el.classList.remove("border-red-400"), { once: true })
+            valid = false
+          }
+        })
+      }
+    }
+
+    return valid
+  }
+
+  // ── Summary panel (step 3) ───────────────────────────────
+
+  updateSummary() {
+    const get = (name) => this.element.querySelector(`[name='order[${name}]']`)?.value || ""
+    const docType = { rut: "RUT", passport: "Pasaporte", dni: "DNI" }
+
+    if (this.hasSummaryFirstNameTarget) {
+      this.summaryFirstNameTarget.textContent = `${get("billing_first_name")} ${get("billing_last_name")}`
+      this.summaryDocumentTarget.textContent   = `${docType[get("billing_document_type")] || ""} ${get("billing_document_number")}`
+      this.summaryEmailTarget.textContent      = get("billing_email")
+      this.summaryPhoneTarget.textContent      = `+56 ${get("billing_phone")}`
+    }
+
+    if (this.hasSummaryShippingTarget) {
+      const isDelivery = this.element.querySelector("[value='delivery']")?.checked
+      this.summaryShippingTarget.textContent = isDelivery ? "Delivery a domicilio" : "Retiro en tienda"
+
+      if (this.hasSummaryAddressTarget) {
+        if (isDelivery) {
+          const parts = [get("shipping_street"), get("shipping_street_number"), get("shipping_apartment"), get("shipping_comuna"), get("shipping_region")].filter(Boolean)
+          this.summaryAddressTarget.textContent = parts.join(", ")
+          this.summaryAddressTarget.parentElement.classList.remove("hidden")
+        } else {
+          this.summaryAddressTarget.parentElement.classList.add("hidden")
+        }
+      }
+    }
+  }
+
+  // ── Cascade región → comuna ──────────────────────────────
+
   regionChanged(event) {
     this.populateComunas(event.target.value)
   }
@@ -46,8 +169,8 @@ export default class extends Controller {
 
     select.innerHTML = '<option value="">— Selecciona una comuna —</option>'
     comunas.forEach(comuna => {
-      const option    = document.createElement("option")
-      option.value    = comuna
+      const option       = document.createElement("option")
+      option.value       = comuna
       option.textContent = comuna
       if (comuna === selectedComuna) option.selected = true
       select.appendChild(option)
@@ -56,7 +179,8 @@ export default class extends Controller {
     select.disabled = comunas.length === 0
   }
 
-  // Toggle sección de delivery
+  // ── Shipping type toggle ─────────────────────────────────
+
   shippingTypeChanged(event) {
     const isDelivery = event.target.value === "delivery"
     if (this.hasShippingSectionTarget) {
@@ -64,7 +188,8 @@ export default class extends Controller {
     }
   }
 
-  // Toggle campo departamento
+  // ── Apartment toggle ─────────────────────────────────────
+
   toggleApartment(event) {
     if (!this.hasApartmentWrapperTarget) return
     this.apartmentWrapperTarget.classList.toggle("hidden", !event.target.checked)
@@ -73,14 +198,11 @@ export default class extends Controller {
     }
   }
 
-  // Cambiar placeholder según tipo de documento
+  // ── Document type placeholder ────────────────────────────
+
   documentTypeChanged(event) {
     if (!this.hasDocumentNumberTarget) return
-    const placeholders = {
-      rut:      "Ej: 12.345.678-9",
-      passport: "Ej: AB123456",
-      dni:      "Ej: 12345678"
-    }
+    const placeholders = { rut: "Ej: 12.345.678-9", passport: "Ej: AB123456", dni: "Ej: 12345678" }
     this.documentNumberTarget.placeholder = placeholders[event.target.value] || ""
   }
 }

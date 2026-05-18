@@ -1,387 +1,449 @@
 <% content_for :title, "Finalizar Compra — Studio Graffé" %>
 
-<main class="pt-32 pb-section-padding px-4 sm:px-8 max-w-screen-xl mx-auto"
-      data-controller="checkout">
+<style>
+  .field-wrap  { @apply relative border-b border-outline focus-within:border-primary transition-colors pb-1; }
+  .field-label { @apply block text-[10px] font-semibold tracking-widest uppercase text-on-surface-variant mb-1; }
+  .field-input { @apply w-full bg-transparent border-none p-0 focus:ring-0 text-base text-on-surface; }
 
-  <header class="mb-10">
-    <h1 class="font-h1 text-h1 mb-2">Finalizar Compra</h1>
-    <p class="font-body-md text-on-surface-variant">Completa tus datos para confirmar el pedido.</p>
-  </header>
+  /* Step indicator states */
+  [data-state="done"]    .step-circle { @apply bg-primary text-on-primary; }
+  [data-state="active"]  .step-circle { @apply bg-primary text-on-primary ring-4 ring-primary/20; }
+  [data-state="pending"] .step-circle { @apply bg-surface-container text-on-surface-variant; }
+  [data-state="done"]    .step-label  { @apply text-primary font-medium; }
+  [data-state="active"]  .step-label  { @apply text-on-surface font-semibold; }
+  [data-state="pending"] .step-label  { @apply text-on-surface-variant; }
+  [data-state="done"]    .step-line   { @apply bg-primary; }
+</style>
+
+<main class="pt-28 pb-20 px-4 sm:px-8 max-w-screen-lg mx-auto"
+      data-controller="checkout">
 
   <%= form_with model: @order,
         url: checkout_payment_path,
         method: :post,
         local: true do |f| %>
 
-    <%# Hidden field for form binding %>
-    <%# Rails uses the model to build field names; we override url to go straight to payment %>
+    <!-- ══════════════════════════════════════════════════
+         STEP INDICATOR BAR
+    ══════════════════════════════════════════════════ -->
+    <nav class="flex items-center justify-center gap-0 mb-12 select-none">
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <% [
+        { label: "Facturación",   icon: "receipt_long" },
+        { label: "Envío",         icon: "local_shipping" },
+        { label: "Confirmar",     icon: "check_circle" }
+      ].each_with_index do |s, i| %>
 
-      <!-- ═══════════════════════════════════════════════════
-           LEFT COLUMN: Billing + Shipping
-      ═══════════════════════════════════════════════════ -->
-      <div class="lg:col-span-7 space-y-10">
+        <button type="button"
+                data-checkout-target="stepIndicator"
+                data-state="<%= i == 0 ? 'active' : 'pending' %>"
+                data-step="<%= i %>"
+                data-action="click->checkout#goToStep"
+                class="flex flex-col items-center gap-1.5 cursor-pointer group">
+          <span class="step-circle w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200">
+            <span class="material-symbols-outlined text-[20px]"><%= s[:icon] %></span>
+          </span>
+          <span class="step-label text-xs transition-all duration-200 hidden sm:block"><%= s[:label] %></span>
+        </button>
 
-        <!-- ── 1. DATOS DE FACTURACIÓN ─────────────────────── -->
-        <section class="bg-surface-container-low rounded-2xl p-6 sm:p-8 border border-outline-variant/50">
-          <h2 class="font-h3 text-h3 mb-6 flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-primary text-on-primary text-sm font-bold flex items-center justify-center">1</span>
-            Datos de Facturación
-          </h2>
+        <% unless i == 2 %>
+          <div class="step-line h-0.5 w-16 sm:w-24 bg-outline-variant mx-1 transition-colors duration-300"></div>
+        <% end %>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+      <% end %>
+    </nav>
 
-            <!-- Nombre -->
-            <div class="field-underline">
+
+    <!-- ══════════════════════════════════════════════════
+         PASO 1 — FACTURACIÓN
+    ══════════════════════════════════════════════════ -->
+    <div data-checkout-target="step">
+      <div class="max-w-lg mx-auto">
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-on-surface">Datos de Facturación</h1>
+          <p class="text-sm text-on-surface-variant mt-1">Esta información aparecerá en tu boleta.</p>
+        </div>
+
+        <div class="space-y-6">
+
+          <!-- Nombre + Apellido -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="field-wrap">
               <%= f.label :billing_first_name, "Nombre", class: "field-label" %>
               <%= f.text_field :billing_first_name,
-                    required: true,
-                    autocomplete: "given-name",
-                    placeholder: "Ej: María",
-                    class: "field-input" %>
+                    required: true, autocomplete: "given-name",
+                    placeholder: "Ej: María", class: "field-input" %>
             </div>
-
-            <!-- Apellido -->
-            <div class="field-underline">
+            <div class="field-wrap">
               <%= f.label :billing_last_name, "Apellido", class: "field-label" %>
               <%= f.text_field :billing_last_name,
-                    required: true,
-                    autocomplete: "family-name",
-                    placeholder: "Ej: González",
-                    class: "field-input" %>
+                    required: true, autocomplete: "family-name",
+                    placeholder: "Ej: González", class: "field-input" %>
             </div>
+          </div>
 
-            <!-- Tipo de documento -->
-            <div class="field-underline">
+          <!-- Tipo + Número de documento -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="field-wrap">
               <%= f.label :billing_document_type, "Tipo de documento", class: "field-label" %>
               <%= f.select :billing_document_type,
                     [["RUT", "rut"], ["Pasaporte", "passport"], ["DNI", "dni"]],
                     { selected: @order.billing_document_type || "rut" },
                     required: true,
-                    class: "field-input bg-transparent",
+                    class: "field-input bg-transparent cursor-pointer",
                     data: { action: "change->checkout#documentTypeChanged" } %>
             </div>
-
-            <!-- Número de documento -->
-            <div class="field-underline">
-              <%= f.label :billing_document_number, "Número de documento", class: "field-label" %>
+            <div class="field-wrap">
+              <%= f.label :billing_document_number, "Número", class: "field-label" %>
               <%= f.text_field :billing_document_number,
                     required: true,
                     placeholder: "Ej: 12.345.678-9",
                     class: "field-input",
                     data: { checkout_target: "documentNumber" } %>
             </div>
-
-            <!-- Email -->
-            <div class="field-underline">
-              <%= f.label :billing_email, "Email", class: "field-label" %>
-              <%= f.email_field :billing_email,
-                    required: true,
-                    autocomplete: "email",
-                    placeholder: "tu@email.com",
-                    class: "field-input" %>
-            </div>
-
-            <!-- Teléfono -->
-            <div class="field-underline">
-              <%= f.label :billing_phone, "Teléfono", class: "field-label" %>
-              <div class="flex items-end gap-2">
-                <span class="font-body-md text-on-surface-variant pb-1 shrink-0">+56</span>
-                <%= f.telephone_field :billing_phone,
-                      required: true,
-                      autocomplete: "tel-national",
-                      placeholder: "9 1234 5678",
-                      pattern: "[0-9 ]{7,12}",
-                      class: "field-input flex-1" %>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- ── 2. TIPO DE ENVÍO ────────────────────────────── -->
-        <section class="bg-surface-container-low rounded-2xl p-6 sm:p-8 border border-outline-variant/50">
-          <h2 class="font-h3 text-h3 mb-6 flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-primary text-on-primary text-sm font-bold flex items-center justify-center">2</span>
-            Tipo de Envío
-          </h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-
-            <!-- Retiro en tienda -->
-            <label class="flex items-center gap-4 p-5 border border-outline-variant rounded-xl cursor-pointer
-                          hover:bg-surface-container transition-colors
-                          has-[:checked]:border-primary has-[:checked]:bg-surface-container">
-              <%= f.radio_button :shipping_type, "pickup",
-                    checked: (@order.shipping_type.blank? || @order.shipping_type == "pickup"),
-                    class: "accent-primary w-5 h-5 shrink-0",
-                    data: { action: "change->checkout#shippingTypeChanged" } %>
-              <div>
-                <p class="font-label-caps text-label-caps text-primary">Retiro en tienda</p>
-                <p class="font-body-sm text-on-surface-variant mt-0.5">Gratis · Disponible en 2–3 días</p>
-              </div>
-              <span class="material-symbols-outlined ml-auto text-on-surface-variant">storefront</span>
-            </label>
-
-            <!-- Delivery -->
-            <label class="flex items-center gap-4 p-5 border border-outline-variant rounded-xl cursor-pointer
-                          hover:bg-surface-container transition-colors
-                          has-[:checked]:border-primary has-[:checked]:bg-surface-container">
-              <%= f.radio_button :shipping_type, "delivery",
-                    checked: @order.shipping_type == "delivery",
-                    class: "accent-primary w-5 h-5 shrink-0",
-                    data: { action: "change->checkout#shippingTypeChanged" } %>
-              <div>
-                <p class="font-label-caps text-label-caps text-primary">Delivery</p>
-                <p class="font-body-sm text-on-surface-variant mt-0.5">Envío a domicilio</p>
-              </div>
-              <span class="material-symbols-outlined ml-auto text-on-surface-variant">local_shipping</span>
-            </label>
-
           </div>
 
-          <!-- ── Formulario de dirección (solo visible en delivery) ── -->
-          <div data-checkout-target="shippingSection"
-               class="<%= @order.shipping_type == 'delivery' ? '' : 'hidden' %>
-                      border-t border-outline-variant pt-6 space-y-5">
+          <!-- Email -->
+          <div class="field-wrap">
+            <%= f.label :billing_email, "Correo electrónico", class: "field-label" %>
+            <%= f.email_field :billing_email,
+                  required: true, autocomplete: "email",
+                  placeholder: "tu@correo.com", class: "field-input" %>
+          </div>
 
-            <h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-1">Dirección de entrega</h3>
+          <!-- Teléfono -->
+          <div class="field-wrap">
+            <%= f.label :billing_phone, "Teléfono", class: "field-label" %>
+            <div class="flex items-end gap-2">
+              <span class="text-on-surface-variant text-base pb-0.5 shrink-0 select-none">+56</span>
+              <%= f.telephone_field :billing_phone,
+                    required: true, autocomplete: "tel-national",
+                    placeholder: "9 1234 5678", class: "field-input flex-1" %>
+            </div>
+          </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+        </div>
 
-              <!-- Nombre del destinatario -->
-              <div class="field-underline">
-                <%= f.label :shipping_recipient_name, "Nombre del destinatario", class: "field-label" %>
+        <!-- Siguiente -->
+        <div class="mt-10">
+          <button type="button"
+                  data-action="click->checkout#next"
+                  class="w-full bg-primary text-on-primary py-4 rounded-xl font-semibold
+                         tracking-wide hover:bg-stone-800 active:scale-[0.98] transition-all">
+            Continuar con Envío →
+          </button>
+        </div>
+      </div>
+    </div><!-- /paso 1 -->
+
+
+    <!-- ══════════════════════════════════════════════════
+         PASO 2 — ENVÍO
+    ══════════════════════════════════════════════════ -->
+    <div data-checkout-target="step" class="hidden">
+      <div class="max-w-lg mx-auto">
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-on-surface">Tipo de Envío</h1>
+          <p class="text-sm text-on-surface-variant mt-1">¿Cómo quieres recibir tu pedido?</p>
+        </div>
+
+        <!-- Opciones de envío -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+
+          <label class="flex flex-col items-center gap-3 p-5 border-2 border-outline-variant rounded-2xl
+                        cursor-pointer hover:border-primary/40 transition-colors text-center
+                        has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <%= f.radio_button :shipping_type, "pickup",
+                  checked: (@order.shipping_type.blank? || @order.shipping_type == "pickup"),
+                  class: "sr-only",
+                  data: { action: "change->checkout#shippingTypeChanged" } %>
+            <span class="material-symbols-outlined text-3xl text-primary">storefront</span>
+            <div>
+              <p class="font-semibold text-sm text-on-surface">Retiro en tienda</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">Gratis · 2–3 días hábiles</p>
+            </div>
+          </label>
+
+          <label class="flex flex-col items-center gap-3 p-5 border-2 border-outline-variant rounded-2xl
+                        cursor-pointer hover:border-primary/40 transition-colors text-center
+                        has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+            <%= f.radio_button :shipping_type, "delivery",
+                  checked: @order.shipping_type == "delivery",
+                  class: "sr-only",
+                  data: { action: "change->checkout#shippingTypeChanged" } %>
+            <span class="material-symbols-outlined text-3xl text-primary">local_shipping</span>
+            <div>
+              <p class="font-semibold text-sm text-on-surface">Delivery</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">Envío a domicilio</p>
+            </div>
+          </label>
+
+        </div>
+
+        <!-- Formulario de dirección (solo delivery) -->
+        <div data-checkout-target="shippingSection"
+             class="<%= @order.shipping_type == 'delivery' ? '' : 'hidden' %> space-y-5">
+
+          <div class="border-t border-outline-variant pt-5">
+            <p class="text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-5">Dirección de entrega</p>
+
+            <!-- Destinatario + Teléfono -->
+            <div class="grid grid-cols-2 gap-4 mb-5">
+              <div class="field-wrap">
+                <%= f.label :shipping_recipient_name, "Nombre destinatario", class: "field-label" %>
                 <%= f.text_field :shipping_recipient_name,
-                      autocomplete: "name",
-                      placeholder: "Quien recibe el pedido",
+                      autocomplete: "name", placeholder: "Quien recibe",
                       class: "field-input" %>
               </div>
-
-              <!-- Teléfono destinatario -->
-              <div class="field-underline">
-                <%= f.label :shipping_phone, "Teléfono de contacto", class: "field-label" %>
-                <div class="flex items-end gap-2">
-                  <span class="font-body-md text-on-surface-variant pb-1 shrink-0">+56</span>
+              <div class="field-wrap">
+                <%= f.label :shipping_phone, "Teléfono", class: "field-label" %>
+                <div class="flex items-end gap-1.5">
+                  <span class="text-on-surface-variant text-sm pb-0.5 shrink-0">+56</span>
                   <%= f.telephone_field :shipping_phone,
-                        autocomplete: "tel-national",
-                        placeholder: "9 1234 5678",
-                        class: "field-input flex-1" %>
+                        placeholder: "9 1234 5678", class: "field-input flex-1" %>
                 </div>
               </div>
+            </div>
 
-              <!-- Región -->
-              <div class="field-underline">
+            <!-- Región + Comuna -->
+            <div class="grid grid-cols-2 gap-4 mb-5">
+              <div class="field-wrap">
                 <%= f.label :shipping_region, "Región", class: "field-label" %>
                 <%= f.select :shipping_region,
-                      [["— Selecciona una región —", ""]] + Address::REGIONS.keys.map { |r| [r, r] },
+                      [["— Región —", ""]] + Address::REGIONS.keys.map { |r| [r, r] },
                       {},
-                      class: "field-input bg-transparent",
+                      class: "field-input bg-transparent cursor-pointer",
                       data: {
                         action: "change->checkout#regionChanged",
                         checkout_target: "regionSelect"
                       } %>
               </div>
-
-              <!-- Comuna -->
-              <div class="field-underline">
+              <div class="field-wrap">
                 <%= f.label :shipping_comuna, "Comuna", class: "field-label" %>
                 <select name="order[shipping_comuna]"
                         id="order_shipping_comuna"
-                        class="field-input bg-transparent"
+                        class="field-input bg-transparent cursor-pointer"
                         data-checkout-target="comunaSelect"
                         data-selected="<%= @order.shipping_comuna %>">
-                  <option value="">— Selecciona una comuna —</option>
+                  <option value="">— Comuna —</option>
                   <% if @order.shipping_region.present? %>
-                    <% Address::REGIONS[@order.shipping_region]&.each do |comuna| %>
-                      <option value="<%= comuna %>" <%= "selected" if @order.shipping_comuna == comuna %>>
-                        <%= comuna %>
-                      </option>
+                    <% Address::REGIONS[@order.shipping_region]&.each do |c| %>
+                      <option value="<%= c %>" <%= "selected" if @order.shipping_comuna == c %>><%= c %></option>
                     <% end %>
                   <% end %>
                 </select>
               </div>
+            </div>
 
-              <!-- Ciudad -->
-              <div class="field-underline sm:col-span-2">
-                <%= f.label :shipping_city, "Ciudad", class: "field-label" %>
-                <%= f.text_field :shipping_city,
-                      autocomplete: "address-level2",
-                      placeholder: "Ej: Santiago",
-                      class: "field-input" %>
-              </div>
+            <!-- Ciudad -->
+            <div class="field-wrap mb-5">
+              <%= f.label :shipping_city, "Ciudad", class: "field-label" %>
+              <%= f.text_field :shipping_city,
+                    autocomplete: "address-level2",
+                    placeholder: "Ej: Santiago", class: "field-input" %>
+            </div>
 
-              <!-- Calle -->
-              <div class="field-underline">
+            <!-- Calle + Número -->
+            <div class="grid grid-cols-2 gap-4 mb-5">
+              <div class="field-wrap">
                 <%= f.label :shipping_street, "Calle", class: "field-label" %>
                 <%= f.text_field :shipping_street,
-                      autocomplete: "street-address",
-                      placeholder: "Ej: Av. Providencia",
-                      class: "field-input" %>
+                      placeholder: "Ej: Av. Providencia", class: "field-input" %>
               </div>
-
-              <!-- Número -->
-              <div class="field-underline">
+              <div class="field-wrap">
                 <%= f.label :shipping_street_number, "Número", class: "field-label" %>
                 <%= f.text_field :shipping_street_number,
-                      placeholder: "Ej: 1234",
-                      class: "field-input" %>
+                      placeholder: "Ej: 1234", class: "field-input" %>
               </div>
+            </div>
 
-              <!-- Toggle departamento -->
-              <div class="sm:col-span-2">
-                <label class="flex items-center gap-3 cursor-pointer select-none w-fit">
-                  <input type="checkbox"
-                         class="accent-primary w-4 h-4"
-                         <%= "checked" if @order.shipping_apartment.present? %>
-                         data-action="change->checkout#toggleApartment">
-                  <span class="font-body-sm text-on-surface-variant">¿Tiene número de departamento o piso?</span>
-                </label>
-              </div>
+            <!-- Toggle departamento -->
+            <label class="flex items-center gap-2.5 cursor-pointer select-none mb-3 w-fit">
+              <input type="checkbox"
+                     class="accent-primary w-4 h-4 rounded"
+                     <%= "checked" if @order.shipping_apartment.present? %>
+                     data-action="change->checkout#toggleApartment">
+              <span class="text-sm text-on-surface-variant">¿Tiene número de departamento o piso?</span>
+            </label>
 
-              <!-- Campo departamento (hidden by default) -->
-              <div data-checkout-target="apartmentWrapper"
-                   class="sm:col-span-2 field-underline <%= @order.shipping_apartment.present? ? '' : 'hidden' %>">
-                <%= f.label :shipping_apartment, "Departamento / Piso", class: "field-label" %>
-                <%= f.text_field :shipping_apartment,
-                      placeholder: "Ej: Depto 4B, Piso 3",
-                      class: "field-input",
-                      data: { checkout_target: "apartmentField" } %>
-              </div>
+            <div data-checkout-target="apartmentWrapper"
+                 class="<%= @order.shipping_apartment.present? ? '' : 'hidden' %> field-wrap">
+              <%= f.label :shipping_apartment, "Departamento / Piso", class: "field-label" %>
+              <%= f.text_field :shipping_apartment,
+                    placeholder: "Ej: Depto 4B, Piso 3",
+                    class: "field-input",
+                    data: { checkout_target: "apartmentField" } %>
+            </div>
 
+          </div>
+        </div><!-- /address section -->
+
+        <!-- Navegación -->
+        <div class="mt-10 flex gap-3">
+          <button type="button"
+                  data-action="click->checkout#back"
+                  class="flex-1 border border-outline-variant text-on-surface py-4 rounded-xl
+                         font-semibold hover:bg-surface-container transition-all">
+            ← Volver
+          </button>
+          <button type="button"
+                  data-action="click->checkout#next"
+                  class="flex-[2] bg-primary text-on-primary py-4 rounded-xl font-semibold
+                         tracking-wide hover:bg-stone-800 active:scale-[0.98] transition-all">
+            Continuar con Pago →
+          </button>
+        </div>
+      </div>
+    </div><!-- /paso 2 -->
+
+
+    <!-- ══════════════════════════════════════════════════
+         PASO 3 — CONFIRMAR PEDIDO
+    ══════════════════════════════════════════════════ -->
+    <div data-checkout-target="step" class="hidden">
+      <div class="max-w-2xl mx-auto">
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-on-surface">Confirmar Pedido</h1>
+          <p class="text-sm text-on-surface-variant mt-1">Revisa tu información antes de pagar.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+          <!-- Resumen facturación -->
+          <div class="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/50">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs font-bold tracking-widest uppercase text-on-surface-variant">Facturación</p>
+              <button type="button" data-action="click->checkout#back"
+                      onclick="this.closest('[data-controller]').__checkoutController?.goBack(0)"
+                      data-step="0"
+                      data-action="click->checkout#goToStep"
+                      class="text-xs text-primary hover:underline">Editar</button>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <p><span class="text-on-surface-variant">Nombre: </span>
+                 <span class="font-medium" data-checkout-target="summaryFirstName">—</span></p>
+              <p><span class="text-on-surface-variant">Documento: </span>
+                 <span class="font-medium" data-checkout-target="summaryDocument">—</span></p>
+              <p><span class="text-on-surface-variant">Email: </span>
+                 <span class="font-medium" data-checkout-target="summaryEmail">—</span></p>
+              <p><span class="text-on-surface-variant">Teléfono: </span>
+                 <span class="font-medium" data-checkout-target="summaryPhone">—</span></p>
             </div>
           </div>
-        </section>
 
-        <!-- ── 3. MÉTODO DE PAGO ───────────────────────────── -->
-        <section class="bg-surface-container-low rounded-2xl p-6 sm:p-8 border border-outline-variant/50">
-          <h2 class="font-h3 text-h3 mb-6 flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-primary text-on-primary text-sm font-bold flex items-center justify-center">3</span>
-            Método de Pago
-          </h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label class="flex items-center gap-4 p-5 border border-outline-variant rounded-xl cursor-pointer
-                          hover:bg-surface-container transition-colors
-                          has-[:checked]:border-primary has-[:checked]:bg-surface-container">
-              <input type="radio" name="payment_method" value="webpay" checked
-                     class="accent-primary w-5 h-5 shrink-0">
-              <div>
-                <p class="font-label-caps text-label-caps text-primary">Webpay Plus</p>
-                <p class="font-body-sm text-on-surface-variant mt-0.5">Débito, crédito y transferencia</p>
+          <!-- Resumen envío -->
+          <div class="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/50">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs font-bold tracking-widest uppercase text-on-surface-variant">Envío</p>
+              <button type="button"
+                      data-step="1"
+                      data-action="click->checkout#goToStep"
+                      class="text-xs text-primary hover:underline">Editar</button>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <p><span class="text-on-surface-variant">Tipo: </span>
+                 <span class="font-medium" data-checkout-target="summaryShipping">—</span></p>
+              <div data-checkout-target="summaryAddress">
+                <p class="text-on-surface-variant mt-1 text-xs leading-relaxed"
+                   data-checkout-target="summaryAddress"></p>
               </div>
-              <span class="material-symbols-outlined ml-auto text-on-surface-variant">account_balance</span>
-            </label>
-
-            <label class="flex items-center gap-4 p-5 border border-outline-variant rounded-xl cursor-pointer
-                          hover:bg-surface-container transition-colors
-                          has-[:checked]:border-primary has-[:checked]:bg-surface-container">
-              <input type="radio" name="payment_method" value="efectivo"
-                     class="accent-primary w-5 h-5 shrink-0">
-              <div>
-                <p class="font-label-caps text-label-caps text-primary">Efectivo</p>
-                <p class="font-body-sm text-on-surface-variant mt-0.5">Pago al retirar o al recibir</p>
-              </div>
-              <span class="material-symbols-outlined ml-auto text-on-surface-variant">payments</span>
-            </label>
+            </div>
           </div>
-        </section>
 
-      </div><!-- /LEFT COLUMN -->
+        </div>
 
+        <!-- Productos del pedido -->
+        <div class="bg-white border border-stone-100 rounded-2xl p-6 mb-6 shadow-sm">
+          <h3 class="font-semibold text-on-surface mb-5">Productos</h3>
 
-      <!-- ═══════════════════════════════════════════════════
-           RIGHT COLUMN: Order Summary (sticky)
-      ═══════════════════════════════════════════════════ -->
-      <aside class="lg:col-span-5 lg:sticky lg:top-32 space-y-6">
-
-        <div class="bg-white border border-stone-100 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <h3 class="font-h3 text-h3 mb-6">Resumen del Pedido</h3>
-
-          <div class="space-y-5 mb-6 max-h-72 overflow-y-auto pr-1">
+          <div class="space-y-4 max-h-64 overflow-y-auto pr-1">
             <% @cart.order_items.includes(:product).each do |item| %>
-              <div class="flex gap-4">
-                <div class="w-16 h-16 bg-stone-100 rounded-lg overflow-hidden shrink-0">
+              <div class="flex gap-4 items-center">
+                <div class="w-14 h-14 bg-stone-100 rounded-xl overflow-hidden shrink-0">
                   <% if item.product.image.attached? %>
                     <%= image_tag item.product.image, alt: item.product.name, class: "w-full h-full object-cover" %>
                   <% else %>
                     <div class="w-full h-full flex items-center justify-center">
-                      <span class="material-symbols-outlined text-stone-300 text-xl">inventory_2</span>
+                      <span class="material-symbols-outlined text-stone-300">inventory_2</span>
                     </div>
                   <% end %>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-body-md font-medium truncate"><%= item.product.name %></p>
-                  <p class="font-body-sm text-on-surface-variant">Cantidad: <%= item.quantity %></p>
-                  <p class="font-body-sm font-medium mt-0.5">
-                    <%= humanized_money_with_symbol(item.total_price) %>
-                  </p>
+                  <p class="text-sm font-medium truncate"><%= item.product.name %></p>
+                  <p class="text-xs text-on-surface-variant">Cantidad: <%= item.quantity %></p>
                 </div>
+                <p class="text-sm font-semibold shrink-0">
+                  <%= humanized_money_with_symbol(item.total_price) %>
+                </p>
               </div>
             <% end %>
           </div>
 
-          <div class="border-t border-stone-100 pt-5 space-y-3">
-            <div class="flex justify-between text-on-surface-variant">
-              <span class="font-body-md">Subtotal (<%= @cart.item_count %> productos)</span>
-              <span class="font-body-md"><%= humanized_money_with_symbol(@cart.subtotal) %></span>
+          <div class="border-t border-stone-100 mt-5 pt-4 space-y-2">
+            <div class="flex justify-between text-sm text-on-surface-variant">
+              <span>Subtotal</span>
+              <span><%= humanized_money_with_symbol(@cart.subtotal) %></span>
             </div>
-            <div class="flex justify-between text-on-surface-variant">
-              <span class="font-body-md">Envío</span>
-              <span class="font-body-sm text-primary font-medium">Por confirmar</span>
+            <div class="flex justify-between text-sm text-on-surface-variant">
+              <span>Envío</span>
+              <span class="text-primary text-xs font-medium">Por confirmar</span>
             </div>
-            <div class="flex justify-between pt-4 border-t border-stone-100">
-              <span class="font-h3 text-h3">Total</span>
-              <span class="font-h3 text-h3"><%= humanized_money_with_symbol(@cart.total) %></span>
-            </div>
-          </div>
-
-          <%= f.submit "Confirmar pedido →",
-                class: "w-full mt-8 bg-primary text-on-primary py-4 rounded-xl
-                        font-label-caps text-label-caps hover:bg-stone-800
-                        transition-all active:scale-[0.98] cursor-pointer
-                        uppercase tracking-widest" %>
-
-          <p class="text-center mt-4 font-body-sm text-outline flex items-center justify-center gap-1.5">
-            <span class="material-symbols-outlined text-base">verified_user</span>
-            Pago 100% seguro y encriptado
-          </p>
-        </div>
-
-        <!-- Aviso política -->
-        <div class="p-5 bg-amber-50/40 rounded-xl border border-amber-100/60">
-          <div class="flex gap-3">
-            <span class="material-symbols-outlined text-amber-600 shrink-0">info</span>
-            <div>
-              <p class="font-body-sm font-medium text-amber-900">Política de devolución</p>
-              <p class="font-body-sm text-amber-800/70 mt-1">Los productos pueden devolverse dentro de 7 días desde la recepción en su empaque original.</p>
+            <div class="flex justify-between pt-3 border-t border-stone-100">
+              <span class="text-lg font-bold">Total</span>
+              <span class="text-lg font-bold"><%= humanized_money_with_symbol(@cart.total) %></span>
             </div>
           </div>
         </div>
 
-        <%= link_to cart_path, class: "flex items-center gap-2 font-body-sm text-on-surface-variant hover:text-primary transition-colors" do %>
-          <span class="material-symbols-outlined text-base">arrow_back</span>
-          Volver al carrito
-        <% end %>
+        <!-- Método de pago -->
+        <div class="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/50 mb-8">
+          <p class="text-xs font-bold tracking-widest uppercase text-on-surface-variant mb-4">Método de Pago</p>
+          <div class="grid grid-cols-2 gap-3">
 
-      </aside>
+            <label class="flex items-center gap-3 p-4 border-2 border-outline-variant rounded-xl cursor-pointer
+                          hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+              <input type="radio" name="payment_method" value="webpay" checked class="accent-primary">
+              <div>
+                <p class="text-sm font-semibold">Webpay Plus</p>
+                <p class="text-xs text-on-surface-variant">Débito y crédito</p>
+              </div>
+            </label>
 
-    </div><!-- /grid -->
+            <label class="flex items-center gap-3 p-4 border-2 border-outline-variant rounded-xl cursor-pointer
+                          hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+              <input type="radio" name="payment_method" value="efectivo" class="accent-primary">
+              <div>
+                <p class="text-sm font-semibold">Efectivo</p>
+                <p class="text-xs text-on-surface-variant">Al retirar o recibir</p>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- Navegación final -->
+        <div class="flex gap-3">
+          <button type="button"
+                  data-step="1"
+                  data-action="click->checkout#goToStep"
+                  class="flex-1 border border-outline-variant text-on-surface py-4 rounded-xl
+                         font-semibold hover:bg-surface-container transition-all">
+            ← Volver
+          </button>
+
+          <%= f.submit "Confirmar y Pagar →",
+                class: "flex-[2] bg-primary text-on-primary py-4 rounded-xl font-semibold
+                        tracking-wide hover:bg-stone-800 active:scale-[0.98] transition-all cursor-pointer" %>
+        </div>
+
+        <p class="text-center mt-5 text-xs text-outline flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">verified_user</span>
+          Pago 100% seguro y encriptado
+        </p>
+
+      </div>
+    </div><!-- /paso 3 -->
+
   <% end %>
 
 </main>
-
-<%# Utility CSS classes — only applied once via Tailwind's @apply would need a CSS file.
-    We define inline via a style block for the field pattern used throughout. %>
-<style>
-  .field-underline {
-    @apply relative border-b border-outline focus-within:border-primary transition-colors pb-1;
-  }
-  .field-label {
-    @apply block text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-1;
-  }
-  .field-input {
-    @apply w-full bg-transparent border-none p-0 focus:ring-0 text-base text-on-surface;
-  }
-</style>

@@ -1,6 +1,5 @@
 # Previsualiza los emails en: http://localhost:3000/rails/mailers/order_mailer
 class OrderMailerPreview < ActionMailer::Preview
-
   # http://localhost:3000/rails/mailers/order_mailer/confirmation
   def confirmation
     # Usa la primera orden pagada que exista en la BD de desarrollo
@@ -9,5 +8,4 @@ class OrderMailerPreview < ActionMailer::Preview
 
     OrderMailer.confirmation(order)
   end
-
 end

@@ -10,7 +10,7 @@ class OrderMailerTest < ActionMailer::TestCase
 
   test "confirmation: se envía al email del usuario" do
     mail = OrderMailer.confirmation(@order)
-    assert_equal [@user.email], mail.to
+    assert_equal [ @user.email ], mail.to
   end
 
   test "confirmation: from contiene una dirección de email" do
@@ -126,5 +126,4 @@ class OrderMailerTest < ActionMailer::TestCase
     mail  = OrderMailer.confirmation(order)
     assert_match order.shipping_recipient_name, mail.html_part.body.to_s
   end
-
 end

@@ -92,7 +92,7 @@
     <div class="info-row">
       <span class="info-label">Método de pago</span>
       <span class="info-value">
-        <%= @order.payment_method == "webpay" ? "Webpay Plus" :
+        <%= @order.payment_method == "getnet"   ? "Getnet (tarjeta)" :
             @order.payment_method == "efectivo" ? "Efectivo" :
             @order.payment_method&.humanize %>
       </span>

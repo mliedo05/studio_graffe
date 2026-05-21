@@ -1,0 +1,170 @@
+<%# ── Header ── %>
+<div class="email-header">
+  <h1>Studio Graffé</h1>
+  <p>Belleza · Cuidado · Estilo</p>
+</div>
+
+<%# ── Hero ── %>
+<div class="email-hero">
+  <span class="icon">✅</span>
+  <h2>¡Tu pedido fue confirmado!</h2>
+  <p>Hola <strong><%= @user.first_name %></strong>, recibimos tu compra y ya estamos preparándola.</p>
+</div>
+
+<%# ── Body ── %>
+<div class="email-body">
+
+  <%# Número y fecha %>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+    <div>
+      <p class="section-label">Número de pedido</p>
+      <p style="font-size:16px;font-weight:700;color:#1c1a19;"><%= @order.number %></p>
+    </div>
+    <div style="text-align:right;">
+      <p class="section-label">Fecha</p>
+      <p style="font-size:13px;color:#6b6360;"><%= @order.created_at.strftime("%d de %B, %Y") %></p>
+    </div>
+  </div>
+
+  <%# Productos %>
+  <p class="section-label">Productos</p>
+  <table class="products-table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th style="text-align:right;">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @items.each do |item| %>
+        <tr>
+          <td>
+            <span class="product-name"><%= item.product.name %></span>
+            <span class="product-qty">Cantidad: <%= item.quantity %> · <%= humanized_money_with_symbol(item.unit_price) %> c/u</span>
+          </td>
+          <td><%= humanized_money_with_symbol(item.total_price) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%# Totales %>
+  <div class="totals-row">
+    <span>Subtotal</span>
+    <span><%= humanized_money_with_symbol(@order.subtotal) %></span>
+  </div>
+  <% if @order.shipping_type == "delivery" %>
+  <div class="totals-row">
+    <span>Envío</span>
+    <span style="color:#b45309;font-style:italic;">Por confirmar</span>
+  </div>
+  <% end %>
+  <div class="totals-row total">
+    <span>Total</span>
+    <span><%= humanized_money_with_symbol(@order.total) %></span>
+  </div>
+
+  <hr class="divider">
+
+  <%# Facturación %>
+  <p class="section-label">Datos de facturación</p>
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-label">Nombre</span>
+      <span class="info-value"><%= @order.billing_first_name %> <%= @order.billing_last_name %></span>
+    </div>
+    <% if @order.billing_document_number.present? %>
+    <div class="info-row">
+      <span class="info-label"><%= @order.billing_document_type&.upcase || "Documento" %></span>
+      <span class="info-value"><%= @order.billing_document_number %></span>
+    </div>
+    <% end %>
+    <div class="info-row">
+      <span class="info-label">Email</span>
+      <span class="info-value"><%= @order.billing_email %></span>
+    </div>
+    <% if @order.billing_phone.present? %>
+    <div class="info-row">
+      <span class="info-label">Teléfono</span>
+      <span class="info-value"><%= @order.billing_phone %></span>
+    </div>
+    <% end %>
+    <div class="info-row">
+      <span class="info-label">Método de pago</span>
+      <span class="info-value">
+        <%= @order.payment_method == "webpay" ? "Webpay Plus" :
+            @order.payment_method == "efectivo" ? "Efectivo" :
+            @order.payment_method&.humanize %>
+      </span>
+    </div>
+  </div>
+
+  <%# Envío %>
+  <p class="section-label">Entrega</p>
+  <div class="info-card">
+    <% if @order.shipping_type == "delivery" %>
+      <div class="info-row">
+        <span class="info-label">Tipo</span>
+        <span class="info-value">🚚 Delivery a domicilio</span>
+      </div>
+      <% if @order.shipping_recipient_name.present? %>
+      <div class="info-row">
+        <span class="info-label">Destinatario</span>
+        <span class="info-value"><%= @order.shipping_recipient_name %></span>
+      </div>
+      <% end %>
+      <% if @order.shipping_street.present? %>
+      <div class="info-row">
+        <span class="info-label">Dirección</span>
+        <span class="info-value">
+          <%= [@order.shipping_street, @order.shipping_street_number, @order.shipping_apartment].compact_blank.join(" ") %>
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Ciudad</span>
+        <span class="info-value"><%= [@order.shipping_comuna, @order.shipping_region].compact_blank.join(", ") %></span>
+      </div>
+      <% end %>
+      <% if @order.shipping_phone.present? %>
+      <div class="info-row">
+        <span class="info-label">Teléfono</span>
+        <span class="info-value"><%= @order.shipping_phone %></span>
+      </div>
+      <% end %>
+    <% else %>
+      <div class="info-row">
+        <span class="info-label">Tipo</span>
+        <span class="info-value">🏪 Retiro en tienda</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Plazo</span>
+        <span class="info-value">2–3 días hábiles</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Dirección</span>
+        <span class="info-value">Te avisaremos cuando esté listo</span>
+      </div>
+    <% end %>
+  </div>
+
+  <%# CTA %>
+  <div class="cta-wrap">
+    <%= link_to "Ver mi perfil", profile_url, class: "cta-btn" %>
+  </div>
+
+  <p style="text-align:center;font-size:12px;color:#9e9087;margin-top:14px;">
+    ¿Tienes dudas? Escríbenos a
+    <a href="mailto:contacto@studiograffe.cl" style="color:#1c1a19;">contacto@studiograffe.cl</a>
+  </p>
+
+</div>
+
+<%# Footer %>
+<div class="email-footer">
+  <p>
+    Este correo fue enviado a <strong><%= @user.email %></strong><br>
+    porque realizaste una compra en Studio Graffé.<br>
+    <br>
+    © <%= Date.today.year %> Studio Graffé · Todos los derechos reservados.
+  </p>
+</div>

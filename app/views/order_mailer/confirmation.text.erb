@@ -19,7 +19,9 @@ PRODUCTOS
 <% end %>
 ───────────────────────────────────────
 Subtotal:  <%= humanized_money_with_symbol(@order.subtotal) %>
+<% if @order.shipping_type == "delivery" %>
 Envío:     Por confirmar
+<% end %>
 TOTAL:     <%= humanized_money_with_symbol(@order.total) %>
 ───────────────────────────────────────
 

@@ -53,10 +53,12 @@
     <span>Subtotal</span>
     <span><%= humanized_money_with_symbol(@order.subtotal) %></span>
   </div>
+  <% if @order.shipping_type == "delivery" %>
   <div class="totals-row">
     <span>Envío</span>
     <span style="color:#b45309;font-style:italic;">Por confirmar</span>
   </div>
+  <% end %>
   <div class="totals-row total">
     <span>Total</span>
     <span><%= humanized_money_with_symbol(@order.total) %></span>

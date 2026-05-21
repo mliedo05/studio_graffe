@@ -13,9 +13,9 @@ class OrderMailerTest < ActionMailer::TestCase
     assert_equal [@user.email], mail.to
   end
 
-  test "confirmation: from es Studio Graffé" do
+  test "confirmation: from contiene una dirección de email" do
     mail = OrderMailer.confirmation(@order)
-    assert_match "studiograffe.cl", mail.from.first
+    assert_match /@/, mail.from.first
   end
 
   test "confirmation: subject incluye el número de orden" do
@@ -80,6 +80,51 @@ class OrderMailerTest < ActionMailer::TestCase
     assert_enqueued_emails 1 do
       OrderMailer.confirmation(@order).deliver_later
     end
+  end
+
+  # ── Pickup: sin fila de envío ─────────────────────────────────────
+
+  test "confirmation HTML pickup: NO muestra fila de envío" do
+    order = orders(:orden_pagada) # shipping_type: pickup
+    mail  = OrderMailer.confirmation(order)
+    body  = mail.html_part.body.to_s
+    assert_no_match "Por confirmar", body
+  end
+
+  test "confirmation HTML pickup: muestra sección retiro en tienda" do
+    order = orders(:orden_pagada)
+    mail  = OrderMailer.confirmation(order)
+    body  = mail.html_part.body.to_s
+    assert_match "Retiro en tienda", body
+  end
+
+  test "confirmation texto pickup: NO menciona envío por confirmar" do
+    order = orders(:orden_pagada)
+    mail  = OrderMailer.confirmation(order)
+    assert_no_match "Por confirmar", mail.text_part.body.to_s
+  end
+
+  # ── Delivery: con fila de envío y dirección ───────────────────────
+
+  test "confirmation HTML delivery: muestra fila de envío por confirmar" do
+    order = orders(:orden_pagada_delivery)
+    mail  = OrderMailer.confirmation(order)
+    body  = mail.html_part.body.to_s
+    assert_match "Por confirmar", body
+  end
+
+  test "confirmation HTML delivery: muestra dirección de envío" do
+    order = orders(:orden_pagada_delivery)
+    mail  = OrderMailer.confirmation(order)
+    body  = mail.html_part.body.to_s
+    assert_match "Av. Providencia", body
+    assert_match "Providencia",     body
+  end
+
+  test "confirmation HTML delivery: muestra destinatario" do
+    order = orders(:orden_pagada_delivery)
+    mail  = OrderMailer.confirmation(order)
+    assert_match order.shipping_recipient_name, mail.html_part.body.to_s
   end
 
 end

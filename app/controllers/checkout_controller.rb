@@ -24,16 +24,16 @@ class CheckoutController < ApplicationController
 
     if @order.update(combined_checkout_params)
       maybe_save_address
-      @order.checkout!
-      @order.mark_paid!(
-        transaction_id: "SIM-#{SecureRandom.hex(6).upcase}",
-        payment_method: params[:payment_method].presence || "webpay"
-      )
-      # Persist billing phone back to user profile if not set yet
-      current_user.update(phone: @order.billing_phone) if @order.billing_phone.present? && current_user.phone.blank?
-      # Send confirmation email
-      OrderMailer.confirmation(@order).deliver_later
-      redirect_to shop_path, notice: "¡Pedido confirmado! Te enviamos un correo con el detalle."
+      method = params[:payment_method].presence || "getnet"
+
+      case method
+      when "getnet"
+        initiate_getnet_payment
+      when "efectivo"
+        complete_cash_payment
+      else
+        initiate_getnet_payment
+      end
     else
       @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
       render :show, status: :unprocessable_entity
@@ -73,6 +73,37 @@ class CheckoutController < ApplicationController
     p["shipping_phone"] = "#{shipping_prefix} #{shipping_number}".strip if shipping_number.present?
 
     p
+  end
+
+  def initiate_getnet_payment
+    service = GetnetService.new
+    result  = service.create_transaction(
+      @order,
+      ip_address: request.remote_ip,
+      user_agent: request.user_agent,
+      return_url: getnet_return_url(order: @order.number),
+      cancel_url: checkout_url
+    )
+    # Store requestId in payment_token to look up the order on return
+    @order.update!(payment_token: result[:request_id])
+    @order.checkout!
+    redirect_to result[:process_url], allow_other_host: true
+  rescue GetnetService::GetnetError => e
+    Rails.logger.error "[Getnet] Error al iniciar pago: #{e.message}"
+    @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
+    flash.now[:alert] = "No pudimos conectar con Getnet. Intenta nuevamente o elige otro método de pago."
+    render :show, status: :unprocessable_entity
+  end
+
+  def complete_cash_payment
+    @order.checkout!
+    @order.mark_paid!(
+      transaction_id: "CASH-#{SecureRandom.hex(6).upcase}",
+      payment_method: "efectivo"
+    )
+    current_user.update(phone: @order.billing_phone) if @order.billing_phone.present? && current_user.phone.blank?
+    OrderMailer.confirmation(@order).deliver_later
+    redirect_to shop_path, notice: "¡Pedido confirmado! Te enviamos un correo con el detalle."
   end
 
   def maybe_save_address

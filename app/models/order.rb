@@ -28,6 +28,7 @@ class Order < ApplicationRecord
   def pickup?   = shipping_type == "pickup"
   def delivery? = shipping_type == "delivery"
   def checkout? = status == "checkout"
+  def paid?     = status == "paid"
 
   scope :completed, -> { where.not(status: %w[cart cancelled]) }
 

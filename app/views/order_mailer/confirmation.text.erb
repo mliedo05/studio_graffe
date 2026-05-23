@@ -34,7 +34,7 @@ Email:          <%= @order.billing_email %>
 <% if @order.billing_phone.present? %>
 Teléfono:       <%= @order.billing_phone %>
 <% end %>
-Método de pago: <%= @order.payment_method == "webpay" ? "Webpay Plus" : "Efectivo" %>
+Método de pago: <%= @order.payment_method == "getnet" ? "Getnet (tarjeta)" : "Efectivo" %>
 
 ENTREGA
 <% if @order.shipping_type == "delivery" %>

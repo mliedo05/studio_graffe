@@ -27,6 +27,10 @@ Rails.application.routes.draw do
   patch "/checkout",       to: "checkout#update",  as: :checkout_update
   post  "/checkout/pago",  to: "checkout#payment", as: :checkout_payment
 
+  # Getnet Web Checkout callbacks
+  get  "/getnet/retorno",       to: "getnet#return_payment", as: :getnet_return
+  post "/getnet/notificacion",  to: "getnet#notification",   as: :getnet_notification
+
   # Citas
   resources :appointments, path: "citas", only: [ :index, :new, :create, :show ] do
     member { post :cancel }

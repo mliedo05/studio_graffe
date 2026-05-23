@@ -156,4 +156,23 @@ class OrderTest < ActiveSupport::TestCase
   test "item_count devuelve total de unidades" do
     assert_equal 1, orders(:orden_pagada).item_count
   end
+
+  # ── paid? ─────────────────────────────────────────────────────────
+
+  test "paid? retorna true cuando status es paid" do
+    assert orders(:orden_pagada).paid?
+  end
+
+  test "paid? retorna false cuando status es cart" do
+    assert_not orders(:carrito_maria).paid?
+  end
+
+  test "paid? retorna false cuando status es checkout" do
+    order = fresh_cart
+    with_billing(order)
+    order.order_items.create!(product: products(:shampoo_wella), quantity: 1,
+                              unit_price_cents: 100, total_price_cents: 100)
+    order.checkout!
+    assert_not order.paid?
+  end
 end

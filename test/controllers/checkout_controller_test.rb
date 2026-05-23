@@ -1,6 +1,9 @@
 require "test_helper"
+require "webmock/minitest"
 
 class CheckoutControllerTest < ActionDispatch::IntegrationTest
+  GETNET_BASE = GetnetService::SANDBOX_URL
+
   # ── Helpers ───────────────────────────────────────────────────────
   def cart_with_product(user = users(:cliente))
     cart = user.current_cart
@@ -81,7 +84,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "pago pickup exitoso redirige a tienda con notice" do
     sign_in_as users(:cliente)
     cart_with_product
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
     assert_redirected_to shop_path
     assert_equal "¡Pedido confirmado! Te enviamos un correo con el detalle.", flash[:notice]
   end
@@ -96,7 +99,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "pago combina prefijo y número de teléfono de facturación" do
     sign_in_as users(:cliente)
     cart = cart_with_product
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
     assert_equal "+56 9 1234 5678", cart.reload.billing_phone
   end
 
@@ -104,7 +107,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "pago delivery guarda datos de dirección" do
     sign_in_as users(:cliente)
     cart = cart_with_product
-    post checkout_payment_path, params: { order: delivery_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: delivery_params, payment_method: "efectivo" }
     order = cart.reload
     assert_equal "delivery",        order.shipping_type
     assert_equal "Metropolitana",   order.shipping_region
@@ -116,7 +119,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "pago delivery combina teléfono de envío" do
     sign_in_as users(:cliente)
     cart = cart_with_product
-    post checkout_payment_path, params: { order: delivery_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: delivery_params, payment_method: "efectivo" }
     assert_equal "+56 9 8765 4321", cart.reload.shipping_phone
   end
 
@@ -124,8 +127,8 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
   test "guarda el método de pago webpay" do
     sign_in_as users(:cliente)
     cart = cart_with_product
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
-    assert_equal "webpay", cart.reload.payment_method
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
+    assert_equal "efectivo", cart.reload.payment_method
   end
 
   test "guarda el método de pago efectivo" do
@@ -141,7 +144,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     cart_with_product
     post checkout_payment_path, params: {
       order: billing_params.except(:billing_first_name),
-      payment_method: "webpay"
+      payment_method: "efectivo"
     }
     assert_response :unprocessable_entity
   end
@@ -161,7 +164,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     user.update_columns(phone: nil)
     sign_in_as user
     cart_with_product(user)
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
     assert_equal "+56 9 1234 5678", user.reload.phone
   end
 
@@ -170,7 +173,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     user.update_columns(phone: "+56 9 0000 0000")
     sign_in_as user
     cart_with_product(user)
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
     assert_equal "+56 9 0000 0000", user.reload.phone
   end
 
@@ -202,7 +205,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_difference "Address.count", 1 do
       post checkout_payment_path, params: {
         order:          delivery_params,
-        payment_method: "webpay",
+        payment_method: "efectivo",
         save_address:   "1",
         address_label:  "Mi depa"
       }
@@ -214,7 +217,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     cart_with_product
     post checkout_payment_path, params: {
       order:          delivery_params,
-      payment_method: "webpay",
+      payment_method: "efectivo",
       save_address:   "1",
       address_label:  "Mi depa"
     }
@@ -230,7 +233,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference "Address.count" do
       post checkout_payment_path, params: {
         order:          billing_params,  # pickup
-        payment_method: "webpay",
+        payment_method: "efectivo",
         save_address:   "1"
       }
     end
@@ -242,7 +245,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference "Address.count" do
       post checkout_payment_path, params: {
         order:          delivery_params,
-        payment_method: "webpay"
+        payment_method: "efectivo"
         # sin save_address
       }
     end
@@ -253,7 +256,7 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     sign_in_as users(:cliente)
     cart_with_product
     assert_enqueued_emails 1 do
-      post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+      post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
     end
   end
 
@@ -263,8 +266,82 @@ class CheckoutControllerTest < ActionDispatch::IntegrationTest
     assert_no_enqueued_emails do
       post checkout_payment_path, params: {
         order:          billing_params.except(:billing_first_name),
-        payment_method: "webpay"
+        payment_method: "efectivo"
       }
     end
+  end
+
+  # ── Getnet ────────────────────────────────────────────────────────
+
+  def stub_getnet_session_ok
+    stub_request(:post, "#{GETNET_BASE}/api/session/")
+      .to_return(
+        status: 200,
+        body: {
+          status:     { status: "OK" },
+          requestId:  "99999",
+          processUrl: "#{GETNET_BASE}/spa/session/99999/abc"
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+  end
+
+  def stub_getnet_session_error
+    stub_request(:post, "#{GETNET_BASE}/api/session/")
+      .to_return(
+        status: 200,
+        body:   { status: { status: "FAILED", message: "Error de autenticación" } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+  end
+
+  test "POST /checkout/pago con getnet redirige a processUrl de Getnet" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    stub_getnet_session_ok
+    post checkout_payment_path, params: { order: billing_params, payment_method: "getnet" }
+    assert_response :redirect
+    assert_match "checkout.test.getnet.cl", response.location
+  end
+
+  test "POST /checkout/pago con getnet guarda payment_token en la orden" do
+    sign_in_as users(:cliente)
+    cart = cart_with_product
+    stub_getnet_session_ok
+    post checkout_payment_path, params: { order: billing_params, payment_method: "getnet" }
+    assert_equal "99999", cart.reload.payment_token
+  end
+
+  test "POST /checkout/pago con getnet cambia status a checkout" do
+    sign_in_as users(:cliente)
+    cart = cart_with_product
+    stub_getnet_session_ok
+    post checkout_payment_path, params: { order: billing_params, payment_method: "getnet" }
+    assert_equal "checkout", cart.reload.status
+  end
+
+  test "POST /checkout/pago con getnet NO encola email (se envía al confirmar retorno)" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    stub_getnet_session_ok
+    assert_no_enqueued_emails do
+      post checkout_payment_path, params: { order: billing_params, payment_method: "getnet" }
+    end
+  end
+
+  test "POST /checkout/pago con efectivo confirma inmediatamente sin Getnet" do
+    sign_in_as users(:cliente)
+    cart = cart_with_product
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
+    assert_equal "paid",     cart.reload.status
+    assert_equal "efectivo", cart.reload.payment_method
+  end
+
+  test "POST /checkout/pago getnet con error de Getnet re-renderiza el formulario" do
+    sign_in_as users(:cliente)
+    cart_with_product
+    stub_getnet_session_error
+    post checkout_payment_path, params: { order: billing_params, payment_method: "getnet" }
+    assert_response :unprocessable_entity
   end
 end

@@ -31,7 +31,7 @@ class GetnetService
       },
       payment: {
         reference:  order.number,
-        description: "Compra Studio Graffé — #{order.number}",
+        description: "Compra Studio Graffe #{order.number}",
         amount: {
           currency: "CLP",
           total:    order.total.fractional.to_i

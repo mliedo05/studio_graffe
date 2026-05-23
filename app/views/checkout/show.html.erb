@@ -7,7 +7,7 @@
   <%= form_with model: @order,
         url: checkout_payment_path,
         method: :post,
-        local: true do |f| %>
+        data: { turbo: false } do |f| %>
 
     <!-- ══════════════════════════════════════════════════
          BARRA DE PASOS

@@ -22,11 +22,12 @@ class GetnetController < ApplicationController
       confirm_order!(order)
       redirect_to shop_path, notice: "¡Pedido confirmado! Te enviamos un correo con el detalle."
     else
-      order.update(status: "cart")
+      order.cancel_failed_payment!
       redirect_to checkout_path, alert: "El pago no fue aprobado. Puedes intentarlo nuevamente."
     end
   rescue GetnetService::GetnetError => e
     Rails.logger.error "[Getnet] Error en retorno: #{e.message}"
+    order&.cancel_failed_payment! if order&.checkout?
     redirect_to checkout_path, alert: "Hubo un problema al verificar el pago. Contáctanos si el cargo fue realizado."
   end
 

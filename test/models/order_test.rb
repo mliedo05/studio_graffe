@@ -175,4 +175,54 @@ class OrderTest < ActiveSupport::TestCase
     order.checkout!
     assert_not order.paid?
   end
+
+  # ── cancel_failed_payment! ─────────────────────────────────────────
+
+  def checkout_order_for_cancel
+    order = fresh_cart
+    with_billing(order)
+    order.order_items.create!(product: products(:shampoo_wella), quantity: 1,
+                              unit_price_cents: 10_000_00, total_price_cents: 10_000_00)
+    order.recalculate!
+    order.checkout!
+    order
+  end
+
+  test "cancel_failed_payment! marca la orden como cancelled" do
+    order = checkout_order_for_cancel
+    order.cancel_failed_payment!
+    assert_equal "cancelled", order.reload.status
+  end
+
+  test "cancel_failed_payment! marca payment_status como failed" do
+    order = checkout_order_for_cancel
+    order.cancel_failed_payment!
+    assert_equal "failed", order.reload.payment_status
+  end
+
+  test "cancel_failed_payment! crea un nuevo carrito para el usuario" do
+    order = checkout_order_for_cancel
+    user  = order.user
+    order.cancel_failed_payment!
+    new_cart = user.reload.current_cart
+    assert_equal "cart", new_cart.status
+  end
+
+  test "cancel_failed_payment! copia los items al nuevo carrito" do
+    order = checkout_order_for_cancel
+    user  = order.user
+    expected = order.order_items.map { |i| [ i.product_id, i.quantity ] }
+    order.cancel_failed_payment!
+    actual = user.reload.current_cart.order_items.map { |i| [ i.product_id, i.quantity ] }
+    assert_equal expected.sort, actual.sort
+  end
+
+  test "cancel_failed_payment! lanza error si la orden no está en checkout" do
+    order = fresh_cart
+    order.order_items.create!(product: products(:shampoo_wella), quantity: 1,
+                              unit_price_cents: 100, total_price_cents: 100)
+    assert_raises Order::InvalidTransitionError do
+      order.cancel_failed_payment!
+    end
+  end
 end

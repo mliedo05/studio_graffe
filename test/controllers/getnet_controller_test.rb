@@ -72,11 +72,33 @@ class GetnetControllerTest < ActionDispatch::IntegrationTest
     assert flash[:alert].present?
   end
 
-  test "retorno rechazado restaura la orden a status cart" do
+  test "retorno rechazado marca la orden como cancelled" do
     stub_getnet_rejected
     order = checkout_order
     get getnet_return_path(order: order.number)
-    assert_equal "cart", order.reload.status
+    assert_equal "cancelled", order.reload.status
+  end
+
+  test "retorno rechazado marca payment_status como failed" do
+    stub_getnet_rejected
+    order = checkout_order
+    get getnet_return_path(order: order.number)
+    assert_equal "failed", order.reload.payment_status
+  end
+
+  test "retorno rechazado crea un nuevo carrito con los mismos productos" do
+    stub_getnet_rejected
+    order = checkout_order
+    user  = order.user
+    # Destroy any pre-existing cart so current_cart returns the one we create
+    user.orders.where(status: "cart").destroy_all
+    items_before = order.order_items.map { |i| [ i.product_id, i.quantity ] }
+
+    get getnet_return_path(order: order.number)
+
+    new_cart = user.reload.current_cart
+    assert_equal "cart", new_cart.status
+    assert_equal items_before.sort, new_cart.order_items.map { |i| [ i.product_id, i.quantity ] }.sort
   end
 
   # ── GET /getnet/retorno — orden ya pagada ─────────────────────────

@@ -1,11 +1,26 @@
 require "test_helper"
+require "webmock/minitest"
 
 class CheckoutFlowTest < ActionDispatch::IntegrationTest
+  GETNET_BASE = GetnetService::SANDBOX_URL
+
   def setup
     @user    = users(:cliente)
     @product = products(:shampoo_wella)
     sign_in_as @user
     @user.current_cart.order_items.destroy_all
+
+    # Stub de Getnet para todos los tests que usan payment_method: "getnet"
+    stub_request(:post, "#{GETNET_BASE}/api/session/")
+      .to_return(
+        status: 200,
+        body: {
+          status:     { status: "OK" },
+          requestId:  "TEST-REQ",
+          processUrl: "#{GETNET_BASE}/spa/session/TEST-REQ/abc"
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
   end
 
   def billing_params
@@ -22,7 +37,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
   end
 
   # ── Flujo completo pickup ─────────────────────────────────────────
-  test "flujo completo: carrito → checkout → pago → orden pagada" do
+  test "flujo completo: carrito → checkout → pago → orden en checkout (getnet)" do
     cart = @user.current_cart
     cart.add_product!(@product, 2)
 
@@ -30,12 +45,28 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     post checkout_payment_path,
-         params: { order: billing_params, payment_method: "webpay" }
+         params: { order: billing_params, payment_method: "getnet" }
+
+    # Con Getnet el pago queda en "checkout" hasta que el usuario pague y regrese
+    order = cart.reload
+    assert_equal "checkout",  order.status
+    assert_equal "TEST-REQ",  order.payment_token
+    assert_equal 2,           order.order_items.first.quantity
+    assert_response :redirect
+    assert_match "getnet.cl", response.location
+  end
+
+  test "flujo completo con efectivo: carrito → checkout → orden pagada" do
+    cart = @user.current_cart
+    cart.add_product!(@product, 2)
+
+    post checkout_payment_path,
+         params: { order: billing_params, payment_method: "efectivo" }
     assert_redirected_to shop_path
 
     order = cart.reload
-    assert_equal "paid",    order.status
-    assert_equal "webpay",  order.payment_method
+    assert_equal "paid",     order.status
+    assert_equal "efectivo", order.payment_method
     assert_not_nil           order.transaction_id
     assert_equal 2,          order.order_items.first.quantity
   end
@@ -74,7 +105,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     stock_antes = @product.stock_quantity
     @user.current_cart.add_product!(@product, 3)
 
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
 
     assert_equal stock_antes - 3, @product.reload.stock_quantity
   end
@@ -82,7 +113,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
   # ── Carrito vacío tras pago ───────────────────────────────────────
   test "tras pagar se crea un nuevo carrito vacío" do
     @user.current_cart.add_product!(@product, 1)
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
 
     nuevo = @user.reload.current_cart
     assert_equal "cart", nuevo.status
@@ -94,7 +125,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
     cart = @user.current_cart
     cart.add_product!(@product, 1)
 
-    post checkout_payment_path, params: { order: billing_params, payment_method: "webpay" }
+    post checkout_payment_path, params: { order: billing_params, payment_method: "efectivo" }
 
     order = cart.reload
     assert_equal "paid",              order.status
@@ -113,7 +144,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
 
     post checkout_payment_path, params: {
       order: billing_params.merge(billing_phone_prefix: "+34", billing_phone_number: "612 345 678"),
-      payment_method: "webpay"
+      payment_method: "efectivo"
     }
 
     assert_equal "+34 612 345 678", cart.reload.billing_phone
@@ -137,7 +168,7 @@ class CheckoutFlowTest < ActionDispatch::IntegrationTest
 
     post checkout_payment_path, params: {
       order: billing_params.merge(billing_phone_prefix: "+54", billing_phone_number: "11 4567 8901"),
-      payment_method: "webpay"
+      payment_method: "efectivo"
     }
 
     assert_equal "+54 11 4567 8901", cart.reload.billing_phone

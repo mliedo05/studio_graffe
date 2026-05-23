@@ -54,6 +54,9 @@ class Order < ApplicationRecord
   def cancel_failed_payment!
     raise InvalidTransitionError, "Solo órdenes en checkout pueden cancelarse por pago fallido." unless status == "checkout"
 
+    # Load items BEFORE the update! call to avoid association cache issues
+    items_snapshot = order_items.to_a
+
     transaction do
       update!(status: "cancelled", payment_status: "failed")
 
@@ -65,10 +68,10 @@ class Order < ApplicationRecord
         subtotal_cents: 0,
         total_cents:    0
       )
-      order_items.each do |item|
+      items_snapshot.each do |item|
         new_cart.order_items.create!(
-          product:          item.product,
-          quantity:         item.quantity,
+          product_id:        item.product_id,
+          quantity:          item.quantity,
           unit_price_cents:  item.unit_price_cents,
           total_price_cents: item.total_price_cents
         )

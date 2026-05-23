@@ -27,10 +27,12 @@ class Order < ApplicationRecord
 
   def pickup?   = shipping_type == "pickup"
   def delivery? = shipping_type == "delivery"
-  def checkout? = status == "checkout"
-  def paid?     = status == "paid"
+  def checkout?  = status == "checkout"
+  def paid?      = status == "paid"
+  def cancelled? = status == "cancelled"
 
   scope :completed, -> { where.not(status: %w[cart cancelled]) }
+  scope :visible,   -> { where.not(status: "cart") }
 
   def item_count
     order_items.sum(:quantity)
@@ -45,6 +47,34 @@ class Order < ApplicationRecord
     raise EmptyCartError, "El carrito está vacío." if order_items.empty?
     raise InvalidTransitionError, "Solo un carrito activo puede pasar a checkout." unless status == "cart"
     update!(status: "checkout")
+  end
+
+  # Cancels a checkout-in-progress order after a failed payment.
+  # Creates a fresh cart for the user, copying all items so they don't lose their selection.
+  def cancel_failed_payment!
+    raise InvalidTransitionError, "Solo órdenes en checkout pueden cancelarse por pago fallido." unless status == "checkout"
+
+    transaction do
+      update!(status: "cancelled", payment_status: "failed")
+
+      # Restore a fresh cart with the same items so the customer can retry
+      new_cart = user.orders.create!(
+        number:         "ORD-#{SecureRandom.hex(4).upcase}",
+        status:         "cart",
+        payment_status: "pending",
+        subtotal_cents: 0,
+        total_cents:    0
+      )
+      order_items.each do |item|
+        new_cart.order_items.create!(
+          product:          item.product,
+          quantity:         item.quantity,
+          unit_price_cents:  item.unit_price_cents,
+          total_price_cents: item.total_price_cents
+        )
+      end
+      new_cart.recalculate!
+    end
   end
 
   def mark_paid!(transaction_id:, payment_method:)

@@ -97,7 +97,7 @@
               when 'paid'      then 'Pagado'
               when 'shipped'   then 'Enviado'
               when 'delivered' then 'Entregado'
-              when 'cancelled' then 'Cancelado'
+              when 'cancelled' then order.payment_status == 'failed' ? 'Pago rechazado' : 'Cancelado'
               when 'checkout'  then 'En proceso'
               else order.status
             end

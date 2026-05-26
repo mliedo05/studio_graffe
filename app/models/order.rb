@@ -60,23 +60,25 @@ class Order < ApplicationRecord
     transaction do
       update!(status: "cancelled", payment_status: "failed")
 
-      # Restore a fresh cart with the same items so the customer can retry
-      new_cart = user.orders.create!(
-        number:         "ORD-#{SecureRandom.hex(4).upcase}",
-        status:         "cart",
-        payment_status: "pending",
-        subtotal_cents: 0,
-        total_cents:    0
-      )
+      # Re-use existing cart or create one — never create duplicates
+      cart = user.current_cart
       items_snapshot.each do |item|
-        new_cart.order_items.create!(
-          product_id:        item.product_id,
-          quantity:          item.quantity,
-          unit_price_cents:  item.unit_price_cents,
-          total_price_cents: item.total_price_cents
-        )
+        existing = cart.order_items.find_by(product_id: item.product_id)
+        if existing
+          existing.update!(
+            quantity:          existing.quantity + item.quantity,
+            total_price_cents: existing.unit_price_cents * (existing.quantity + item.quantity)
+          )
+        else
+          cart.order_items.create!(
+            product_id:        item.product_id,
+            quantity:          item.quantity,
+            unit_price_cents:  item.unit_price_cents,
+            total_price_cents: item.total_price_cents
+          )
+        end
       end
-      new_cart.recalculate!
+      cart.recalculate!
     end
   end
 

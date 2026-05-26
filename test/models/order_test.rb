@@ -225,4 +225,70 @@ class OrderTest < ActiveSupport::TestCase
       order.cancel_failed_payment!
     end
   end
+
+  # ── Regresión: un solo carrito por usuario ─────────────────────────
+  # Antes del fix, cancel_failed_payment! creaba un carrito nuevo con
+  # orders.create! en lugar de reutilizar el existente, lo que provocaba
+  # N carritos huérfanos por usuario y rompía toda la navegación posterior.
+
+  test "cancel_failed_payment! no crea un segundo carrito si ya existe uno" do
+    order = checkout_order_for_cancel
+    user  = order.user
+
+    # Asegurar que no queda ningún carrito previo
+    user.orders.where(status: "cart").destroy_all
+
+    order.cancel_failed_payment!
+
+    assert_equal 1, user.orders.where(status: "cart").count,
+      "No debe existir más de un carrito activo por usuario"
+  end
+
+  test "dos pagos rechazados consecutivos no generan carritos duplicados" do
+    user = users(:cliente)
+    product = products(:shampoo_wella)
+    user.orders.where(status: "cart").destroy_all
+
+    # Primer intento fallido
+    cart1 = user.current_cart
+    cart1.add_product!(product, 1)
+    with_billing(cart1)
+    cart1.checkout!
+    cart1.cancel_failed_payment!
+
+    assert_equal 1, user.orders.where(status: "cart").count, "Después del 1er rechazo debe haber exactamente 1 carrito"
+
+    # Segundo intento fallido
+    cart2 = user.current_cart
+    with_billing(cart2)
+    cart2.checkout!
+    cart2.cancel_failed_payment!
+
+    assert_equal 1, user.orders.where(status: "cart").count, "Después del 2do rechazo debe haber exactamente 1 carrito"
+  end
+
+  test "pago exitoso tras un rechazo deja exactamente un carrito nuevo vacío" do
+    user = users(:cliente)
+    product = products(:shampoo_wella)
+    user.orders.where(status: "cart").destroy_all
+
+    # Rechazo previo (crea carrito de reintento con el producto)
+    cart1 = user.current_cart
+    cart1.add_product!(product, 1)
+    with_billing(cart1)
+    cart1.checkout!
+    cart1.cancel_failed_payment!
+
+    # El usuario retoma el carrito de reintento y paga con éxito
+    cart2 = user.current_cart
+    with_billing(cart2)
+    cart2.checkout!
+    cart2.mark_paid!(transaction_id: "TXN-001", payment_method: "getnet")
+
+    # El carrito se crea bajo demanda al acceder (simula la primera visita post-pago)
+    new_cart = user.current_cart
+    assert_equal "cart", new_cart.status, "Debe existir un carrito activo tras el pago"
+    assert_equal 0, new_cart.order_items.count, "El carrito nuevo debe estar vacío"
+    assert_equal 1, user.orders.where(status: "cart").count, "No debe haber más de un carrito activo"
+  end
 end

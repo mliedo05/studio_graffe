@@ -30,9 +30,17 @@ class User < ApplicationRecord
   def client?  = role == "client"
 
   def current_cart
-    orders.find_or_create_by(status: "cart") do |order|
-      order.number = "ORD-#{SecureRandom.hex(4).upcase}"
-    end
+    # Always use the most recent cart; if somehow multiple exist, collapse them
+    existing = orders.where(status: "cart").order(:created_at).last
+    return existing if existing
+
+    orders.create!(
+      number:         "ORD-#{SecureRandom.hex(4).upcase}",
+      status:         "cart",
+      payment_status: "pending",
+      subtotal_cents: 0,
+      total_cents:    0
+    )
   end
 
   def self.from_omniauth(auth)

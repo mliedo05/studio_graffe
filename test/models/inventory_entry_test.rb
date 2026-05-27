@@ -1,7 +1,6 @@
 require "test_helper"
 
 class InventoryEntryTest < ActiveSupport::TestCase
-
   def valid_entry(product: products(:shampoo_wella), overrides: {})
     InventoryEntry.new({
       product:          product,

@@ -57,4 +57,38 @@ class ShopControllerTest < ActionDispatch::IntegrationTest
     get landing_path
     assert_response :success
   end
+
+  # ── GET /tienda/marca/:brand_slug ─────────────────────────────────
+
+  test "GET /tienda/marca/wella devuelve 200" do
+    get shop_brand_path(brand_slug: "wella")
+    assert_response :success
+  end
+
+  test "GET /tienda/marca/:slug muestra solo productos de esa marca" do
+    get shop_brand_path(brand_slug: "wella")
+    assert_response :success
+    assert_select "article", minimum: 1
+  end
+
+  test "GET /tienda/marca/:slug inexistente redirige a la tienda" do
+    get shop_brand_path(brand_slug: "marca-inexistente")
+    assert_redirected_to shop_path
+    assert_equal "Marca no encontrada.", flash[:alert]
+  end
+
+  test "GET /tienda muestra sección de marcas en el sidebar" do
+    get shop_path
+    assert_select "a[href='#{shop_brand_path(brand_slug: "wella")}']"
+  end
+
+  test "GET /tienda/:category_slug muestra sección de marcas en el sidebar" do
+    get shop_category_path(category_slug: product_categories(:shampoo).slug)
+    assert_select "a[href='#{shop_brand_path(brand_slug: "wella")}']"
+  end
+
+  test "GET /tienda/marca/olaplex devuelve 200" do
+    get shop_brand_path(brand_slug: "olaplex")
+    assert_response :success
+  end
 end

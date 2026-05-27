@@ -1,0 +1,26 @@
+lote_wella_enero:
+  product: shampoo_wella
+  quantity_received: 20
+  quantity_remaining: 15
+  unit_cost_cents: 9000
+  supplier: "Wella Chile"
+  invoice_number: "F-001-2026"
+  received_at: "2026-01-10 10:00:00"
+
+lote_wella_marzo:
+  product: shampoo_wella
+  quantity_received: 10
+  quantity_remaining: 10
+  unit_cost_cents: 9500
+  supplier: "Wella Chile"
+  invoice_number: "F-002-2026"
+  received_at: "2026-03-15 10:00:00"
+
+lote_olaplex:
+  product: olaplex
+  quantity_received: 5
+  quantity_remaining: 5
+  unit_cost_cents: 18000
+  supplier: "Distribuidora Belleza"
+  invoice_number: "F-003-2026"
+  received_at: "2026-02-01 10:00:00"

@@ -4,7 +4,6 @@ ActiveAdmin.register_page "Dashboard" do
   menu priority: 1, label: "📊 Dashboard"
 
   content title: "Panel de administración" do
-
     # ── Tarjetas de resumen ──────────────────────────────────────────
     columns do
       column do
@@ -12,6 +11,21 @@ ActiveAdmin.register_page "Dashboard" do
           count = Order.where(created_at: Time.current.beginning_of_day..).count
           h2 count, style: "font-size:2.5rem; font-weight:bold; color:#d97706; margin:0"
           para "órdenes creadas hoy"
+        end
+      end
+      column do
+        panel "📈 Margen bruto del mes" do
+          items = OrderItem.joins(:order)
+                           .where(orders: { status: "paid", created_at: Time.current.beginning_of_month.. })
+                           .where.not(total_cost_cents: nil)
+          ventas = items.sum(:total_price_cents)
+          costos = items.sum(:total_cost_cents)
+          margen = ventas - costos
+          pct    = ventas > 0 ? (margen.to_f / ventas * 100).round(1) : 0
+          color  = margen > 0 ? "#16a34a" : "#dc2626"
+          h2 number_to_currency(margen, unit: "$", delimiter: ".", precision: 0),
+             style: "font-size:1.8rem; font-weight:bold; color:#{color}; margin:0"
+          para "#{pct}% margen bruto este mes"
         end
       end
       column do
@@ -50,11 +64,11 @@ ActiveAdmin.register_page "Dashboard" do
             column("Cliente")   { |o| o.user.full_name }
             column("Estado") do |o|
               color = case o.status
-                      when "paid"      then "#16a34a"
-                      when "checkout"  then "#d97706"
-                      when "cancelled" then "#dc2626"
-                      else "#6b7280"
-                      end
+              when "paid"      then "#16a34a"
+              when "checkout"  then "#d97706"
+              when "cancelled" then "#dc2626"
+              else "#6b7280"
+              end
               span o.status, style: "background:#{color}; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold"
             end
             column("Total")     { |o| number_to_currency(o.total_cents, unit: "$", delimiter: ".", precision: 0) }
@@ -81,6 +95,5 @@ ActiveAdmin.register_page "Dashboard" do
         end
       end
     end
-
   end
 end

@@ -39,18 +39,18 @@ ActiveAdmin.register Order do
     end
     column("Total") { |o| number_to_currency(o.total_cents, unit: "$", delimiter: ".", precision: 0) }
     column("Fecha") { |o| o.created_at.strftime("%d/%m/%Y %H:%M") }
-    actions only: [:show]
+    actions only: [ :show ]
   end
 
   # ── Filtros ───────────────────────────────────────────────────────
   filter :status, as: :select,
-         collection: Order::STATUSES.map { |s| [s.capitalize, s] },
+         collection: Order::STATUSES.map { |s| [ s.capitalize, s ] },
          label: "Estado"
   filter :payment_method, as: :select,
-         collection: [["Getnet", "getnet"], ["Efectivo", "efectivo"]],
+         collection: [ [ "Getnet", "getnet" ], [ "Efectivo", "efectivo" ] ],
          label: "Método de pago"
   filter :shipping_type, as: :select,
-         collection: [["Retiro", "pickup"], ["Delivery", "delivery"]],
+         collection: [ [ "Retiro", "pickup" ], [ "Delivery", "delivery" ] ],
          label: "Tipo de envío"
   filter :number_cont,        label: "Número de orden"
   filter :created_at_gteq,    label: "Desde"

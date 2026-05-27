@@ -93,6 +93,7 @@ class Order < ApplicationRecord
     )
     order_items.each do |item|
       item.product.decrement!(:stock_quantity, item.quantity)
+      consume_fifo!(item)
     end
   end
 
@@ -117,7 +118,32 @@ class Order < ApplicationRecord
     recalculate!
   end
 
-  class EmptyCartError        < StandardError; end
+  class EmptyCartError         < StandardError; end
   class InvalidTransitionError < StandardError; end
-  class OutOfStockError       < StandardError; end
+  class OutOfStockError        < StandardError; end
+
+  private
+
+  # Consume inventory entries FIFO for one order item and records unit cost.
+  # If no inventory entries exist (e.g. legacy products), records cost as 0.
+  def consume_fifo!(item)
+    qty_needed   = item.quantity
+    total_cost   = 0
+
+    item.product.inventory_entries.available.each do |entry|
+      break if qty_needed == 0
+
+      consume = [ entry.quantity_remaining, qty_needed ].min
+      total_cost  += consume * entry.unit_cost_cents
+      qty_needed  -= consume
+      entry.update!(quantity_remaining: entry.quantity_remaining - consume)
+    end
+
+    # qty_needed > 0 means stock was sold without inventory entries (legacy)
+    unit_cost  = item.quantity > 0 ? total_cost / item.quantity : 0
+    item.update!(
+      unit_cost_cents:  unit_cost,
+      total_cost_cents: total_cost
+    )
+  end
 end

@@ -12,6 +12,7 @@ class ShopController < ApplicationController
   def index
     data = ShopService.index_data(pagy_helper: method(:pagy))
     @categories            = data[:categories]
+    @brands                = data[:brands]
     @featured              = data[:featured]
     @pagy                  = data[:pagy]
     @products              = data[:products]
@@ -21,9 +22,23 @@ class ShopController < ApplicationController
   def category
     data = ShopService.category_data(slug: params[:category_slug], pagy_helper: method(:pagy))
     @category              = data[:category]
+    @categories            = data[:categories]
+    @brands                = data[:brands]
     @pagy                  = data[:pagy]
     @products              = data[:products]
     @cart_items_by_product = cart_items_by_product
+  end
+
+  def brand
+    data = ShopService.brand_data(brand_slug: params[:brand_slug], pagy_helper: method(:pagy))
+    @brand                 = data[:brand]
+    @categories            = data[:categories]
+    @brands                = data[:brands]
+    @pagy                  = data[:pagy]
+    @products              = data[:products]
+    @cart_items_by_product = cart_items_by_product
+  rescue ActiveRecord::RecordNotFound
+    redirect_to shop_path, alert: "Marca no encontrada."
   end
 
   def show

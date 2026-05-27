@@ -11,6 +11,7 @@ Rails.application.routes.draw do
 
   # Tienda
   get  "/tienda",                                    to: "shop#index",    as: :shop
+  get  "/tienda/marca/:brand_slug",                  to: "shop#brand",    as: :shop_brand
   get  "/tienda/:category_slug",                     to: "shop#category", as: :shop_category
   get  "/tienda/:category_slug/:product_slug",       to: "shop#show",     as: :shop_product
 

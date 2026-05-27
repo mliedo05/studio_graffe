@@ -321,7 +321,7 @@ class OrderTest < ActiveSupport::TestCase
     user    = users(:cliente)
     # Lote único: 10 uds × $9.000
     cart = setup_fifo_cart(user: user, product: product, quantity: 2,
-                           lots: [{ qty: 10, cost: 9000 }])
+                           lots: [ { qty: 10, cost: 9000 } ])
     cart.mark_paid!(transaction_id: "T1", payment_method: "efectivo")
 
     item = cart.order_items.find_by(product_id: product.id)
@@ -337,7 +337,7 @@ class OrderTest < ActiveSupport::TestCase
     # Venta de 5: consume lote1 entero + 2 de lote2
     # Costo total: 3×8000 + 2×10000 = 44.000 → unit = 8.800
     cart = setup_fifo_cart(user: user, product: product, quantity: 5,
-                           lots: [{ qty: 3, cost: 8000 }, { qty: 10, cost: 10000 }])
+                           lots: [ { qty: 3, cost: 8000 }, { qty: 10, cost: 10000 } ])
     cart.mark_paid!(transaction_id: "T2", payment_method: "efectivo")
 
     item = cart.order_items.find_by(product_id: product.id)
@@ -349,7 +349,7 @@ class OrderTest < ActiveSupport::TestCase
     product = products(:shampoo_wella)
     user    = users(:cliente)
     cart = setup_fifo_cart(user: user, product: product, quantity: 5,
-                           lots: [{ qty: 3, cost: 8000 }, { qty: 10, cost: 10000 }])
+                           lots: [ { qty: 3, cost: 8000 }, { qty: 10, cost: 10000 } ])
     cart.mark_paid!(transaction_id: "T3", payment_method: "efectivo")
 
     lote_viejo   = product.inventory_entries.order(:received_at).first
@@ -382,7 +382,7 @@ class OrderTest < ActiveSupport::TestCase
     product = products(:shampoo_wella)
     user    = users(:cliente)
     cart = setup_fifo_cart(user: user, product: product, quantity: 2,
-                           lots: [{ qty: 10, cost: 9000 }])
+                           lots: [ { qty: 10, cost: 9000 } ])
     prev_stock = product.reload.stock_quantity
     cart.mark_paid!(transaction_id: "T5", payment_method: "efectivo")
 

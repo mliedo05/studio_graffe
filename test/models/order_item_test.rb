@@ -1,7 +1,6 @@
 require "test_helper"
 
 class OrderItemTest < ActiveSupport::TestCase
-
   def item_with_cost(price_cents:, cost_cents:, quantity: 1)
     OrderItem.new(
       order:             orders(:orden_pagada),

@@ -1,7 +1,6 @@
 require "test_helper"
 
 class AdminInventoryEntriesTest < ActionDispatch::IntegrationTest
-
   def setup
     sign_in_as users(:admin)
   end

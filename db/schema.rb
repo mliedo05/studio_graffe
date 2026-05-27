@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_154304) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_27_215337) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -109,12 +109,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_154304) do
     t.index ["stylist_id"], name: "index_commissions_on_stylist_id"
   end
 
+  create_table "inventory_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "invoice_number", null: false
+    t.text "notes"
+    t.bigint "product_id", null: false
+    t.integer "quantity_received", null: false
+    t.integer "quantity_remaining", null: false
+    t.datetime "received_at", null: false
+    t.string "supplier", null: false
+    t.integer "unit_cost_cents", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "received_at"], name: "index_inventory_entries_on_product_id_and_received_at"
+    t.index ["product_id"], name: "index_inventory_entries_on_product_id"
+  end
+
   create_table "order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "order_id", null: false
     t.bigint "product_id", null: false
     t.integer "quantity", default: 1, null: false
+    t.integer "total_cost_cents"
     t.integer "total_price_cents", default: 0, null: false
+    t.integer "unit_cost_cents"
     t.integer "unit_price_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["order_id"], name: "index_order_items_on_order_id"
@@ -263,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_154304) do
   add_foreign_key "appointments", "users", column: "stylist_id"
   add_foreign_key "commissions", "appointments"
   add_foreign_key "commissions", "users", column: "stylist_id"
+  add_foreign_key "inventory_entries", "products"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "products"
   add_foreign_key "orders", "users"

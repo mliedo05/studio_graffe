@@ -291,4 +291,101 @@ class OrderTest < ActiveSupport::TestCase
     assert_equal 0, new_cart.order_items.count, "El carrito nuevo debe estar vacío"
     assert_equal 1, user.orders.where(status: "cart").count, "No debe haber más de un carrito activo"
   end
+
+  # ── FIFO: consume_fifo! integrado en mark_paid! ───────────────────
+
+  def setup_fifo_cart(user:, product:, quantity:, lots:)
+    product.inventory_entries.destroy_all
+    user.orders.where(status: "cart").destroy_all
+
+    lots.each_with_index do |lot, i|
+      product.receive_stock!(
+        quantity:        lot[:qty],
+        unit_cost_cents: lot[:cost],
+        supplier:        "Test",
+        invoice_number:  "FIFO-#{i + 1}",
+        received_at:     (lots.size - i).months.ago
+      )
+    end
+    product.update!(stock_quantity: lots.sum { |l| l[:qty] })
+
+    cart = user.current_cart
+    cart.add_product!(product, quantity)
+    with_billing(cart)
+    cart.checkout!
+    cart
+  end
+
+  test "mark_paid! registra costo FIFO en order_item" do
+    product = products(:shampoo_wella)
+    user    = users(:cliente)
+    # Lote único: 10 uds × $9.000
+    cart = setup_fifo_cart(user: user, product: product, quantity: 2,
+                           lots: [ { qty: 10, cost: 9000 } ])
+    cart.mark_paid!(transaction_id: "T1", payment_method: "efectivo")
+
+    item = cart.order_items.find_by(product_id: product.id)
+    assert_equal 9000,  item.reload.unit_cost_cents
+    assert_equal 18000, item.reload.total_cost_cents
+  end
+
+  test "mark_paid! consume varios lotes FIFO en orden correcto" do
+    product = products(:shampoo_wella)
+    user    = users(:cliente)
+    # Lote 1 (más antiguo): 3 uds × $8.000
+    # Lote 2 (más reciente): 10 uds × $10.000
+    # Venta de 5: consume lote1 entero + 2 de lote2
+    # Costo total: 3×8000 + 2×10000 = 44.000 → unit = 8.800
+    cart = setup_fifo_cart(user: user, product: product, quantity: 5,
+                           lots: [ { qty: 3, cost: 8000 }, { qty: 10, cost: 10000 } ])
+    cart.mark_paid!(transaction_id: "T2", payment_method: "efectivo")
+
+    item = cart.order_items.find_by(product_id: product.id)
+    assert_equal 8800,  item.reload.unit_cost_cents
+    assert_equal 44000, item.reload.total_cost_cents
+  end
+
+  test "mark_paid! agota el lote más antiguo antes de pasar al siguiente" do
+    product = products(:shampoo_wella)
+    user    = users(:cliente)
+    cart = setup_fifo_cart(user: user, product: product, quantity: 5,
+                           lots: [ { qty: 3, cost: 8000 }, { qty: 10, cost: 10000 } ])
+    cart.mark_paid!(transaction_id: "T3", payment_method: "efectivo")
+
+    lote_viejo   = product.inventory_entries.order(:received_at).first
+    lote_reciente = product.inventory_entries.order(:received_at).last
+
+    assert_equal 0, lote_viejo.reload.quantity_remaining,   "El lote más antiguo debe quedar agotado"
+    assert_equal 8, lote_reciente.reload.quantity_remaining, "El lote reciente debe quedar con 8"
+  end
+
+  test "mark_paid! graba costo 0 si el producto no tiene lotes FIFO" do
+    product = products(:shampoo_wella)
+    user    = users(:cliente)
+    product.inventory_entries.destroy_all
+    user.orders.where(status: "cart").destroy_all
+
+    # Stock manual sin lotes de inventario (productos legacy)
+    product.update!(stock_quantity: 5)
+    cart = user.current_cart
+    cart.add_product!(product, 2)
+    with_billing(cart)
+    cart.checkout!
+    cart.mark_paid!(transaction_id: "T4", payment_method: "efectivo")
+
+    item = cart.order_items.find_by(product_id: product.id)
+    assert_equal 0, item.reload.unit_cost_cents,  "Sin lotes, el costo debe ser 0"
+    assert_equal 0, item.reload.total_cost_cents, "Sin lotes, el costo total debe ser 0"
+  end
+
+  test "mark_paid! no modifica el stock del producto en las entradas FIFO directamente" do
+    product = products(:shampoo_wella)
+    user    = users(:cliente)
+    cart = setup_fifo_cart(user: user, product: product, quantity: 2,
+                           lots: [ { qty: 10, cost: 9000 } ])
+    prev_stock = product.reload.stock_quantity
+    cart.mark_paid!(transaction_id: "T5", payment_method: "efectivo")
+
+    assert_equal prev_stock - 2, product.reload.stock_quantity
+  end
 end

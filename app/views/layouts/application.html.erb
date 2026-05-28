@@ -130,7 +130,8 @@
   <%= javascript_importmap_tags %>
 </head>
 
-<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col selection:bg-tertiary-fixed selection:text-on-tertiary-fixed">
+<body class="bg-background font-body-md text-on-background min-h-screen flex flex-col selection:bg-tertiary-fixed selection:text-on-tertiary-fixed"
+      data-controller="cart-drawer">
 
 <!-- Flash messages -->
 <div id="flash-messages" class="fixed top-24 right-4 z-[100] space-y-2 max-w-sm">
@@ -216,6 +217,36 @@
                   <span class="font-body-sm text-[14px] text-purple-600">Panel Admin</span>
                 <% end %>
               <% end %>
+
+              <% if current_user.admin? || current_user.supervisor? %>
+                <div class="mx-3 my-1 border-t border-stone-100"></div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9ca3af; padding:6px 16px 2px;">Supervisor</p>
+                <%= link_to supervisor_root_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">dashboard</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Dashboard</span>
+                <% end %>
+                <%= link_to new_supervisor_attendance_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">add_circle</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Nueva atención</span>
+                <% end %>
+                <%= link_to supervisor_commissions_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">payments</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Comisiones</span>
+                <% end %>
+                <%= link_to supervisor_sales_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">storefront</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Ventas</span>
+                <% end %>
+              <% end %>
+
+              <% if current_user.stylist? %>
+                <div class="mx-3 my-1 border-t border-stone-100"></div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9ca3af; padding:6px 16px 2px;">Mi panel</p>
+                <%= link_to stylist_panel_root_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-blue-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-blue-400 group-hover/item:text-blue-600 transition-colors">bar_chart</span>
+                  <span class="font-body-sm text-[14px] text-blue-600">Mis comisiones</span>
+                <% end %>
+              <% end %>
             </div>
 
             <!-- Sign out -->
@@ -229,15 +260,17 @@
           </div>
         </div>
 
-        <!-- Cart icon -->
-        <%= link_to cart_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors" do %>
+        <!-- Cart icon — opens drawer -->
+        <button type="button"
+                data-action="click->cart-drawer#toggle"
+                class="scale-105 transition-transform text-stone-900 dark:text-stone-100 relative hover:text-amber-600 transition-colors">
           <span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
           <%= turbo_frame_tag "cart-count" do %>
             <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-tertiary-fixed text-[10px] text-on-tertiary-fixed font-bold">
               <%= current_user ? (current_user.current_cart&.item_count || 0) : 0 %>
             </span>
           <% end %>
-        <% end %>
+        </button>
 
       <% else %>
         <%= link_to new_user_session_path, class: "scale-105 transition-transform text-stone-900 dark:text-stone-100 hover:text-amber-600 transition-colors" do %>
@@ -250,6 +283,9 @@
     </div>
   </div>
 </header>
+
+<!-- Cart Drawer (rendered once in layout, toggled by JS) -->
+<%= render "cart/drawer" %>
 
 <!-- Main Content -->
 <div class="flex-1">

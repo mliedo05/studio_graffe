@@ -1,0 +1,89 @@
+<main class="pt-20 min-h-screen flex">
+  <%= render "sidebar", categories: @categories, brands: @brands,
+        current_category: nil, current_brand: @brand %>
+
+  <!-- Main Content Area -->
+  <section class="flex-1 px-8 py-12 md:px-16 lg:px-24">
+    <div class="mb-12 border-b border-amber-200/50 pb-4">
+      <span class="font-label-caps text-label-caps text-on-secondary-container tracking-[0.3em] uppercase"><%= @brand %></span>
+    </div>
+
+    <% if @products.empty? %>
+      <div class="py-24 text-center flex flex-col items-center gap-6 border-2 border-dashed border-outline-variant/20 rounded-xl">
+        <span class="material-symbols-outlined text-stone-200 text-6xl">storefront</span>
+        <p class="font-h3 text-stone-400">No hay productos de esta marca</p>
+        <%= link_to "Ver todos los productos", shop_path,
+              class: "px-8 py-3 bg-primary text-on-primary rounded-full font-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
+      </div>
+    <% else %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+        <% @products.each do |product| %>
+          <article class="group" id="product-<%= product.id %>">
+            <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "block" do %>
+              <div class="aspect-square relative overflow-hidden bg-surface-container-low rounded-xl transition-transform duration-500 group-hover:scale-[1.01]">
+                <% if product.respond_to?(:image_url) && product.image_url.present? %>
+                  <img alt="<%= product.name %>" class="w-full h-full object-cover" src="<%= product.image_url %>"/>
+                <% else %>
+                  <div class="w-full h-full flex items-center justify-center bg-surface-container">
+                    <span class="material-symbols-outlined text-6xl text-stone-300">inventory_2</span>
+                  </div>
+                <% end %>
+                <% unless product.in_stock? %>
+                  <div class="absolute top-4 left-4">
+                    <span class="bg-stone-200 text-stone-500 px-3 py-1 font-label-caps text-[10px] tracking-widest uppercase">Sin stock</span>
+                  </div>
+                <% end %>
+              </div>
+              <div class="mt-6 space-y-1">
+                <p class="font-label-caps text-xs text-on-surface-variant uppercase tracking-widest"><%= product.product_category.name %></p>
+                <h3 class="font-h3 text-h3 text-on-surface"><%= product.name %></h3>
+                <p class="font-body-md text-on-secondary-container"><%= humanized_money_with_symbol(product.price) %></p>
+              </div>
+            <% end %>
+            <% if product.in_stock? %>
+              <div class="mt-4">
+                <%= render "cart_items/add_to_cart", product: product, cart_item: @cart_items_by_product[product.id] %>
+              </div>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+
+      <% if @pagy && @pagy.pages > 1 %>
+        <nav class="mt-24 flex justify-center items-center gap-12 font-serif text-sm tracking-[0.2em] uppercase">
+          <% if @pagy.prev %>
+            <%= link_to shop_brand_path(ShopService.brand_slug(@brand), page: @pagy.prev), class: "text-black flex items-center gap-2 hover:-translate-x-1 transition-transform" do %>
+              <span class="material-symbols-outlined text-base">chevron_left</span>
+              Anterior
+            <% end %>
+          <% else %>
+            <span class="text-stone-300 cursor-not-allowed flex items-center gap-2">
+              <span class="material-symbols-outlined text-base">chevron_left</span>
+              Anterior
+            </span>
+          <% end %>
+          <div class="flex gap-6">
+            <% (1..@pagy.pages).each do |page| %>
+              <% if page == @pagy.page %>
+                <span class="text-amber-600 border-b border-amber-600 px-1"><%= page %></span>
+              <% else %>
+                <%= link_to page, shop_brand_path(ShopService.brand_slug(@brand), page: page), class: "text-stone-400 hover:text-black transition-colors" %>
+              <% end %>
+            <% end %>
+          </div>
+          <% if @pagy.next %>
+            <%= link_to shop_brand_path(ShopService.brand_slug(@brand), page: @pagy.next), class: "text-black flex items-center gap-2 hover:translate-x-1 transition-transform" do %>
+              Siguiente
+              <span class="material-symbols-outlined text-base">chevron_right</span>
+            <% end %>
+          <% else %>
+            <span class="text-stone-300 cursor-not-allowed flex items-center gap-2">
+              Siguiente
+              <span class="material-symbols-outlined text-base">chevron_right</span>
+            </span>
+          <% end %>
+        </nav>
+      <% end %>
+    <% end %>
+  </section>
+</main>

@@ -1,0 +1,50 @@
+<% is_product = f.object.item_type == "product" %>
+<div class="item-row" style="border:1px solid <%= is_product ? "#dbeafe" : "#E5E5E0" %>; border-radius:8px; padding:14px; margin-bottom:10px; background:<%= is_product ? "#f0f9ff" : "#fafaf8" %>;">
+  <%= f.hidden_field :_destroy, class: "destroy-field" %>
+  <%= f.hidden_field :item_type %>
+  <%= f.hidden_field :description, class: "item-desc" %>
+
+  <% if is_product %>
+    <div style="font-size:10px; font-weight:700; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;">🛍️ Producto</div>
+  <% end %>
+
+  <div style="display:grid; grid-template-columns:2fr 1.5fr 80px 80px auto; gap:8px; align-items:end;">
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;"><%= is_product ? "Producto" : "Servicio" %></label>
+      <% if is_product %>
+        <%= f.select :product_id,
+              Product.active.in_stock.order(:name).map { |p| ["#{p.brand} — #{p.name}", p.id,
+                { data: { price: p.price_cents, commission: 10 } }] },
+              { include_blank: "Seleccionar..." },
+              class: "sv-select item-product-sel",
+              onchange: "onExistingItemChange(this)" %>
+      <% else %>
+        <%= f.select :service_id,
+              Service.active.ordered.map { |s| [s.name, s.id,
+                { data: { price: s.price_cents, commission: s.default_commission_percent } }] },
+              { include_blank: "Seleccionar..." },
+              class: "sv-select item-service-sel",
+              onchange: "onExistingItemChange(this)" %>
+      <% end %>
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Estilista</label>
+      <%= f.select :stylist_id,
+            User.stylists.map { |u| [u.full_name, u.id] },
+            { include_blank: "Seleccionar..." },
+            class: "sv-select",
+            onchange: "updateTotals()" %>
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Precio $</label>
+      <%= f.number_field :price_cents, class: "sv-input item-price", min: 0, oninput: "updateTotals()" %>
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Comisión %</label>
+      <%= f.number_field :commission_percent, class: "sv-input item-commission", min: 0, max: 100, oninput: "updateTotals()" %>
+    </div>
+    <button type="button" onclick="removeItem(this)"
+            style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; margin-bottom:2px;">×</button>
+  </div>
+  <div style="font-size:11px; color:<%= is_product ? "#1d4ed8" : "#C9A96E" %>; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
+</div>

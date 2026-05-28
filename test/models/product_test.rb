@@ -82,4 +82,78 @@ class ProductTest < ActiveSupport::TestCase
     assert_includes     Product.in_stock, products(:shampoo_wella)
     assert_not_includes Product.in_stock, products(:olaplex)
   end
+
+  # ── receive_stock! ────────────────────────────────────────────────
+
+  test "receive_stock! crea un lote con los datos correctos" do
+    product = products(:shampoo_wella)
+    entry = product.receive_stock!(
+      quantity:        10,
+      unit_cost_cents: 8500,
+      supplier:        "Distribuidora Test",
+      invoice_number:  "F-100",
+      received_at:     Time.current,
+      notes:           "Lote de prueba"
+    )
+    assert_equal 10,    entry.quantity_received
+    assert_equal 10,    entry.quantity_remaining
+    assert_equal 8500,  entry.unit_cost_cents
+    assert_equal "Distribuidora Test", entry.supplier
+    assert_equal "F-100",             entry.invoice_number
+    assert_equal "Lote de prueba",    entry.notes
+  end
+
+  test "receive_stock! incrementa stock_quantity del producto" do
+    product    = products(:shampoo_wella)
+    prev_stock = product.stock_quantity
+    product.receive_stock!(quantity: 7, unit_cost_cents: 9000,
+                           supplier: "S", invoice_number: "F-X")
+    assert_equal prev_stock + 7, product.reload.stock_quantity
+  end
+
+  test "receive_stock! es atómico: revierte si falla" do
+    product = products(:shampoo_wella)
+    prev_stock = product.stock_quantity
+    assert_raises(ActiveRecord::RecordInvalid) do
+      product.receive_stock!(quantity: 5, unit_cost_cents: 0,  # costo 0 falla validación
+                             supplier: "S", invoice_number: "F-X")
+    end
+    assert_equal prev_stock, product.reload.stock_quantity
+  end
+
+  # ── weighted_average_cost ─────────────────────────────────────────
+
+  test "weighted_average_cost es 0 cuando no hay lotes disponibles" do
+    product = products(:shampoo_wella)
+    product.inventory_entries.destroy_all
+    assert_equal 0, product.weighted_average_cost.fractional
+  end
+
+  test "weighted_average_cost pondera correctamente dos lotes" do
+    product = products(:shampoo_wella)
+    product.inventory_entries.destroy_all
+    # Lote A: 4 uds × $10.000 = $40.000
+    # Lote B: 6 uds × $12.000 = $72.000
+    # Promedio ponderado: $112.000 / 10 = $11.200
+    product.inventory_entries.create!(quantity_received: 4, quantity_remaining: 4,
+                                      unit_cost_cents: 10000, supplier: "S",
+                                      invoice_number: "A", received_at: 2.days.ago)
+    product.inventory_entries.create!(quantity_received: 6, quantity_remaining: 6,
+                                      unit_cost_cents: 12000, supplier: "S",
+                                      invoice_number: "B", received_at: 1.day.ago)
+    assert_equal 11200, product.weighted_average_cost.fractional
+  end
+
+  test "weighted_average_cost ignora lotes agotados" do
+    product = products(:shampoo_wella)
+    product.inventory_entries.destroy_all
+    # Lote agotado a $5.000 no debe influir
+    product.inventory_entries.create!(quantity_received: 10, quantity_remaining: 0,
+                                      unit_cost_cents: 5000, supplier: "S",
+                                      invoice_number: "OLD", received_at: 1.month.ago)
+    product.inventory_entries.create!(quantity_received: 5, quantity_remaining: 5,
+                                      unit_cost_cents: 9000, supplier: "S",
+                                      invoice_number: "NEW", received_at: 1.day.ago)
+    assert_equal 9000, product.weighted_average_cost.fractional
+  end
 end

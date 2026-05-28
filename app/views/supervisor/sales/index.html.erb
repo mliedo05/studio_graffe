@@ -1,0 +1,59 @@
+<% content_for :page_title, "Ventas" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <h1 style="font-size:20px; font-weight:700;">Ventas de productos</h1>
+  <div class="period-tabs">
+    <%= link_to "Hoy",    supervisor_sales_path(period: "today"),  class: "period-tab #{current_period == "today"  ? "active" : ""}" %>
+    <%= link_to "Semana", supervisor_sales_path(period: "week"),   class: "period-tab #{current_period == "week"   ? "active" : ""}" %>
+    <%= link_to "Mes",    supervisor_sales_path(period: "month"),  class: "period-tab #{current_period == "month"  ? "active" : ""}" %>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+
+  <!-- Ventas en atenciones -->
+  <div class="sv-table-wrap">
+    <div class="sv-table-head"><h3>✂️ Vendidos en atenciones</h3></div>
+    <table class="sv-table">
+      <thead><tr><th>Producto</th><th>Marca</th><th>Unidades</th><th>Total</th></tr></thead>
+      <tbody>
+        <% @product_totals.each do |r| %>
+          <tr>
+            <td style="font-weight:500;"><%= r.product_name %></td>
+            <td style="color:#9ca3af;"><%= r.product_brand %></td>
+            <td style="font-weight:600; color:#1d4ed8;"><%= r.units_sold %></td>
+            <td style="font-weight:600;"><%= number_to_currency(r.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
+          </tr>
+        <% end %>
+        <% if @product_totals.empty? %>
+          <tr><td colspan="4" style="text-align:center; color:#9ca3af; padding:24px;">Sin ventas en atenciones</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Ventas online -->
+  <div class="sv-table-wrap">
+    <div class="sv-table-head" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>🛍️ Tienda online</h3>
+      <strong><%= number_to_currency(@online_total , unit: "$", delimiter: ".", precision: 0) %></strong>
+    </div>
+    <table class="sv-table">
+      <thead><tr><th>N° Orden</th><th>Cliente</th><th>Total</th><th>Fecha</th></tr></thead>
+      <tbody>
+        <% @online_orders.includes(:user).order(created_at: :desc).limit(20).each do |o| %>
+          <tr>
+            <td><code style="font-size:12px;"><%= o.number %></code></td>
+            <td><%= o.user.full_name %></td>
+            <td style="font-weight:600;"><%= number_to_currency(o.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="color:#9ca3af;"><%= o.created_at.strftime("%d/%m/%Y") %></td>
+          </tr>
+        <% end %>
+        <% if @online_orders.empty? %>
+          <tr><td colspan="4" style="text-align:center; color:#9ca3af; padding:24px;">Sin órdenes online</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+</div>

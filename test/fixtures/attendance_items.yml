@@ -1,0 +1,43 @@
+# Item servicio en atencion_cerrada: $119.000 c/IVA → neto $100.000, comisión 40% = $40.000
+item_servicio:
+  attendance: atencion_cerrada
+  stylist: valentina
+  service: corte_damas
+  item_type: service
+  description: "Corte Damas"
+  price_cents: 119000
+  commission_percent: 40
+  commission_cents: 40000
+
+# Item producto en atencion_cerrada
+item_producto:
+  attendance: atencion_cerrada
+  stylist: valentina
+  product: shampoo_wella
+  item_type: product
+  description: "Wella — Shampoo Elements Renewing"
+  price_cents: 18990
+  commission_percent: 10
+  commission_cents: 1596
+
+# Item en atencion_pendiente: $59.500 → neto $50.000, comisión 40% = $20.000
+item_pendiente:
+  attendance: atencion_pendiente
+  stylist: camila
+  service: tinte_completo
+  item_type: service
+  description: "Tinte Completo"
+  price_cents: 59500
+  commission_percent: 40
+  commission_cents: 20000
+
+# Item en atencion_este_mes
+item_este_mes:
+  attendance: atencion_este_mes
+  stylist: valentina
+  service: manicure
+  item_type: service
+  description: "Manicure Básico"
+  price_cents: 23800
+  commission_percent: 35
+  commission_cents: 7000

@@ -2,7 +2,8 @@ class Product < ApplicationRecord
   monetize :price_cents
 
   belongs_to :product_category
-  has_many :order_items, dependent: :restrict_with_error
+  has_many :order_items,       dependent: :restrict_with_error
+  has_many :inventory_entries, dependent: :destroy
   has_one_attached :image
 
   validates :name, :brand, :slug, presence: true
@@ -20,6 +21,33 @@ class Product < ApplicationRecord
 
   def in_stock?
     stock_quantity > 0
+  end
+
+  # Carga mercadería: crea el lote y actualiza stock visible
+  def receive_stock!(quantity:, unit_cost_cents:, supplier:, invoice_number:, received_at: Time.current, notes: nil)
+    transaction do
+      entry = inventory_entries.create!(
+        quantity_received:  quantity,
+        quantity_remaining: quantity,
+        unit_cost_cents:    unit_cost_cents,
+        supplier:           supplier,
+        invoice_number:     invoice_number,
+        received_at:        received_at,
+        notes:              notes
+      )
+      increment!(:stock_quantity, quantity)
+      entry
+    end
+  end
+
+  # Costo promedio ponderado de los lotes disponibles (para referencia)
+  def weighted_average_cost
+    entries = inventory_entries.available
+    total_units = entries.sum(:quantity_remaining)
+    return Money.new(0, "CLP") if total_units == 0
+
+    total_cost = entries.sum("quantity_remaining * unit_cost_cents")
+    Money.new(total_cost / total_units, "CLP")
   end
 
   private

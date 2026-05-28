@@ -1,25 +1,6 @@
 <main class="pt-20 min-h-screen flex">
-  <!-- SideNavBar -->
-  <aside class="hidden md:flex flex-col py-8 px-4 h-screen sticky top-20 w-64 border-r border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950">
-    <div class="mb-10 px-4">
-      <h2 class="text-lg font-bold text-black dark:text-white font-serif mb-1">Categorías</h2>
-      <p class="text-[10px] uppercase tracking-widest text-stone-400">Filtrar productos</p>
-    </div>
-    <nav class="space-y-1">
-      <%= link_to shop_path,
-            class: "flex items-center gap-3 py-3 px-4 transition-all duration-200 ease-in-out font-serif text-sm uppercase tracking-widest #{params[:category_slug].nil? ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-50/50 dark:bg-amber-950/20' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900'}" do %>
-        <span class="material-symbols-outlined text-lg">category</span>
-        Todos
-      <% end %>
-      <% @categories.each do |category| %>
-        <%= link_to shop_category_path(category.slug),
-              class: "flex items-center gap-3 py-3 px-4 transition-all duration-200 ease-in-out font-serif text-sm uppercase tracking-widest #{params[:category_slug] == category.slug ? 'text-amber-600 dark:text-amber-400 font-bold bg-amber-50/50 dark:bg-amber-950/20' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900'}" do %>
-          <span class="material-symbols-outlined text-lg">label</span>
-          <%= category.name %>
-        <% end %>
-      <% end %>
-    </nav>
-  </aside>
+  <%= render "sidebar", categories: @categories, brands: @brands,
+        current_category: nil, current_brand: nil %>
 
   <!-- Main Content Area -->
   <section class="flex-1 px-8 py-12 md:px-16 lg:px-24">
@@ -73,12 +54,7 @@
 
             <% if product.in_stock? %>
               <div class="mt-4">
-                <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true } do |f| %>
-                  <%= f.hidden_field :product_id, value: product.id %>
-                  <%= f.hidden_field :quantity, value: 1 %>
-                  <%= f.submit "Agregar al carrito",
-                        class: "w-full py-3 bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps uppercase tracking-[0.2em] rounded-lg hover:bg-tertiary-fixed-dim transition-all duration-300 cursor-pointer" %>
-                <% end %>
+                <%= render "cart_items/add_to_cart", product: product, cart_item: @cart_items_by_product[product.id] %>
               </div>
             <% end %>
           </article>

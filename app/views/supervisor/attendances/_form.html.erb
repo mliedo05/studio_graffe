@@ -1,0 +1,609 @@
+<%# Clases mínimas que necesita phone_country_controller (Tailwind no carga en este layout) %>
+<style>
+  .hidden { display: none !important; }
+
+  /* Botones de país generados dinámicamente por renderList() en phone_country_controller.js */
+  [data-phone-country-target="list"] button {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 8px 14px !important;
+    text-align: left !important;
+    border: none !important;
+    background: #fff !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+  }
+  [data-phone-country-target="list"] button:hover,
+  [data-phone-country-target="list"] button.bg-stone-100,
+  [data-phone-country-target="list"] button.font-semibold {
+    background: #f5f5f4 !important;
+  }
+  [data-phone-country-target="list"] button .flex-1  { flex: 1; color: #1c1917; }
+  [data-phone-country-target="list"] button .shrink-0 { flex-shrink: 0; font-size: 11px; color: #a8a29e; }
+  [data-phone-country-target="list"] button .w-7     { width: 28px; flex-shrink: 0; font-size: 18px; }
+  [data-phone-country-target="list"] button .text-xl { font-size: 18px; }
+  [data-phone-country-target="list"] button .text-sm { font-size: 13px; }
+  [data-phone-country-target="list"] button .text-xs { font-size: 11px; }
+</style>
+
+<%# Datos para JS %>
+<script>
+  const SERVICES_DATA = <%= raw Service.active.ordered.map { |s|
+    { id: s.id, name: s.name, price_cents: s.price_cents, commission_percent: s.default_commission_percent }
+  }.to_json %>;
+
+  const PRODUCTS_DATA = <%= raw Product.active.in_stock.order(:name).map { |p|
+    { id: p.id, name: p.name, brand: p.brand, price_cents: p.price_cents, commission_percent: 10 }
+  }.to_json %>;
+
+  const STYLISTS_DATA = <%= raw User.stylists.map { |u|
+    { id: u.id, name: u.full_name, commission_percent: u.stylist_profile&.commission_percentage || 40 }
+  }.to_json %>;
+
+  const CREATE_CLIENT_URL = '<%= create_client_supervisor_attendances_path %>';
+  const CSRF_TOKEN = '<%= form_authenticity_token %>';
+</script>
+
+<!-- ── Modal: Crear cliente nuevo ─────────────────────────────── -->
+<div id="new-client-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:12px; padding:28px; width:440px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">👤 Crear nueva clienta</h3>
+    <p style="font-size:12px; color:#9ca3af; margin-bottom:20px;">
+      Se creará una cuenta. Si luego se registra con el mismo email,
+      quedará automáticamente vinculada a su historial.
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+      <div>
+        <label class="sv-label">Nombre *</label>
+        <input type="text" id="nc-first-name" class="sv-input" placeholder="Ej: María">
+      </div>
+      <div>
+        <label class="sv-label">Apellido *</label>
+        <input type="text" id="nc-last-name" class="sv-input" placeholder="Ej: González">
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label class="sv-label">Email *</label>
+      <input type="email" id="nc-email" class="sv-input" placeholder="Ej: maria@gmail.com">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="sv-label">Teléfono</label>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <%# Selector de prefijo de país (reutiliza phone_country_controller) %>
+        <div style="position:relative; flex-shrink:0;"
+             data-controller="phone-country"
+             data-phone-country-selected-value="+56">
+          <input type="hidden" id="nc-phone-prefix" value="+56"
+                 data-phone-country-target="hidden">
+          <button type="button"
+                  data-action="click->phone-country#toggle"
+                  data-phone-country-target="trigger"
+                  style="display:flex; align-items:center; gap:4px; padding:6px 10px; background:#f3f4f6; border:1px solid #d1d5db; border-radius:6px; cursor:pointer; font-size:13px;">
+            <span data-phone-country-target="triggerFlag" style="font-size:16px; line-height:1;">🇨🇱</span>
+            <span data-phone-country-target="triggerCode" style="font-weight:600; color:#374151; font-variant-numeric:tabular-nums;">+56</span>
+            <span style="color:#9ca3af; font-size:11px;">▾</span>
+          </button>
+          <div data-phone-country-target="dropdown"
+               class="hidden"
+               style="position:absolute; left:0; top:calc(100% + 4px); z-index:1100; width:280px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.15); overflow:hidden;"
+               data-action="keydown->phone-country#onKeydown">
+            <div style="padding:10px 12px; border-bottom:1px solid #f3f4f6;">
+              <input type="text"
+                     data-phone-country-target="search"
+                     data-action="input->phone-country#filter"
+                     placeholder="Buscar país..."
+                     style="width:100%; border:1px solid #e5e7eb; border-radius:6px; padding:5px 10px; font-size:13px;">
+            </div>
+            <div data-phone-country-target="list"
+                 style="overflow-y:auto; max-height:200px; padding:4px 0;"></div>
+          </div>
+        </div>
+        <%# Número sin prefijo %>
+        <input type="tel" id="nc-phone" class="sv-input" placeholder="9 1234 5678"
+               style="flex:1; margin-bottom:0;">
+      </div>
+    </div>
+
+    <div id="nc-error" style="display:none; background:#fee2e2; color:#991b1b; padding:10px 12px; border-radius:6px; font-size:13px; margin-bottom:12px;"></div>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button type="button" onclick="closeClientModal()" class="btn btn-outline">Cancelar</button>
+      <button type="button" onclick="submitNewClient()" class="btn btn-primary" id="nc-submit">Crear cliente</button>
+    </div>
+  </div>
+</div>
+
+<%= form_with model: [:supervisor, attendance], html: { id: "attendance-form" } do |f| %>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+
+    <!-- Columna izquierda: datos básicos -->
+    <div>
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px; margin-bottom:20px;">
+        <h3 style="font-size:14px; font-weight:600; margin-bottom:16px;">📋 Datos de la atención</h3>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Fecha de atención</label>
+          <%= f.date_field :attended_on, class: "sv-input", required: true %>
+        </div>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Cliente</label>
+          <div style="display:flex; gap:8px;">
+            <div style="position:relative; flex:1;">
+              <input type="text" id="client-search" placeholder="Buscar por nombre o email..."
+                     class="sv-input" autocomplete="off"
+                     value="<%= attendance.client&.full_name %>">
+              <div id="client-suggestions" style="position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #d1d5db; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:100; display:none; max-height:200px; overflow-y:auto;"></div>
+            </div>
+            <button type="button" onclick="openClientModal()"
+                    class="btn btn-outline btn-sm" style="white-space:nowrap;" title="Crear clienta nueva">
+              + Nueva
+            </button>
+          </div>
+          <%= f.hidden_field :client_id, id: "client-id-field" %>
+
+          <!-- Badge de cliente seleccionado -->
+          <div id="selected-client-badge" style="display:<%= attendance.client_id.present? ? "flex" : "none" %>; align-items:center; gap:8px; margin-top:8px; padding:8px 12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; font-size:13px;">
+            <span style="color:#16a34a;">✓</span>
+            <span id="selected-client-name" style="font-weight:600;"><%= attendance.client&.full_name %></span>
+            <span id="selected-client-email" style="color:#9ca3af; font-size:12px;"><%= attendance.client&.email %></span>
+            <button type="button" onclick="clearClient()" style="margin-left:auto; background:none; border:none; color:#9ca3af; cursor:pointer; font-size:16px;">×</button>
+          </div>
+
+          <p style="font-size:11px; color:#9ca3af; margin-top:6px;">
+            Busca una clienta registrada o usa <strong>+ Nueva</strong> para crearla.
+          </p>
+        </div>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Notas</label>
+          <%= f.text_area :notes, class: "sv-textarea", placeholder: "Observaciones opcionales..." %>
+        </div>
+      </div>
+
+      <!-- Formas de pago -->
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:14px; font-weight:600;">💳 Formas de pago</h3>
+          <button type="button" onclick="addPayment()" class="btn btn-outline btn-sm">+ Agregar</button>
+        </div>
+
+        <div id="payments-container">
+          <%= f.fields_for :attendance_payments do |p| %>
+            <%= render "payment_fields", f: p %>
+          <% end %>
+        </div>
+
+        <div id="total-display" style="margin-top:12px; padding:14px; background:#f9fafb; border-radius:8px; font-size:13px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="color:#6b7280;">Total atención:</span>
+            <strong id="total-amount" style="font-size:20px; color:#1A1A1A;">$0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="color:#6b7280;">Pagado:</span>
+            <strong id="paid-amount" style="font-size:20px; color:#16a34a;">$0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #e5e7eb;">
+            <span style="color:#6b7280; font-weight:600;">Saldo pendiente:</span>
+            <strong id="balance-amount" style="font-size:20px; color:#dc2626;">$0</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: servicios/productos -->
+    <div>
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:14px; font-weight:600;">✂️ Servicios y productos</h3>
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="addItem('service')" class="btn btn-gold btn-sm">+ Servicio</button>
+            <button type="button" onclick="addItem('product')" class="btn btn-outline btn-sm">+ Producto</button>
+          </div>
+        </div>
+
+        <div id="items-container">
+          <%= f.fields_for :attendance_items do |i| %>
+            <%= render "item_fields", f: i %>
+          <% end %>
+        </div>
+
+        <div id="commission-summary" style="margin-top:12px; padding:12px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:13px; display:none;">
+          <p style="font-weight:600; margin-bottom:8px; color:#92400e;">💰 Resumen comisiones</p>
+          <div id="commission-by-stylist"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+    <%= link_to "Cancelar", supervisor_attendances_path, class: "btn btn-outline" %>
+    <%= f.submit attendance.new_record? ? "Registrar atención" : "Guardar cambios",
+          class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<script>
+// IIFE para evitar conflictos de const/let al re-ejecutar con Turbo.
+// Las funciones usadas en onclick se asignan a window para que sean globales.
+(function() {
+let itemIndex    = <%= attendance.attendance_items.size %>;
+let paymentIndex = <%= attendance.attendance_payments.size %>;
+
+// ── Utilidades de formato ─────────────────────────────────────────
+// En CLP no hay centavos: price_cents == pesos. NO dividir por 100.
+function formatCLP(pesos) {
+  return '$' + Math.round(pesos).toLocaleString('es-CL');
+}
+
+// Formatea un input numérico con separador de miles al perder el foco
+function attachThousandFormat(input) {
+  input.addEventListener('blur', () => {
+    const v = parseInt(input.value.replace(/\./g, '')) || 0;
+    input.value = v;
+  });
+}
+
+// ── Búsqueda de cliente ───────────────────────────────────────────
+const clientSearch        = document.getElementById('client-search');
+const clientSugg          = document.getElementById('client-suggestions');
+const clientIdField       = document.getElementById('client-id-field');
+const selectedBadge       = document.getElementById('selected-client-badge');
+const selectedClientName  = document.getElementById('selected-client-name');
+const selectedClientEmail = document.getElementById('selected-client-email');
+
+clientSearch.addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length < 2) { clientSugg.style.display = 'none'; return; }
+
+  fetch('<%= search_client_supervisor_attendances_path %>?q=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(data => {
+      clientSugg.innerHTML = '';
+      if (!data.length) { clientSugg.style.display = 'none'; return; }
+      data.forEach(u => {
+        const d = document.createElement('div');
+        d.style.cssText = 'padding:10px 14px; cursor:pointer; border-bottom:1px solid #f3f4f6; font-size:13px;';
+        d.innerHTML = '<strong>' + u.name + '</strong><br><span style="color:#9ca3af;">' + u.email + '</span>';
+        d.addEventListener('click', () => selectClient(u));
+        d.addEventListener('mouseenter', () => d.style.background = '#f9fafb');
+        d.addEventListener('mouseleave', () => d.style.background = '');
+        clientSugg.appendChild(d);
+      });
+      clientSugg.style.display = 'block';
+    });
+});
+
+document.addEventListener('click', e => {
+  if (!clientSearch.contains(e.target) && !clientSugg.contains(e.target))
+    clientSugg.style.display = 'none';
+});
+
+function selectClient(u) {
+  clientIdField.value        = u.id;
+  clientSearch.value         = '';
+  selectedClientName.textContent  = u.name;
+  selectedClientEmail.textContent = u.email;
+  selectedBadge.style.display = 'flex';
+  clientSugg.style.display   = 'none';
+}
+
+function clearClient() {
+  clientIdField.value = '';
+  selectedBadge.style.display = 'none';
+  clientSearch.value = '';
+  clientSearch.focus();
+}
+
+// ── Modal: Crear cliente nuevo ────────────────────────────────────
+function openClientModal() {
+  document.getElementById('new-client-modal').style.display = 'flex';
+  document.getElementById('nc-first-name').focus();
+}
+
+function closeClientModal() {
+  document.getElementById('new-client-modal').style.display = 'none';
+  document.getElementById('nc-error').style.display = 'none';
+  ['nc-first-name','nc-last-name','nc-email','nc-phone'].forEach(id => document.getElementById(id).value = '');
+  // Resetear prefijo a Chile
+  const prefixEl = document.getElementById('nc-phone-prefix');
+  if (prefixEl) prefixEl.value = '+56';
+}
+
+function submitNewClient() {
+  const firstName = document.getElementById('nc-first-name').value.trim();
+  const lastName  = document.getElementById('nc-last-name').value.trim();
+  const email     = document.getElementById('nc-email').value.trim();
+  const phonePrefix = document.getElementById('nc-phone-prefix').value.trim();
+  const phoneNumber = document.getElementById('nc-phone').value.trim();
+  const phone       = phoneNumber ? `${phonePrefix} ${phoneNumber}` : '';
+  const errDiv    = document.getElementById('nc-error');
+  const btn       = document.getElementById('nc-submit');
+
+  if (!firstName || !lastName || !email) {
+    errDiv.textContent = 'Nombre, apellido y email son obligatorios.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creando...';
+
+  fetch(CREATE_CLIENT_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRF-Token': CSRF_TOKEN
+    },
+    body: new URLSearchParams({ first_name: firstName, last_name: lastName, email, phone })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.errors) {
+      errDiv.textContent = data.errors.join(', ');
+      errDiv.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Crear cliente';
+      return;
+    }
+    const msg = data.existing
+      ? '✓ Clienta ya registrada — vinculada correctamente.'
+      : '✓ Clienta creada. Puede recuperar su contraseña con su email.';
+    selectClient(data);
+    closeClientModal();
+    // Pequeño toast de éxito
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed; top:20px; right:20px; background:#dcfce7; color:#166534; padding:12px 18px; border-radius:8px; font-size:13px; font-weight:600; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  })
+  .catch(() => {
+    errDiv.textContent = 'Error de conexión. Intenta nuevamente.';
+    errDiv.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Crear cliente';
+  });
+}
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeClientModal(); });
+
+// ── Agregar ítem ──────────────────────────────────────────────────
+function addItem(type) {
+  const container = document.getElementById('items-container');
+  const tmpl = type === 'service' ? buildServiceItem(itemIndex) : buildProductItem(itemIndex);
+  container.insertAdjacentHTML('beforeend', tmpl);
+  itemIndex++;
+  updateTotals();
+}
+
+function buildServiceItem(idx) {
+  const opts = SERVICES_DATA.map(s =>
+    `<option value="${s.id}" data-price="${s.price_cents}" data-commission="${s.commission_percent}">${s.name}</option>`
+  ).join('');
+  const stylistOpts = STYLISTS_DATA.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+
+  return `<div class="item-row" style="border:1px solid #E5E5E0; border-radius:8px; padding:14px; margin-bottom:10px; background:#fafaf8;">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][item_type]" value="service">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][description]" class="item-desc">
+    <div style="display:grid; grid-template-columns:2fr 1.5fr 90px 80px auto; gap:8px; align-items:end;">
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Servicio</label>
+        <select name="attendance[attendance_items_attributes][${idx}][service_id]" class="sv-select item-service-sel">
+          <option value="">Seleccionar...</option>${opts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Estilista</label>
+        <select name="attendance[attendance_items_attributes][${idx}][stylist_id]" class="sv-select" onchange="updateTotals()">
+          <option value="">Seleccionar...</option>${stylistOpts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Precio $</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][price_cents]" class="sv-input item-price" value="0" min="0" step="100" oninput="updateTotals()">
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Com. %</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="40" min="0" max="100" oninput="updateTotals()">
+      </div>
+      <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; align-self:end; margin-bottom:1px;">×</button>
+    </div>
+    <div style="font-size:12px; color:#C9A96E; font-weight:600; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
+  </div>`;
+}
+
+function buildProductItem(idx) {
+  const opts = PRODUCTS_DATA.map(p =>
+    `<option value="${p.id}" data-price="${p.price_cents}" data-commission="10">${p.brand} — ${p.name}</option>`
+  ).join('');
+  const stylistOpts = STYLISTS_DATA.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+
+  return `<div class="item-row" style="border:1px solid #dbeafe; border-radius:8px; padding:14px; margin-bottom:10px; background:#f0f9ff;">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][item_type]" value="product">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][description]" class="item-desc">
+    <div style="font-size:10px; font-weight:700; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;">🛍️ Producto</div>
+    <div style="display:grid; grid-template-columns:2fr 1.5fr 90px 80px auto; gap:8px; align-items:end;">
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Producto</label>
+        <select name="attendance[attendance_items_attributes][${idx}][product_id]" class="sv-select item-product-sel">
+          <option value="">Seleccionar...</option>${opts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Estilista</label>
+        <select name="attendance[attendance_items_attributes][${idx}][stylist_id]" class="sv-select" onchange="updateTotals()">
+          <option value="">Seleccionar...</option>${stylistOpts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Precio $</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][price_cents]" class="sv-input item-price" value="0" min="0" step="100" oninput="updateTotals()">
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Com. %</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="10" min="0" max="100" oninput="updateTotals()">
+      </div>
+      <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; align-self:end; margin-bottom:1px;">×</button>
+    </div>
+    <div style="font-size:12px; color:#1d4ed8; font-weight:600; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
+  </div>`;
+}
+
+// ── Event delegation: un solo listener en el contenedor ──────────
+// Captura cambios en cualquier select de servicio o producto,
+// sin importar si el row fue generado por Rails o por JS.
+document.getElementById('items-container').addEventListener('change', function(e) {
+  const sel = e.target;
+  if (sel.classList.contains('item-service-sel') || sel.classList.contains('item-product-sel')) {
+    applyItemChange(sel);
+  }
+  updateTotals();
+});
+
+function applyItemChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const row = sel.closest('.item-row');
+  if (!row || !opt) return;
+  if (opt.dataset.price !== undefined && opt.dataset.price !== '')
+    row.querySelector('.item-price').value = opt.dataset.price;
+  if (opt.dataset.commission !== undefined && opt.dataset.commission !== '')
+    row.querySelector('.item-commission').value = opt.dataset.commission;
+  const desc = row.querySelector('.item-desc');
+  if (desc && opt.value) desc.value = opt.text;
+}
+
+// Mantener por compatibilidad con el partial _item_fields.html.erb (onExistingItemChange)
+function onExistingItemChange(sel) { applyItemChange(sel); updateTotals(); }
+
+
+function removeItem(btn) {
+  const row = btn.closest('.item-row');
+  const destroyField = row.querySelector('input[name*="_destroy"]');
+  if (destroyField) { destroyField.value = '1'; row.style.display = 'none'; }
+  else row.remove();
+  updateTotals();
+}
+
+// ── Agregar pago ──────────────────────────────────────────────────
+function addPayment() {
+  const container = document.getElementById('payments-container');
+  container.insertAdjacentHTML('beforeend', buildPaymentRow(paymentIndex));
+  paymentIndex++;
+  updateTotals();
+}
+
+function buildPaymentRow(idx) {
+  return `<div class="payment-row" style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:end; margin-bottom:8px;">
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Método</label>
+      <select name="attendance[attendance_payments_attributes][${idx}][payment_method]" class="sv-select">
+        <option value="cash">💵 Efectivo</option>
+        <option value="transfer">🏦 Transferencia</option>
+        <option value="card">💳 Tarjeta</option>
+        <option value="other">📌 Otro</option>
+        <option value="pending">⏳ Pendiente de pago</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Monto $</label>
+      <input type="number" name="attendance[attendance_payments_attributes][${idx}][amount_cents]" class="sv-input payment-amount" value="0" min="0" step="1000" oninput="updateTotals()">
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Nota</label>
+      <input type="text" name="attendance[attendance_payments_attributes][${idx}][note]" class="sv-input" placeholder="Ej: abono, saldo">
+    </div>
+    <button type="button" onclick="removePayment(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; align-self:end; margin-bottom:1px;">×</button>
+  </div>`;
+}
+
+function removePayment(btn) {
+  const row = btn.closest('.payment-row');
+  const destroyField = row.querySelector('input[name*="_destroy"]');
+  if (destroyField) { destroyField.value = '1'; row.style.display = 'none'; }
+  else row.remove();
+  updateTotals();
+}
+
+// ── Cálculo de totales ────────────────────────────────────────────
+// NOTA: price_cents en CLP = pesos directos (CLP no tiene subunidad)
+function updateTotals() {
+  let total = 0;
+  const commissionByStylist = {};
+
+  document.querySelectorAll('.item-row').forEach(row => {
+    if (row.style.display === 'none') return;
+    const priceInput  = row.querySelector('.item-price');
+    const commInput   = row.querySelector('.item-commission');
+    if (!priceInput || !commInput) return;
+
+    const price      = parseInt(priceInput.value) || 0;
+    const commPct    = parseFloat(commInput.value) || 0;
+    const commission = Math.round(price * commPct / 100);
+
+    const stylistSel  = row.querySelector('select[name*="stylist_id"]');
+    const stylistName = stylistSel?.options[stylistSel.selectedIndex]?.text || 'Sin asignar';
+
+    total += price;
+    commissionByStylist[stylistName] = (commissionByStylist[stylistName] || 0) + commission;
+
+    const disp = row.querySelector('.item-commission-display');
+    if (disp) disp.textContent = 'Comisión: ' + formatCLP(commission);
+  });
+
+  let paid = 0;
+  document.querySelectorAll('.payment-amount').forEach(inp => {
+    const row = inp.closest('.payment-row');
+    if (row && row.style.display === 'none') return;
+    paid += parseInt(inp.value) || 0;
+  });
+
+  const balance = total - paid;
+
+  document.getElementById('total-amount').textContent   = formatCLP(total);
+  document.getElementById('paid-amount').textContent    = formatCLP(paid);
+  document.getElementById('balance-amount').textContent = formatCLP(balance);
+  document.getElementById('balance-amount').style.color = balance > 0 ? '#dc2626' : '#16a34a';
+
+  // Resumen comisiones por estilista
+  const summary = document.getElementById('commission-summary');
+  const detail  = document.getElementById('commission-by-stylist');
+  const entries = Object.entries(commissionByStylist).filter(([, v]) => v > 0);
+  if (entries.length) {
+    summary.style.display = 'block';
+    detail.innerHTML = entries.map(([name, amt]) =>
+      `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #fde68a;">
+        <span>${name}</span>
+        <strong style="color:#92400e;">${formatCLP(amt)}</strong>
+      </div>`
+    ).join('');
+  } else {
+    summary.style.display = 'none';
+  }
+}
+
+updateTotals();
+
+// Exponer al scope global las funciones llamadas desde onclick en el HTML
+window.openClientModal      = openClientModal;
+window.closeClientModal     = closeClientModal;
+window.submitNewClient      = submitNewClient;
+window.selectClient         = selectClient;
+window.clearClient          = clearClient;
+window.addItem              = addItem;
+window.removeItem           = removeItem;
+window.addPayment           = addPayment;
+window.removePayment        = removePayment;
+window.updateTotals         = updateTotals;
+window.onExistingItemChange = onExistingItemChange; // usado en _item_fields.html.erb
+})();
+</script>

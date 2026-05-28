@@ -45,6 +45,8 @@ gem "image_processing", "~> 1.2"
 
 # Auth & Authorization
 gem "devise"
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
 gem "pundit"
 
 # Admin panel
@@ -77,10 +79,14 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+  # Preview emails in the browser instead of sending them
+  gem "letter_opener"
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  # Stub HTTP requests in tests
+  gem "webmock"
 end

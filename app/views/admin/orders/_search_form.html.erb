@@ -1,0 +1,84 @@
+<%# Sin <form> — está anidado dentro del form de batch actions de ActiveAdmin.
+    Usamos JS para construir la URL y navegar. %>
+
+<div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:end;"
+     id="orders-search-bar">
+
+  <%# Buscador libre %>
+  <div>
+    <label style="display:block; font-size:11px; color:#9ca3af; margin-bottom:4px; font-weight:600;">
+      Nº orden · Nombre · Email
+    </label>
+    <input id="oq-text" type="text"
+           value="<%= params.dig(:q, :search_text) %>"
+           placeholder="Ej: ORD-A1B2, Juan, juan@mail.com"
+           style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box;">
+  </div>
+
+  <%# Estado %>
+  <div>
+    <label style="display:block; font-size:11px; color:#9ca3af; margin-bottom:4px; font-weight:600;">Estado</label>
+    <select id="oq-status"
+            style="width:100%; padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; background:#fff; box-sizing:border-box;">
+      <option value="">Todos</option>
+      <option value="paid"      <%= "selected" if params.dig(:q, :status_eq) == "paid" %>>✅ Pagado</option>
+      <option value="checkout"  <%= "selected" if params.dig(:q, :status_eq) == "checkout" %>>⏳ En proceso</option>
+      <option value="cancelled" <%= "selected" if params.dig(:q, :status_eq) == "cancelled" %>>❌ Cancelado</option>
+      <option value="cart"      <%= "selected" if params.dig(:q, :status_eq) == "cart" %>>🛒 Carrito</option>
+      <option value="shipped"   <%= "selected" if params.dig(:q, :status_eq) == "shipped" %>>🚚 Enviado</option>
+      <option value="delivered" <%= "selected" if params.dig(:q, :status_eq) == "delivered" %>>🏠 Entregado</option>
+    </select>
+  </div>
+
+  <%# Desde %>
+  <div>
+    <label style="display:block; font-size:11px; color:#9ca3af; margin-bottom:4px; font-weight:600;">Desde</label>
+    <input id="oq-from" type="date"
+           value="<%= params.dig(:q, :created_at_gteq) %>"
+           style="width:100%; padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box;">
+  </div>
+
+  <%# Hasta %>
+  <div>
+    <label style="display:block; font-size:11px; color:#9ca3af; margin-bottom:4px; font-weight:600;">Hasta</label>
+    <input id="oq-to" type="date"
+           value="<%= params.dig(:q, :created_at_lteq) %>"
+           style="width:100%; padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; box-sizing:border-box;">
+  </div>
+
+  <%# Botones %>
+  <div style="display:flex; gap:6px; padding-bottom:1px;">
+    <button type="button" onclick="ordersSearch()"
+            style="padding:8px 18px; background:#4f46e5; color:#fff; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">
+      Buscar
+    </button>
+    <a href="<%= admin_orders_path %>"
+       style="padding:8px 14px; background:#f3f4f6; color:#374151; border-radius:6px; font-size:13px; font-weight:500; text-decoration:none; white-space:nowrap; display:inline-flex; align-items:center;">
+      Limpiar
+    </a>
+  </div>
+
+</div>
+
+<script>
+function ordersSearch() {
+  var params = new URLSearchParams();
+  var text   = document.getElementById('oq-text').value.trim();
+  var status = document.getElementById('oq-status').value;
+  var from   = document.getElementById('oq-from').value;
+  var to     = document.getElementById('oq-to').value;
+
+  if (text)   params.set('q[search_text]',      text);
+  if (status) params.set('q[status_eq]',         status);
+  if (from)   params.set('q[created_at_gteq]',   from);
+  if (to)     params.set('q[created_at_lteq]',   to);
+
+  var qs = params.toString();
+  window.location.href = '<%= admin_orders_path %>' + (qs ? '?' + qs : '');
+}
+
+// También buscar al presionar Enter en el campo de texto
+document.getElementById('oq-text').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') ordersSearch();
+});
+</script>

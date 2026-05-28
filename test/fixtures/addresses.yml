@@ -1,0 +1,25 @@
+casa_cliente:
+  user: cliente
+  label: "Casa"
+  recipient_name: "María González"
+  phone: "+56 9 1234 5678"
+  region: "Metropolitana"
+  comuna: "Providencia"
+  city: "Santiago"
+  street: "Av. Providencia"
+  street_number: "1234"
+  apartment: "4B"
+  default: true
+
+trabajo_cliente:
+  user: cliente
+  label: "Trabajo"
+  recipient_name: "María González"
+  phone: "+56 9 8765 4321"
+  region: "Metropolitana"
+  comuna: "Las Condes"
+  city: "Santiago"
+  street: "Av. Apoquindo"
+  street_number: "5555"
+  apartment: ""
+  default: false

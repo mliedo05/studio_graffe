@@ -137,6 +137,8 @@
       <%= link_to "➕ Nueva atención", new_supervisor_attendance_path %>
 
       <p class="sv-nav-section">Reportes</p>
+      <%= link_to "💵 Caja", supervisor_caja_path,
+            class: "#{controller_path == "supervisor/caja" ? "active" : ""}" %>
       <%= link_to "💰 Comisiones", supervisor_commissions_path,
             class: "#{controller_path == "supervisor/commissions" ? "active" : ""}" %>
       <%= link_to "🛍️ Ventas", supervisor_sales_path,

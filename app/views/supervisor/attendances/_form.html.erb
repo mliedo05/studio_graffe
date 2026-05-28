@@ -507,10 +507,11 @@ function buildPaymentRow(idx) {
     <div>
       <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Método</label>
       <select name="attendance[attendance_payments_attributes][${idx}][payment_method]" class="sv-select">
-        <option value="cash">Efectivo</option>
-        <option value="transfer">Transferencia</option>
-        <option value="card">Tarjeta</option>
-        <option value="other">Otro</option>
+        <option value="cash">💵 Efectivo</option>
+        <option value="transfer">🏦 Transferencia</option>
+        <option value="card">💳 Tarjeta</option>
+        <option value="other">📌 Otro</option>
+        <option value="pending">⏳ Pendiente de pago</option>
       </select>
     </div>
     <div>

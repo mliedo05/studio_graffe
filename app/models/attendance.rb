@@ -40,8 +40,21 @@ class Attendance < ApplicationRecord
   # ── Recalcula totales desde los ítems y pagos ────────────────────
   def recalculate!
     new_total = attendance_items.sum(:price_cents)
-    new_paid  = attendance_payments.sum(:amount_cents)
+    # Los pagos "pending" no cuentan como cobrado
+    new_paid  = attendance_payments.real.sum(:amount_cents)
     update_columns(total_cents: new_total, paid_cents: new_paid)
+  end
+
+  def pending_cents
+    balance_cents
+  end
+
+  def fully_paid?
+    balance_cents <= 0
+  end
+
+  def partially_paid?
+    paid_cents > 0 && balance_cents > 0
   end
 
   # ── Balance pendiente ─────────────────────────────────────────────

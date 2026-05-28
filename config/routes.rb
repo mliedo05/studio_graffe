@@ -68,9 +68,11 @@ Rails.application.routes.draw do
         post :create_client
       end
     end
-    get "/comisiones",          to: "commissions#index",   as: :commissions
-    get "/comisiones/exportar", to: "commissions#export",  as: :commissions_export
-    get "/ventas",              to: "sales#index",         as: :sales
+    get "/comisiones",           to: "commissions#index",        as: :commissions
+    get "/comisiones/exportar",  to: "commissions#export",       as: :commissions_export
+    get "/ventas",               to: "sales#index",              as: :sales
+    get  "/caja",                to: "caja#index",               as: :caja
+    post "/caja/registrar_pago", to: "caja#registrar_pago",      as: :caja_registrar_pago
   end
 
   # ── Panel Estilista ───────────────────────────────────────────────

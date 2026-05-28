@@ -28,6 +28,15 @@ module Supervisor
                                       .ordered
                                       .limit(10)
 
+      # Servicios más realizados (para gráfico)
+      @services_chart = AttendanceItem
+        .joins(:attendance, :service)
+        .where(item_type: "service", attendances: { attended_on: range })
+        .group("services.name")
+        .order(Arel.sql("COUNT(*) DESC"))
+        .limit(10)
+        .count
+
       # Stock crítico
       @critical_stock = Product.active.where("stock_quantity <= 3").order(:stock_quantity)
     end

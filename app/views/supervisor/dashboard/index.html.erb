@@ -77,6 +77,14 @@
   </div>
 </div>
 
+<!-- Gráfico servicios más realizados -->
+<% if @services_chart.any? %>
+  <div class="chart-wrap" style="margin-bottom:28px;">
+    <h3>✂️ Servicios más realizados</h3>
+    <canvas id="servicesChart" height="80"></canvas>
+  </div>
+<% end %>
+
 <!-- Últimas atenciones -->
 <div class="sv-table-wrap">
   <div class="sv-table-head" style="display:flex; justify-content:space-between; align-items:center;">
@@ -142,4 +150,30 @@ new Chart(document.getElementById('commissionChart'), {
   },
   options: { responsive: true, plugins: { legend: { position: 'right' } } }
 });
+
+<% if @services_chart.any? %>
+// Servicios más realizados
+new Chart(document.getElementById('servicesChart'), {
+  type: 'bar',
+  data: {
+    labels: <%= raw @services_chart.keys.to_json %>,
+    datasets: [{
+      label: 'Veces realizados',
+      data:   <%= raw @services_chart.values.to_json %>,
+      backgroundColor: '#1A1A1A',
+      borderRadius: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1, callback: v => v + (v === 1 ? ' vez' : ' veces') }
+      }
+    }
+  }
+});
+<% end %>
 </script>

@@ -48,7 +48,7 @@ module Supervisor
         .joins(:attendance, :service)
         .where(item_type: "service", attendances: { attended_on: range })
         .group("services.name")
-        .order("COUNT(*) DESC")
+        .order(Arel.sql("COUNT(*) DESC"))
         .limit(10)
         .count
     end

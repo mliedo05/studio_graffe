@@ -1,25 +1,31 @@
 <%# Clases mínimas que necesita phone_country_controller (Tailwind no carga en este layout) %>
 <style>
   .hidden { display: none !important; }
-  /* Items del dropdown generados por renderList() */
-  #new-client-modal [data-phone-country-target="list"] button {
-    width: 100%; display: flex; align-items: center; gap: 12px;
-    padding: 8px 14px; text-align: left; border: none; background: #fff;
-    cursor: pointer; transition: background 0.1s;
+
+  /* Botones de país generados dinámicamente por renderList() en phone_country_controller.js */
+  [data-phone-country-target="list"] button {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 8px 14px !important;
+    text-align: left !important;
+    border: none !important;
+    background: #fff !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
   }
-  #new-client-modal [data-phone-country-target="list"] button:hover,
-  #new-client-modal [data-phone-country-target="list"] button.bg-stone-100 {
-    background: #f5f5f4;
+  [data-phone-country-target="list"] button:hover,
+  [data-phone-country-target="list"] button.bg-stone-100,
+  [data-phone-country-target="list"] button.font-semibold {
+    background: #f5f5f4 !important;
   }
-  #new-client-modal [data-phone-country-target="list"] button .flex-1 {
-    flex: 1; font-size: 13px; color: #1c1917;
-  }
-  #new-client-modal [data-phone-country-target="list"] button .shrink-0 {
-    flex-shrink: 0; font-size: 11px; color: #a8a29e;
-  }
-  #new-client-modal [data-phone-country-target="list"] button .w-7 {
-    width: 28px; flex-shrink: 0;
-  }
+  [data-phone-country-target="list"] button .flex-1  { flex: 1; color: #1c1917; }
+  [data-phone-country-target="list"] button .shrink-0 { flex-shrink: 0; font-size: 11px; color: #a8a29e; }
+  [data-phone-country-target="list"] button .w-7     { width: 28px; flex-shrink: 0; font-size: 18px; }
+  [data-phone-country-target="list"] button .text-xl { font-size: 18px; }
+  [data-phone-country-target="list"] button .text-sm { font-size: 13px; }
+  [data-phone-country-target="list"] button .text-xs { font-size: 11px; }
 </style>
 
 <%# Datos para JS %>
@@ -67,7 +73,7 @@
       <label class="sv-label">Teléfono</label>
       <div style="display:flex; align-items:center; gap:8px;">
         <%# Selector de prefijo de país (reutiliza phone_country_controller) %>
-        <div class="relative shrink-0"
+        <div style="position:relative; flex-shrink:0;"
              data-controller="phone-country"
              data-phone-country-selected-value="+56">
           <input type="hidden" id="nc-phone-prefix" value="+56"

@@ -41,7 +41,16 @@ module Supervisor
       end
 
       # Datos para gráfico de barras
-      @chart_data = @commission_summary.map { |s| [ s[:name], s[:total_commission_cents] / 100.0 ] }.to_h
+      @chart_data = @commission_summary.map { |s| [ s[:name], s[:total_commission_cents] ] }.to_h
+
+      # Servicios más realizados en el período
+      @services_chart = AttendanceItem
+        .joins(:attendance, :service)
+        .where(item_type: "service", attendances: { attended_on: range })
+        .group("services.name")
+        .order("COUNT(*) DESC")
+        .limit(10)
+        .count
     end
   end
 end

@@ -10,6 +10,27 @@
   </div>
 </div>
 
+<% if current_period == "custom" %>
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px 20px; margin-bottom:24px; display:flex; gap:16px; align-items:flex-end;">
+    <div>
+      <label style="font-size:11px; font-weight:600; color:#9ca3af; display:block; margin-bottom:4px;">Desde</label>
+      <input type="date" id="from-date" value="<%= params[:from] %>" style="padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+    </div>
+    <div>
+      <label style="font-size:11px; font-weight:600; color:#9ca3af; display:block; margin-bottom:4px;">Hasta</label>
+      <input type="date" id="to-date" value="<%= params[:to] %>" style="padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+    </div>
+    <button onclick="applyCustomRange()" class="btn btn-gold btn-sm">Aplicar</button>
+  </div>
+  <script>
+    function applyCustomRange() {
+      var from = document.getElementById('from-date').value;
+      var to   = document.getElementById('to-date').value;
+      window.location.href = '<%= supervisor_commissions_path(period: "custom") %>&from=' + from + '&to=' + to;
+    }
+  </script>
+<% end %>
+
 <!-- Resumen global -->
 <div class="sv-cards" style="grid-template-columns: repeat(<%= [@commission_summary.size, 4].min %>, 1fr);">
   <% @commission_summary.each do |s| %>
@@ -51,6 +72,38 @@
         responsive: true,
         plugins: { legend: { display: false } },
         scales: { y: { ticks: { callback: v => '$' + v.toLocaleString('es-CL') } } }
+      }
+    });
+  </script>
+<% end %>
+
+<!-- Gráfico: servicios más realizados -->
+<% if @services_chart.any? %>
+  <div class="chart-wrap" style="margin-bottom:24px;">
+    <h3>✂️ Servicios más realizados en el período</h3>
+    <canvas id="servicesChart" height="80"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('servicesChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= raw @services_chart.keys.to_json %>,
+        datasets: [{
+          label: 'Veces realizados',
+          data:   <%= raw @services_chart.values.to_json %>,
+          backgroundColor: '#1A1A1A',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, callback: v => v + ' vez' + (v !== 1 ? 'es' : '') }
+          }
+        }
       }
     });
   </script>

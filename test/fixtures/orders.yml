@@ -15,30 +15,3 @@ orden_pagada:
   transaction_id: AUTH123456
   subtotal_cents: 18990
   total_cents: 18990
-  shipping_type: pickup
-  billing_first_name: María
-  billing_last_name: González
-  billing_email: maria@example.com
-  billing_phone: "+56 9 1234 5678"
-
-orden_pagada_delivery:
-  user: cliente
-  number: ORD-PAID02
-  status: paid
-  payment_status: paid
-  payment_method: webpay
-  transaction_id: AUTH654321
-  subtotal_cents: 33980
-  total_cents: 33980
-  shipping_type: delivery
-  billing_first_name: María
-  billing_last_name: González
-  billing_email: maria@example.com
-  billing_phone: "+56 9 1234 5678"
-  shipping_recipient_name: María González
-  shipping_street: Av. Providencia
-  shipping_street_number: "1234"
-  shipping_comuna: Providencia
-  shipping_region: Metropolitana
-  shipping_city: Santiago
-  shipping_phone: "+56 9 8765 4321"

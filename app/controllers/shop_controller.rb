@@ -11,34 +11,17 @@ class ShopController < ApplicationController
 
   def index
     data = ShopService.index_data(pagy_helper: method(:pagy))
-    @categories            = data[:categories]
-    @brands                = data[:brands]
-    @featured              = data[:featured]
-    @pagy                  = data[:pagy]
-    @products              = data[:products]
-    @cart_items_by_product = cart_items_by_product
+    @categories = data[:categories]
+    @featured   = data[:featured]
+    @pagy       = data[:pagy]
+    @products   = data[:products]
   end
 
   def category
     data = ShopService.category_data(slug: params[:category_slug], pagy_helper: method(:pagy))
-    @category              = data[:category]
-    @categories            = data[:categories]
-    @brands                = data[:brands]
-    @pagy                  = data[:pagy]
-    @products              = data[:products]
-    @cart_items_by_product = cart_items_by_product
-  end
-
-  def brand
-    data = ShopService.brand_data(brand_slug: params[:brand_slug], pagy_helper: method(:pagy))
-    @brand                 = data[:brand]
-    @categories            = data[:categories]
-    @brands                = data[:brands]
-    @pagy                  = data[:pagy]
-    @products              = data[:products]
-    @cart_items_by_product = cart_items_by_product
-  rescue ActiveRecord::RecordNotFound
-    redirect_to shop_path, alert: "Marca no encontrada."
+    @category = data[:category]
+    @pagy     = data[:pagy]
+    @products = data[:products]
   end
 
   def show
@@ -46,17 +29,8 @@ class ShopController < ApplicationController
       category_slug: params[:category_slug],
       product_slug:  params[:product_slug]
     )
-    @category  = data[:category]
-    @product   = data[:product]
-    @related   = data[:related]
-    @cart_item = cart_items_by_product[@product.id]
-  end
-
-  private
-
-  def cart_items_by_product
-    return {} unless user_signed_in?
-
-    CartService.cart_for(current_user).order_items.index_by(&:product_id)
+    @category = data[:category]
+    @product  = data[:product]
+    @related  = data[:related]
   end
 end

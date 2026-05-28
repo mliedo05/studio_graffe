@@ -1,7 +1,3 @@
-<%= turbo_stream.replace "cart-product-#{@product.id}" do %>
-  <%= render "cart_items/add_to_cart", product: @product, cart_item: nil %>
-<% end %>
-
 <% if @cart.order_items.empty? %>
   <%# Carrito quedó vacío — reemplazar todo el contenido con estado vacío %>
   <%= turbo_stream.replace "cart-content" do %>

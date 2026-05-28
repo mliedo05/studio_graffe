@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_172036) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,24 +56,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "addresses", force: :cascade do |t|
-    t.string "apartment"
-    t.string "city", null: false
-    t.string "comuna", null: false
-    t.datetime "created_at", null: false
-    t.boolean "default", default: false, null: false
-    t.string "label", default: "Mi dirección", null: false
-    t.string "phone", null: false
-    t.string "recipient_name", null: false
-    t.string "region", null: false
-    t.string "street", null: false
-    t.string "street_number", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["user_id", "default"], name: "index_addresses_on_user_id_and_default"
-    t.index ["user_id"], name: "index_addresses_on_user_id"
-  end
-
   create_table "appointments", force: :cascade do |t|
     t.bigint "client_id", null: false
     t.boolean "commission_paid", default: false, null: false
@@ -95,54 +77,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.index ["stylist_id"], name: "index_appointments_on_stylist_id"
   end
 
-  create_table "attendance_items", force: :cascade do |t|
-    t.bigint "attendance_id", null: false
-    t.integer "commission_cents", default: 0, null: false
-    t.integer "commission_percent", null: false
-    t.datetime "created_at", null: false
-    t.string "description", null: false
-    t.string "item_type", null: false
-    t.integer "price_cents", null: false
-    t.bigint "product_id"
-    t.bigint "service_id"
-    t.bigint "stylist_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["attendance_id"], name: "index_attendance_items_on_attendance_id"
-    t.index ["item_type"], name: "index_attendance_items_on_item_type"
-    t.index ["product_id"], name: "index_attendance_items_on_product_id"
-    t.index ["service_id"], name: "index_attendance_items_on_service_id"
-    t.index ["stylist_id"], name: "index_attendance_items_on_stylist_id"
-  end
-
-  create_table "attendance_payments", force: :cascade do |t|
-    t.integer "amount_cents", null: false
-    t.bigint "attendance_id", null: false
-    t.datetime "created_at", null: false
-    t.string "note"
-    t.string "payment_method", null: false
-    t.datetime "updated_at", null: false
-    t.index ["attendance_id"], name: "index_attendance_payments_on_attendance_id"
-  end
-
-  create_table "attendances", force: :cascade do |t|
-    t.date "attended_on", null: false
-    t.bigint "client_id"
-    t.string "client_name"
-    t.datetime "created_at", null: false
-    t.text "notes"
-    t.string "number", null: false
-    t.integer "paid_cents", default: 0, null: false
-    t.bigint "registered_by_id", null: false
-    t.string "status", default: "open", null: false
-    t.integer "total_cents", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["attended_on"], name: "index_attendances_on_attended_on"
-    t.index ["client_id"], name: "index_attendances_on_client_id"
-    t.index ["number"], name: "index_attendances_on_number", unique: true
-    t.index ["registered_by_id"], name: "index_attendances_on_registered_by_id"
-    t.index ["status"], name: "index_attendances_on_status"
-  end
-
   create_table "commissions", force: :cascade do |t|
     t.integer "amount_cents", default: 0, null: false
     t.bigint "appointment_id", null: false
@@ -157,29 +91,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.index ["stylist_id"], name: "index_commissions_on_stylist_id"
   end
 
-  create_table "inventory_entries", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "invoice_number", null: false
-    t.text "notes"
-    t.bigint "product_id", null: false
-    t.integer "quantity_received", null: false
-    t.integer "quantity_remaining", null: false
-    t.datetime "received_at", null: false
-    t.string "supplier", null: false
-    t.integer "unit_cost_cents", null: false
-    t.datetime "updated_at", null: false
-    t.index ["product_id", "received_at"], name: "index_inventory_entries_on_product_id_and_received_at"
-    t.index ["product_id"], name: "index_inventory_entries_on_product_id"
-  end
-
   create_table "order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "order_id", null: false
     t.bigint "product_id", null: false
     t.integer "quantity", default: 1, null: false
-    t.integer "total_cost_cents"
     t.integer "total_price_cents", default: 0, null: false
-    t.integer "unit_cost_cents"
     t.integer "unit_price_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["order_id"], name: "index_order_items_on_order_id"
@@ -187,26 +104,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
   end
 
   create_table "orders", force: :cascade do |t|
-    t.string "billing_document_number"
-    t.string "billing_document_type"
-    t.string "billing_email"
-    t.string "billing_first_name"
-    t.string "billing_last_name"
-    t.string "billing_phone"
     t.datetime "created_at", null: false
     t.string "number", null: false
     t.string "payment_method"
     t.string "payment_status", default: "pending", null: false
     t.string "payment_token"
-    t.string "shipping_apartment"
-    t.string "shipping_city"
-    t.string "shipping_comuna"
-    t.string "shipping_phone"
-    t.string "shipping_recipient_name"
-    t.string "shipping_region"
-    t.string "shipping_street"
-    t.string "shipping_street_number"
-    t.string "shipping_type", default: "pickup"
     t.string "status", default: "cart", null: false
     t.integer "subtotal_cents", default: 0, null: false
     t.integer "total_cents", default: 0, null: false
@@ -215,7 +117,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.bigint "user_id", null: false
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["payment_status"], name: "index_orders_on_payment_status"
-    t.index ["shipping_type"], name: "index_orders_on_shipping_type"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
@@ -255,7 +156,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.boolean "active", default: true, null: false
     t.string "category", null: false
     t.datetime "created_at", null: false
-    t.integer "default_commission_percent", default: 40, null: false
     t.text "description"
     t.integer "duration_minutes", default: 60, null: false
     t.string "name", null: false
@@ -301,43 +201,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.string "phone"
-    t.string "provider"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.string "role", default: "client", null: false
-    t.string "uid"
     t.datetime "updated_at", null: false
-    t.boolean "walk_in", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "addresses", "users"
   add_foreign_key "appointments", "services"
   add_foreign_key "appointments", "users", column: "client_id"
   add_foreign_key "appointments", "users", column: "stylist_id"
-  add_foreign_key "attendance_items", "attendances"
-  add_foreign_key "attendance_items", "products"
-  add_foreign_key "attendance_items", "services"
-  add_foreign_key "attendance_items", "users", column: "stylist_id"
-  add_foreign_key "attendance_payments", "attendances"
-  add_foreign_key "attendances", "users", column: "client_id"
-  add_foreign_key "attendances", "users", column: "registered_by_id"
   add_foreign_key "commissions", "appointments"
   add_foreign_key "commissions", "users", column: "stylist_id"
-  add_foreign_key "inventory_entries", "products"
   add_foreign_key "order_items", "orders"
   add_foreign_key "order_items", "products"
   add_foreign_key "orders", "users"

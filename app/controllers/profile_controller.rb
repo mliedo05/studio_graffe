@@ -2,8 +2,7 @@ class ProfileController < ApplicationController
   before_action :authenticate_user!
 
   def show
-    @user      = current_user
-    @addresses = current_user.addresses.order(default: :desc, created_at: :desc)
+    @user = current_user
     @upcoming_appointments = current_user.appointments_as_client.upcoming.active.includes(:service, :stylist).limit(5)
     @past_appointments     = current_user.appointments_as_client.past.includes(:service, :stylist).limit(10)
     @orders                = current_user.orders.where.not(status: "cart").order(created_at: :desc).includes(order_items: :product).limit(10)
@@ -15,13 +14,7 @@ class ProfileController < ApplicationController
 
   def update
     @user = current_user
-    updated = if @user.oauth_user?
-      @user.update(user_params.except(:current_password, :password, :password_confirmation))
-    else
-      @user.update_with_password(user_params)
-    end
-
-    if updated
+    if @user.update_with_password(user_params)
       bypass_sign_in(@user)
       redirect_to profile_path, notice: "Perfil actualizado correctamente."
     else

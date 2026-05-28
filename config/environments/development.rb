@@ -2,26 +2,6 @@ require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
-
-  if Rails.application.credentials.dig(:smtp, :resend_api_key).present?
-    # Resend configurado: envía el email real a tu correo para probar
-    config.action_mailer.delivery_method    = :smtp
-    config.action_mailer.perform_deliveries = true
-    config.action_mailer.smtp_settings = {
-      address:              "smtp.resend.com",
-      port:                 465,
-      ssl:                  true,
-      user_name:            "resend",
-      password:             Rails.application.credentials.dig(:smtp, :resend_api_key),
-      authentication:       :plain,
-      enable_starttls_auto: false,
-      openssl_verify_mode:  OpenSSL::SSL::VERIFY_NONE
-    }
-  else
-    # Sin key configurada: abre los emails en el browser (letter_opener)
-    config.action_mailer.delivery_method    = :letter_opener
-    config.action_mailer.perform_deliveries = true
-  end
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Make code changes take effect immediately without server restart.
@@ -53,7 +33,7 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.raise_delivery_errors = false
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false

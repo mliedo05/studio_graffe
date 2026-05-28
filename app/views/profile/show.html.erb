@@ -84,387 +84,54 @@
         <%= link_to "Ver tienda", shop_path, class: "mt-4 inline-block px-6 py-3 bg-primary text-on-primary rounded-full font-label-caps text-label-caps uppercase tracking-widest hover:scale-105 transition-transform" %>
       </div>
     <% else %>
-      <div class="space-y-3">
-        <% @orders.each do |order| %>
-          <%
-            status_style = case order.status
-              when 'paid', 'shipped', 'delivered' then 'bg-green-100 text-green-700'
-              when 'cancelled'                    then 'bg-red-100 text-red-600'
-              when 'checkout'                     then 'bg-amber-100 text-amber-700'
-              else                                     'bg-stone-100 text-stone-500'
-            end
-            status_label = case order.status
-              when 'paid'      then 'Pagado'
-              when 'shipped'   then 'Enviado'
-              when 'delivered' then 'Entregado'
-              when 'cancelled' then order.payment_status == 'failed' ? 'Pago rechazado' : 'Cancelado'
-              when 'checkout'  then 'En proceso'
-              else order.status
-            end
-          %>
-
-          <!-- Order row -->
-          <div class="flex items-center justify-between gap-4 px-5 py-4
-                      rounded-xl border border-outline-variant/30
-                      hover:bg-surface-container-low transition-colors">
-
-            <!-- Left: number + date -->
-            <div class="min-w-0">
-              <p class="font-medium text-sm text-on-surface truncate"><%= order.number %></p>
-              <p class="text-xs text-on-surface-variant mt-0.5"><%= order.created_at.strftime("%d/%m/%Y") %></p>
-            </div>
-
-            <!-- Center: product count pill -->
-            <div class="flex items-center gap-1.5 text-xs text-on-surface-variant shrink-0">
-              <span class="material-symbols-outlined text-base">inventory_2</span>
-              <%= pluralize(order.order_items.sum(:quantity), "producto") %>
-            </div>
-
-            <!-- Right: total + status + button -->
-            <div class="flex items-center gap-3 shrink-0">
-              <span class="font-semibold text-sm text-on-surface"><%= humanized_money_with_symbol(order.total) %></span>
-
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest <%= status_style %>">
-                <%= status_label %>
-              </span>
-
-              <!-- Button opens the <dialog> for this order -->
-              <button type="button"
-                      onclick="document.getElementById('order-modal-<%= order.id %>').showModal()"
-                      class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant
-                             text-xs font-medium text-on-surface-variant hover:bg-surface-container
-                             hover:text-on-surface transition-colors">
-                <span class="material-symbols-outlined text-[15px]">visibility</span>
-                Ver productos
-              </button>
-            </div>
-          </div>
-
-          <!-- ── Modal for this order (native <dialog>) ── -->
-          <dialog id="order-modal-<%= order.id %>"
-                  class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
-                  onclick="if(event.target===this)this.close()">
-
-            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
-              <div>
-                <h3 class="font-semibold text-base text-on-surface"><%= order.number %></h3>
-                <p class="text-xs text-stone-400 mt-0.5"><%= order.created_at.strftime("%d de %B, %Y") %></p>
-              </div>
-              <button onclick="this.closest('dialog').close()"
-                      class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
-                <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
-              </button>
-            </div>
-
-            <!-- Products list -->
-            <div class="px-6 py-4 space-y-4 max-h-72 overflow-y-auto">
-              <% order.order_items.includes(:product).each do |item| %>
-                <div class="flex items-center gap-4">
-                  <!-- Thumbnail -->
-                  <div class="w-14 h-14 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-200">
-                    <% if item.product.image.attached? %>
-                      <%= image_tag item.product.image, alt: item.product.name,
-                            class: "w-full h-full object-cover" %>
-                    <% else %>
-                      <div class="w-full h-full flex items-center justify-center">
-                        <span class="material-symbols-outlined text-stone-300 text-lg">inventory_2</span>
-                      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-outline-variant/20">
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Orden</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Fecha</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest">Productos</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-right">Total</th>
+              <th class="pb-4 font-label-caps text-[11px] text-on-surface-variant uppercase tracking-widest text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/10">
+            <% @orders.each do |order| %>
+              <tr class="group">
+                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.number %></td>
+                <td class="py-4 font-body-sm text-on-surface-variant"><%= order.created_at.strftime("%d/%m/%Y") %></td>
+                <td class="py-4">
+                  <div class="flex flex-wrap gap-1">
+                    <% order.order_items.each do |item| %>
+                      <span class="font-body-sm text-on-surface"><%= item.product.name %> ×<%= item.quantity %></span>
                     <% end %>
                   </div>
-
-                  <!-- Name + qty -->
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium truncate"><%= item.product.name %></p>
-                    <p class="text-xs text-stone-400 mt-0.5">
-                      Precio unitario: <%= humanized_money_with_symbol(item.unit_price) %>
-                    </p>
-                  </div>
-
-                  <!-- Quantity badge + subtotal -->
-                  <div class="text-right shrink-0">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-xs font-semibold text-stone-600">
-                      ×<%= item.quantity %>
-                    </span>
-                    <p class="text-xs font-medium text-on-surface mt-1">
-                      <%= humanized_money_with_symbol(item.total_price) %>
-                    </p>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- Footer: envío + pago + total -->
-            <div class="px-6 py-4 border-t border-stone-100 space-y-3">
-
-              <!-- Envío -->
-              <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-stone-300 text-base mt-0.5 shrink-0">
-                  <%= order.shipping_type == "delivery" ? "local_shipping" : "storefront" %>
-                </span>
-                <div class="flex-1 min-w-0">
-                  <p class="text-[10px] font-bold tracking-widest uppercase text-stone-400 mb-0.5">
-                    <%= order.shipping_type == "delivery" ? "Delivery" : "Retiro en tienda" %>
-                  </p>
-                  <% if order.shipping_type == "delivery" && order.shipping_street.present? %>
-                    <p class="text-xs text-stone-500 leading-relaxed">
-                      <%= [order.shipping_street, order.shipping_street_number, order.shipping_apartment].compact_blank.join(" ") %><% if order.shipping_comuna.present? %>,
-                      <%= order.shipping_comuna %><% end %><% if order.shipping_region.present? %>,
-                      <%= order.shipping_region %><% end %>
-                    </p>
-                  <% elsif order.shipping_type == "pickup" %>
-                    <p class="text-xs text-stone-400">Se retira directamente en el local</p>
-                  <% end %>
-                </div>
-              </div>
-
-              <!-- Método de pago -->
-              <% if order.payment_method.present? %>
-                <div class="flex items-center gap-3">
-                  <span class="material-symbols-outlined text-stone-300 text-base shrink-0">
-                    <%= order.payment_method == "efectivo" ? "payments" : "credit_card" %>
+                </td>
+                <td class="py-4 text-right font-body-md font-medium text-on-surface"><%= humanized_money_with_symbol(order.total) %></td>
+                <td class="py-4 text-center">
+                  <span class="px-3 py-1 rounded-full text-[11px] font-label-caps uppercase tracking-widest
+                    <%= case order.status
+                        when 'paid', 'shipped', 'delivered' then 'bg-green-100 text-green-700'
+                        when 'cancelled' then 'bg-red-100 text-red-600'
+                        else 'bg-stone-100 text-stone-500'
+                        end %>">
+                    <%= case order.status
+                        when 'paid'       then 'Pagado'
+                        when 'shipped'    then 'Enviado'
+                        when 'delivered'  then 'Entregado'
+                        when 'cancelled'  then 'Cancelado'
+                        when 'checkout'   then 'En proceso'
+                        else order.status
+                        end %>
                   </span>
-                  <div>
-                    <p class="text-[10px] font-bold tracking-widest uppercase text-stone-400 mb-0.5">Método de pago</p>
-                    <p class="text-xs text-stone-500">
-                      <%= order.payment_method == "webpay" ? "Webpay Plus (débito / crédito)" :
-                          order.payment_method == "efectivo" ? "Efectivo" :
-                          order.payment_method.humanize %>
-                    </p>
-                  </div>
-                </div>
-              <% end %>
-
-              <!-- Total + estado -->
-              <div class="flex items-center justify-between pt-2 border-t border-stone-100">
-                <div>
-                  <p class="text-xs text-stone-400 uppercase tracking-widest font-semibold">Total</p>
-                  <p class="text-lg font-bold text-on-surface mt-0.5"><%= humanized_money_with_symbol(order.total) %></p>
-                </div>
-                <span class="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest <%= status_style %>">
-                  <%= status_label %>
-                </span>
-              </div>
-
-            </div>
-
-          </dialog>
-
-        <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
     <% end %>
   </div>
-
-  <!-- Direcciones guardadas -->
-  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 p-8 mb-8">
-    <div class="flex items-center justify-between mb-6 pb-4 border-b border-outline-variant/20">
-      <h2 class="font-h2 text-h3 text-on-surface">Direcciones guardadas</h2>
-      <button type="button"
-              onclick="document.getElementById('new-address-modal').showModal()"
-              class="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-stone-700 transition-colors">
-        <span class="material-symbols-outlined text-sm">add</span>
-        Nueva
-      </button>
-    </div>
-
-    <% if @addresses.empty? %>
-      <div class="py-10 text-center">
-        <span class="material-symbols-outlined text-stone-300 text-5xl block mb-3">location_off</span>
-        <p class="text-sm text-stone-500">No tienes direcciones guardadas todavía.</p>
-        <p class="text-xs text-stone-400 mt-1">Las puedes agregar al finalizar una compra o desde aquí.</p>
-      </div>
-    <% else %>
-      <div class="space-y-3">
-        <% @addresses.each do |addr| %>
-          <div class="flex items-start gap-4 p-4 rounded-xl border border-stone-200 hover:bg-stone-50 transition-colors group">
-            <span class="material-symbols-outlined text-stone-400 mt-0.5 shrink-0">location_on</span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-0.5">
-                <span class="font-semibold text-sm text-stone-800"><%= addr.label %></span>
-                <% if addr.default? %>
-                  <span class="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full font-semibold uppercase tracking-wide">Predeterminada</span>
-                <% end %>
-              </div>
-              <p class="text-xs text-stone-500"><%= addr.recipient_name %> · <%= addr.phone %></p>
-              <p class="text-xs text-stone-400 mt-0.5 truncate">
-                <%= addr.street %> <%= addr.street_number %><%= addr.apartment.present? ? ", #{addr.apartment}" : "" %>,
-                <%= addr.comuna %>, <%= addr.region %>
-              </p>
-            </div>
-            <!-- Acciones -->
-            <div class="flex items-center gap-2 shrink-0">
-              <% unless addr.default? %>
-                <%= button_to set_default_address_path(addr), method: :patch,
-                      class: "px-3 py-1.5 text-xs text-stone-500 hover:text-stone-800 border border-stone-200 rounded-lg transition-colors" do %>
-                  Predeterminar
-                <% end %>
-              <% end %>
-              <button type="button"
-                      onclick="document.getElementById('edit-address-modal-<%= addr.id %>').showModal()"
-                      class="px-3 py-1.5 text-xs text-stone-500 hover:text-stone-800 border border-stone-200 rounded-lg transition-colors">
-                Editar
-              </button>
-              <%= button_to address_path(addr), method: :delete,
-                    data: { turbo_confirm: "¿Eliminar esta dirección?" },
-                    class: "px-3 py-1.5 text-xs text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 rounded-lg transition-colors" do %>
-                Eliminar
-              <% end %>
-            </div>
-          </div>
-
-          <!-- Modal editar dirección -->
-          <dialog id="edit-address-modal-<%= addr.id %>"
-                  class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
-                  onclick="if(event.target===this)this.close()">
-            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
-              <h3 class="font-semibold text-base">Editar dirección</h3>
-              <button onclick="this.closest('dialog').close()"
-                      class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
-                <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
-              </button>
-            </div>
-            <%= form_with url: address_path(addr), method: :patch, class: "px-6 py-5 space-y-4" do |af| %>
-              <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Nombre de la dirección</label>
-                  <input type="text" name="address[label]" value="<%= addr.label %>"
-                         placeholder="Ej: Casa, Trabajo" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Destinatario</label>
-                  <input type="text" name="address[recipient_name]" value="<%= addr.recipient_name %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
-                  <input type="text" name="address[phone]" value="<%= addr.phone %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Región</label>
-                  <select name="address[region]" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm cursor-pointer">
-                    <% Address::REGIONS.keys.each do |r| %>
-                      <option value="<%= r %>" <%= "selected" if addr.region == r %>><%= r %></option>
-                    <% end %>
-                  </select>
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Comuna</label>
-                  <input type="text" name="address[comuna]" value="<%= addr.comuna %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Ciudad</label>
-                  <input type="text" name="address[city]" value="<%= addr.city %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Calle</label>
-                  <input type="text" name="address[street]" value="<%= addr.street %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Número</label>
-                  <input type="text" name="address[street_number]" value="<%= addr.street_number %>"
-                         class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-                <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-                  <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Departamento / Piso (opcional)</label>
-                  <input type="text" name="address[apartment]" value="<%= addr.apartment %>"
-                         placeholder="Ej: Depto 4B" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-                </div>
-              </div>
-              <div class="flex gap-3 pt-2">
-                <button type="button" onclick="this.closest('dialog').close()"
-                        class="flex-1 py-3 border border-stone-200 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit"
-                        class="flex-[2] py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-700 transition-colors">
-                  Guardar cambios
-                </button>
-              </div>
-            <% end %>
-          </dialog>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- Modal nueva dirección -->
-  <dialog id="new-address-modal"
-          class="rounded-2xl shadow-2xl border-0 p-0 w-full max-w-lg backdrop:bg-black/40"
-          onclick="if(event.target===this)this.close()">
-    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-100">
-      <h3 class="font-semibold text-base">Nueva dirección</h3>
-      <button onclick="this.closest('dialog').close()"
-              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 transition-colors">
-        <span class="material-symbols-outlined text-[18px] text-stone-500">close</span>
-      </button>
-    </div>
-    <%= form_with url: addresses_path, method: :post, class: "px-6 py-5 space-y-4" do |af| %>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Nombre de la dirección</label>
-          <input type="text" name="address[label]" placeholder="Ej: Casa, Trabajo, Casa de mamá"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Destinatario</label>
-          <input type="text" name="address[recipient_name]" placeholder="Nombre de quien recibe"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Teléfono</label>
-          <input type="text" name="address[phone]" placeholder="+56 9 1234 5678"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Región</label>
-          <select name="address[region]" class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm cursor-pointer">
-            <option value="">— Región —</option>
-            <% Address::REGIONS.keys.each do |r| %>
-              <option value="<%= r %>"><%= r %></option>
-            <% end %>
-          </select>
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Comuna</label>
-          <input type="text" name="address[comuna]" placeholder="Ej: Providencia"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Ciudad</label>
-          <input type="text" name="address[city]" placeholder="Ej: Santiago"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Calle</label>
-          <input type="text" name="address[street]" placeholder="Ej: Av. Providencia"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Número</label>
-          <input type="text" name="address[street_number]" placeholder="Ej: 1234"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-        <div class="col-span-2 border-b border-stone-300 focus-within:border-stone-900 pb-1">
-          <label class="block text-[10px] font-semibold tracking-widest uppercase text-stone-400 mb-1">Departamento / Piso (opcional)</label>
-          <input type="text" name="address[apartment]" placeholder="Ej: Depto 4B"
-                 class="w-full bg-transparent border-none p-0 focus:ring-0 text-sm">
-        </div>
-      </div>
-      <div class="flex gap-3 pt-2">
-        <button type="button" onclick="this.closest('dialog').close()"
-                class="flex-1 py-3 border border-stone-200 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-50 transition-colors">
-          Cancelar
-        </button>
-        <button type="submit"
-                class="flex-[2] py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-700 transition-colors">
-          Guardar dirección
-        </button>
-      </div>
-    <% end %>
-  </dialog>
 
   <!-- Historial de citas pasadas -->
   <% if @past_appointments.any? %>

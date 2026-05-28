@@ -58,43 +58,15 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  # ⚠️  Cambia "studiograffe.cl" por tu dominio real en producción
-  config.action_mailer.default_url_options  = { host: ENV.fetch("APP_HOST", "studiograffe.cl") }
-  config.action_mailer.delivery_method      = :smtp
-  config.action_mailer.perform_deliveries   = true
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.default_url_options = { host: "example.com" }
 
-  # ── Opción A: Resend (recomendado — gratis hasta 3.000 emails/mes)
-  #    1. Crea cuenta en https://resend.com
-  #    2. Agrega tu dominio y verifica DNS
-  #    3. Genera una API key
-  #    4. Guarda la key: bin/rails credentials:edit
-  #       smtp:
-  #         resend_api_key: re_xxxxxxxxxx
-  config.action_mailer.smtp_settings = {
-    address:              "smtp.resend.com",
-    port:                 465,
-    ssl:                  true,
-    user_name:            "resend",
-    password:             Rails.application.credentials.dig(:smtp, :resend_api_key),
-    authentication:       :plain,
-    enable_starttls_auto: false
-  }
-
-  # ── Opción B: Gmail (para pruebas rápidas, no recomendado en producción)
-  #    1. Activa "Verificación en 2 pasos" en tu cuenta Google
-  #    2. Genera una "Contraseña de aplicación" en myaccount.google.com
-  #    3. bin/rails credentials:edit
-  #       smtp:
-  #         gmail_user:     tu@gmail.com
-  #         gmail_password: xxxx-xxxx-xxxx-xxxx
+  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
-  #   address:              "smtp.gmail.com",
-  #   port:                 587,
-  #   user_name:            Rails.application.credentials.dig(:smtp, :gmail_user),
-  #   password:             Rails.application.credentials.dig(:smtp, :gmail_password),
-  #   authentication:       :plain,
-  #   enable_starttls_auto: true
+  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
+  #   password: Rails.application.credentials.dig(:smtp, :password),
+  #   address: "smtp.example.com",
+  #   port: 587,
+  #   authentication: :plain
   # }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

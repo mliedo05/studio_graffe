@@ -7,32 +7,12 @@ class Order < ApplicationRecord
 
   STATUSES         = %w[cart checkout paid shipped delivered cancelled].freeze
   PAYMENT_STATUSES = %w[pending paid failed refunded].freeze
-  SHIPPING_TYPES   = %w[pickup delivery].freeze
-  DOCUMENT_TYPES   = %w[rut passport dni].freeze
 
   validates :number, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
   validates :payment_status, inclusion: { in: PAYMENT_STATUSES }
-  validates :shipping_type, inclusion: { in: SHIPPING_TYPES }, allow_nil: true
-  validates :billing_document_type, inclusion: { in: DOCUMENT_TYPES }, allow_nil: true
-
-  validates :billing_first_name, :billing_last_name, :billing_document_type,
-            :billing_document_number, :billing_email, :billing_phone,
-            presence: true, if: :checkout?
-
-  validates :shipping_region, :shipping_comuna, :shipping_city,
-            :shipping_street, :shipping_street_number,
-            :shipping_recipient_name, :shipping_phone,
-            presence: true, if: -> { checkout? && delivery? }
-
-  def pickup?   = shipping_type == "pickup"
-  def delivery? = shipping_type == "delivery"
-  def checkout?  = status == "checkout"
-  def paid?      = status == "paid"
-  def cancelled? = status == "cancelled"
 
   scope :completed, -> { where.not(status: %w[cart cancelled]) }
-  scope :visible,   -> { where.not(status: "cart") }
 
   def item_count
     order_items.sum(:quantity)
@@ -49,39 +29,6 @@ class Order < ApplicationRecord
     update!(status: "checkout")
   end
 
-  # Cancels a checkout-in-progress order after a failed payment.
-  # Creates a fresh cart for the user, copying all items so they don't lose their selection.
-  def cancel_failed_payment!
-    raise InvalidTransitionError, "Solo órdenes en checkout pueden cancelarse por pago fallido." unless status == "checkout"
-
-    # Load items BEFORE the update! call to avoid association cache issues
-    items_snapshot = order_items.to_a
-
-    transaction do
-      update!(status: "cancelled", payment_status: "failed")
-
-      # Re-use existing cart or create one — never create duplicates
-      cart = user.current_cart
-      items_snapshot.each do |item|
-        existing = cart.order_items.find_by(product_id: item.product_id)
-        if existing
-          existing.update!(
-            quantity:          existing.quantity + item.quantity,
-            total_price_cents: existing.unit_price_cents * (existing.quantity + item.quantity)
-          )
-        else
-          cart.order_items.create!(
-            product_id:        item.product_id,
-            quantity:          item.quantity,
-            unit_price_cents:  item.unit_price_cents,
-            total_price_cents: item.total_price_cents
-          )
-        end
-      end
-      cart.recalculate!
-    end
-  end
-
   def mark_paid!(transaction_id:, payment_method:)
     raise InvalidTransitionError, "Solo órdenes en checkout pueden marcarse como pagadas." unless status == "checkout"
 
@@ -93,7 +40,6 @@ class Order < ApplicationRecord
     )
     order_items.each do |item|
       item.product.decrement!(:stock_quantity, item.quantity)
-      consume_fifo!(item)
     end
   end
 
@@ -118,55 +64,7 @@ class Order < ApplicationRecord
     recalculate!
   end
 
-  class EmptyCartError         < StandardError; end
+  class EmptyCartError        < StandardError; end
   class InvalidTransitionError < StandardError; end
-  class OutOfStockError        < StandardError; end
-
-  private
-
-  # Consume inventory entries FIFO for one order item and records unit cost.
-  # If no inventory entries exist (e.g. legacy products), records cost as 0.
-  def consume_fifo!(item)
-    qty_needed   = item.quantity
-    total_cost   = 0
-
-    item.product.inventory_entries.available.each do |entry|
-      break if qty_needed == 0
-
-      consume = [ entry.quantity_remaining, qty_needed ].min
-      total_cost  += consume * entry.unit_cost_cents
-      qty_needed  -= consume
-      entry.update!(quantity_remaining: entry.quantity_remaining - consume)
-    end
-
-    # qty_needed > 0 means stock was sold without inventory entries (legacy)
-    unit_cost  = item.quantity > 0 ? total_cost / item.quantity : 0
-    item.update!(
-      unit_cost_cents:  unit_cost,
-      total_cost_cents: total_cost
-    )
-  end
-
-  # ── Búsqueda libre: número, nombre o email del cliente ───────────
-  scope :search_text, ->(q) {
-    return all if q.blank?
-    term = "%#{q.strip}%"
-    joins(:user).where(
-      "orders.number ILIKE :t OR users.first_name ILIKE :t OR users.last_name ILIKE :t OR users.email ILIKE :t",
-      t: term
-    )
-  }
-
-  # ── Ransack ───────────────────────────────────────────────────────
-  def self.ransackable_attributes(auth_object = nil)
-    %w[number status payment_status payment_method shipping_type total_cents created_at]
-  end
-
-  def self.ransackable_associations(auth_object = nil)
-    %w[user order_items]
-  end
-
-  def self.ransackable_scopes(auth_object = nil)
-    %i[search_text]
-  end
+  class OutOfStockError       < StandardError; end
 end

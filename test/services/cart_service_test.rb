@@ -68,13 +68,6 @@ class CartServiceTest < ActiveSupport::TestCase
   # ── checkout ──────────────────────────────────────────────────────
   test "checkout cambia el status a checkout" do
     CartService.add_item(user: @user, product_id: @product.id, quantity: 1)
-    # Añadir datos de facturación requeridos por las validaciones de checkout
-    @user.current_cart.update_columns(
-      billing_first_name: "Test", billing_last_name: "User",
-      billing_document_type: "rut", billing_document_number: "11.111.111-1",
-      billing_email: "test@example.com", billing_phone: "+56 9 0000 0000",
-      shipping_type: "pickup"
-    )
     cart = CartService.checkout(@user)
     assert_equal "checkout", cart.reload.status
   end

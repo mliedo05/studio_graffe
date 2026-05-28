@@ -28,14 +28,24 @@ module Supervisor
                                       .ordered
                                       .limit(10)
 
-      # Servicios más realizados (para gráfico)
-      @services_chart = AttendanceItem
+      # Una sola consulta agrupa por servicio → frecuencia + ingresos
+      services_raw = AttendanceItem
         .joins(:attendance, :service)
         .where(item_type: "service", attendances: { attended_on: range })
         .group("services.name")
-        .order(Arel.sql("COUNT(*) DESC"))
-        .limit(10)
-        .count
+        .select(
+          "services.name AS service_name",
+          "COUNT(*) AS times_done",
+          "SUM(attendance_items.price_cents) AS total_revenue"
+        )
+
+      @services_frequency = services_raw.sort_by { |r| -r.times_done.to_i }
+                                        .first(10)
+                                        .to_h { |r| [ r.service_name, r.times_done.to_i ] }
+
+      @services_revenue = services_raw.sort_by { |r| -r.total_revenue.to_i }
+                                      .first(10)
+                                      .to_h { |r| [ r.service_name, r.total_revenue.to_i ] }
 
       # Stock crítico
       @critical_stock = Product.active.where("stock_quantity <= 3").order(:stock_quantity)

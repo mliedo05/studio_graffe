@@ -77,11 +77,17 @@
   </div>
 </div>
 
-<!-- Gráfico servicios más realizados -->
-<% if @services_chart.any? %>
-  <div class="chart-wrap" style="margin-bottom:28px;">
-    <h3>✂️ Servicios más realizados</h3>
-    <canvas id="servicesChart" height="80"></canvas>
+<!-- Gráfico servicios: frecuencia + ingresos -->
+<% if @services_frequency.any? %>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
+    <div class="chart-wrap">
+      <h3>✂️ Servicios más realizados</h3>
+      <canvas id="servicesFreqChart"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h3>💰 Servicios que más ingresos generan</h3>
+      <canvas id="servicesRevChart"></canvas>
+    </div>
   </div>
 <% end %>
 
@@ -151,27 +157,35 @@ new Chart(document.getElementById('commissionChart'), {
   options: { responsive: true, plugins: { legend: { position: 'right' } } }
 });
 
-<% if @services_chart.any? %>
-// Servicios más realizados
-new Chart(document.getElementById('servicesChart'), {
-  type: 'bar',
+<% if @services_frequency.any? %>
+const PIE_COLORS = ['#C9A96E','#1A1A1A','#4f46e5','#16a34a','#dc2626','#d97706','#0891b2','#7c3aed','#be185d','#059669'];
+
+new Chart(document.getElementById('servicesFreqChart'), {
+  type: 'doughnut',
   data: {
-    labels: <%= raw @services_chart.keys.to_json %>,
-    datasets: [{
-      label: 'Veces realizados',
-      data:   <%= raw @services_chart.values.to_json %>,
-      backgroundColor: '#1A1A1A',
-      borderRadius: 6
-    }]
+    labels: <%= raw @services_frequency.keys.to_json %>,
+    datasets: [{ data: <%= raw @services_frequency.values.to_json %>, backgroundColor: PIE_COLORS }]
   },
   options: {
     responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { stepSize: 1, callback: v => v + (v === 1 ? ' vez' : ' veces') }
-      }
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} ${ctx.raw === 1 ? 'vez' : 'veces'}` } }
+    }
+  }
+});
+
+new Chart(document.getElementById('servicesRevChart'), {
+  type: 'doughnut',
+  data: {
+    labels: <%= raw @services_revenue.keys.to_json %>,
+    datasets: [{ data: <%= raw @services_revenue.values.to_json %>, backgroundColor: PIE_COLORS }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $${ctx.raw.toLocaleString('es-CL')}` } }
     }
   }
 });

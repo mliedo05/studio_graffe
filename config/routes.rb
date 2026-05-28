@@ -62,7 +62,10 @@ Rails.application.routes.draw do
     root to: "dashboard#index"
     resources :attendances, only: [ :index, :new, :create, :show, :edit, :update ] do
       member { patch :close }
-      collection { get :search_client }
+      collection do
+        get  :search_client
+        post :create_client
+      end
     end
     get "/comisiones",          to: "commissions#index",   as: :commissions
     get "/comisiones/exportar", to: "commissions#export",  as: :commissions_export

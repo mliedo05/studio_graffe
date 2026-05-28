@@ -49,13 +49,41 @@ module Supervisor
       redirect_to supervisor_attendance_path(@attendance), notice: "Atención cerrada."
     end
 
-    # GET /supervisor/atenciones/buscar_cliente?q=Juan
+    # GET /supervisor/atenciones/search_client?q=Juan
     def search_client
       query = params[:q].to_s.strip
       @users = User.clients
                    .where("first_name ILIKE :q OR last_name ILIKE :q OR email ILIKE :q", q: "%#{query}%")
                    .limit(10)
       render json: @users.map { |u| { id: u.id, name: u.full_name, email: u.email } }
+    end
+
+    # POST /supervisor/atenciones/create_client
+    # Crea un cliente nuevo desde el modal del formulario de atención.
+    # Si el email ya existe, retorna el usuario existente (para cuando
+    # el cliente ya tiene cuenta y quiere asociarse).
+    def create_client
+      existing = User.find_by(email: params[:email].to_s.strip.downcase)
+
+      if existing
+        render json: { id: existing.id, name: existing.full_name, email: existing.email, existing: true }
+        return
+      end
+
+      user = User.new(
+        first_name: params[:first_name],
+        last_name:  params[:last_name],
+        email:      params[:email].to_s.strip.downcase,
+        phone:      params[:phone],
+        role:       "client",
+        password:   SecureRandom.hex(12)   # contraseña temporal — puede resetearla luego
+      )
+
+      if user.save
+        render json: { id: user.id, name: user.full_name, email: user.email, existing: false }
+      else
+        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+      end
     end
 
     private

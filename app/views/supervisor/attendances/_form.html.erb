@@ -1,0 +1,341 @@
+<%# Datos para JS %>
+<script>
+  const SERVICES_DATA = <%= raw Service.active.ordered.map { |s|
+    { id: s.id, name: s.name, price_cents: s.price_cents, commission_percent: s.default_commission_percent }
+  }.to_json %>;
+
+  const PRODUCTS_DATA = <%= raw Product.active.in_stock.order(:name).map { |p|
+    { id: p.id, name: p.name, brand: p.brand, price_cents: p.price_cents, commission_percent: 10 }
+  }.to_json %>;
+
+  const STYLISTS_DATA = <%= raw User.stylists.map { |u|
+    { id: u.id, name: u.full_name, commission_percent: u.stylist_profile&.commission_percentage || 40 }
+  }.to_json %>;
+</script>
+
+<%= form_with model: [:supervisor, attendance], html: { id: "attendance-form" } do |f| %>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+
+    <!-- Columna izquierda: datos básicos -->
+    <div>
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px; margin-bottom:20px;">
+        <h3 style="font-size:14px; font-weight:600; margin-bottom:16px;">📋 Datos de la atención</h3>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Fecha de atención</label>
+          <%= f.date_field :attended_on, class: "sv-input", required: true %>
+        </div>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Cliente (registrado o nuevo)</label>
+          <div style="position:relative;">
+            <input type="text" id="client-search" placeholder="Buscar por nombre o email..."
+                   class="sv-input" autocomplete="off"
+                   value="<%= attendance.client&.full_name || attendance.client_name %>">
+            <div id="client-suggestions" style="position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #d1d5db; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:100; display:none; max-height:200px; overflow-y:auto;"></div>
+          </div>
+          <%= f.hidden_field :client_id, id: "client-id-field" %>
+          <div id="client-name-group" style="margin-top:8px; <%= attendance.client_id.present? ? "display:none;" : "" %>">
+            <%= f.text_field :client_name, class: "sv-input", placeholder: "Nombre de la clienta (walk-in)" %>
+            <p style="font-size:11px; color:#9ca3af; margin-top:4px;">Si no está registrada, escribe su nombre aquí.</p>
+          </div>
+        </div>
+
+        <div class="sv-form-group">
+          <label class="sv-label">Notas</label>
+          <%= f.text_area :notes, class: "sv-textarea", placeholder: "Observaciones opcionales..." %>
+        </div>
+      </div>
+
+      <!-- Formas de pago -->
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:14px; font-weight:600;">💳 Formas de pago</h3>
+          <button type="button" onclick="addPayment()" class="btn btn-outline btn-sm">+ Agregar</button>
+        </div>
+
+        <div id="payments-container">
+          <%= f.fields_for :attendance_payments do |p| %>
+            <%= render "payment_fields", f: p %>
+          <% end %>
+        </div>
+
+        <div id="total-display" style="margin-top:12px; padding:12px; background:#f9fafb; border-radius:6px; text-align:right; font-size:13px;">
+          <span style="color:#6b7280;">Total atención: </span>
+          <strong id="total-amount" style="font-size:18px;">$0</strong>
+          <span style="color:#6b7280; margin-left:12px;">Pagado: </span>
+          <strong id="paid-amount" style="color:#16a34a; font-size:18px;">$0</strong>
+          <span style="color:#6b7280; margin-left:12px;">Saldo: </span>
+          <strong id="balance-amount" style="color:#dc2626; font-size:18px;">$0</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: servicios/productos -->
+    <div>
+      <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:14px; font-weight:600;">✂️ Servicios y productos</h3>
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="addItem('service')" class="btn btn-gold btn-sm">+ Servicio</button>
+            <button type="button" onclick="addItem('product')" class="btn btn-outline btn-sm">+ Producto</button>
+          </div>
+        </div>
+
+        <div id="items-container">
+          <%= f.fields_for :attendance_items do |i| %>
+            <%= render "item_fields", f: i %>
+          <% end %>
+        </div>
+
+        <div id="commission-summary" style="margin-top:12px; padding:12px; background:#f9fafb; border-radius:6px; font-size:12px; display:none;">
+          <strong>Resumen comisiones:</strong>
+          <div id="commission-by-stylist" style="margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:24px;">
+    <%= link_to "Cancelar", supervisor_attendances_path, class: "btn btn-outline" %>
+    <%= f.submit attendance.new_record? ? "Registrar atención" : "Guardar cambios",
+          class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<script>
+let itemIndex = <%= attendance.attendance_items.size %>;
+let paymentIndex = <%= attendance.attendance_payments.size %>;
+
+// ── Búsqueda de cliente ───────────────────────────────────────────
+const clientSearch = document.getElementById('client-search');
+const clientSugg   = document.getElementById('client-suggestions');
+const clientIdField = document.getElementById('client-id-field');
+const clientNameGroup = document.getElementById('client-name-group');
+
+clientSearch.addEventListener('input', function() {
+  const q = this.value.trim();
+  clientIdField.value = '';
+  clientNameGroup.style.display = 'block';
+
+  if (q.length < 2) { clientSugg.style.display = 'none'; return; }
+
+  fetch('/supervisor/atenciones/search_client?q=' + encodeURIComponent(q))
+    .then(r => r.json())
+    .then(data => {
+      clientSugg.innerHTML = '';
+      if (!data.length) { clientSugg.style.display = 'none'; return; }
+      data.forEach(u => {
+        const d = document.createElement('div');
+        d.style.cssText = 'padding:10px 14px; cursor:pointer; border-bottom:1px solid #f3f4f6; font-size:13px;';
+        d.innerHTML = '<strong>' + u.name + '</strong><br><span style="color:#9ca3af;">' + u.email + '</span>';
+        d.addEventListener('click', () => {
+          clientIdField.value = u.id;
+          clientSearch.value  = u.name;
+          clientNameGroup.style.display = 'none';
+          clientSugg.style.display = 'none';
+        });
+        d.addEventListener('mouseenter', () => d.style.background = '#f9fafb');
+        d.addEventListener('mouseleave', () => d.style.background = '');
+        clientSugg.appendChild(d);
+      });
+      clientSugg.style.display = 'block';
+    });
+});
+document.addEventListener('click', e => { if (!clientSearch.contains(e.target)) clientSugg.style.display = 'none'; });
+
+// ── Agregar ítem ──────────────────────────────────────────────────
+function addItem(type) {
+  const container = document.getElementById('items-container');
+  const tmpl = type === 'service' ? buildServiceItem(itemIndex) : buildProductItem(itemIndex);
+  container.insertAdjacentHTML('beforeend', tmpl);
+  itemIndex++;
+  updateTotals();
+}
+
+function buildServiceItem(idx) {
+  const opts = SERVICES_DATA.map(s =>
+    `<option value="${s.id}" data-price="${s.price_cents}" data-commission="${s.commission_percent}">${s.name}</option>`
+  ).join('');
+  const stylistOpts = STYLISTS_DATA.map(s =>
+    `<option value="${s.id}" data-commission="${s.commission_percent}">${s.name}</option>`
+  ).join('');
+
+  return `<div class="item-row" data-index="${idx}" style="border:1px solid #E5E5E0; border-radius:8px; padding:14px; margin-bottom:10px; background:#fafaf8;">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][item_type]" value="service">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][description]" class="item-desc">
+    <div style="display:grid; grid-template-columns:2fr 1.5fr 80px 80px auto; gap:8px; align-items:end;">
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Servicio</label>
+        <select name="attendance[attendance_items_attributes][${idx}][service_id]" class="sv-select item-service-sel" onchange="onServiceChange(this, ${idx})">
+          <option value="">Seleccionar...</option>${opts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Estilista</label>
+        <select name="attendance[attendance_items_attributes][${idx}][stylist_id]" class="sv-select" onchange="updateTotals()">
+          ${stylistOpts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Precio $</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][price_cents]" class="sv-input item-price" value="0" min="0" oninput="updateTotals()">
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Comisión %</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="40" min="0" max="100" oninput="updateTotals()">
+      </div>
+      <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; margin-bottom:2px;">×</button>
+    </div>
+    <div style="font-size:11px; color:#C9A96E; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
+  </div>`;
+}
+
+function buildProductItem(idx) {
+  const opts = PRODUCTS_DATA.map(p =>
+    `<option value="${p.id}" data-price="${p.price_cents}" data-commission="10">${p.brand} — ${p.name}</option>`
+  ).join('');
+  const stylistOpts = STYLISTS_DATA.map(s =>
+    `<option value="${s.id}">${s.name}</option>`
+  ).join('');
+
+  return `<div class="item-row" data-index="${idx}" style="border:1px solid #dbeafe; border-radius:8px; padding:14px; margin-bottom:10px; background:#f0f9ff;">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][item_type]" value="product">
+    <input type="hidden" name="attendance[attendance_items_attributes][${idx}][description]" class="item-desc">
+    <div style="font-size:10px; font-weight:700; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;">🛍️ Producto</div>
+    <div style="display:grid; grid-template-columns:2fr 1.5fr 80px 80px auto; gap:8px; align-items:end;">
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Producto</label>
+        <select name="attendance[attendance_items_attributes][${idx}][product_id]" class="sv-select item-product-sel" onchange="onProductChange(this, ${idx})">
+          <option value="">Seleccionar...</option>${opts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Estilista</label>
+        <select name="attendance[attendance_items_attributes][${idx}][stylist_id]" class="sv-select" onchange="updateTotals()">
+          ${stylistOpts}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Precio $</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][price_cents]" class="sv-input item-price" value="0" min="0" oninput="updateTotals()">
+      </div>
+      <div>
+        <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Comisión %</label>
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="10" min="0" max="100" oninput="updateTotals()">
+      </div>
+      <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; margin-bottom:2px;">×</button>
+    </div>
+    <div style="font-size:11px; color:#1d4ed8; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
+  </div>`;
+}
+
+function onServiceChange(sel, idx) {
+  const opt = sel.options[sel.selectedIndex];
+  const row = sel.closest('.item-row');
+  row.querySelector('.item-price').value = opt.dataset.price || 0;
+  row.querySelector('.item-commission').value = opt.dataset.commission || 40;
+  row.querySelector('.item-desc').value = opt.text;
+  updateTotals();
+}
+
+function onProductChange(sel, idx) {
+  const opt = sel.options[sel.selectedIndex];
+  const row = sel.closest('.item-row');
+  row.querySelector('.item-price').value = opt.dataset.price || 0;
+  row.querySelector('.item-commission').value = 10;
+  row.querySelector('.item-desc').value = opt.text;
+  updateTotals();
+}
+
+function removeItem(btn) {
+  const row = btn.closest('.item-row');
+  // Marcar _destroy si es un ítem existente (tiene hidden id)
+  const destroyField = row.querySelector('input[name*="_destroy"]');
+  if (destroyField) { destroyField.value = '1'; row.style.display = 'none'; }
+  else row.remove();
+  updateTotals();
+}
+
+// ── Agregar pago ──────────────────────────────────────────────────
+function addPayment() {
+  const container = document.getElementById('payments-container');
+  container.insertAdjacentHTML('beforeend', buildPaymentRow(paymentIndex));
+  paymentIndex++;
+  updateTotals();
+}
+
+function buildPaymentRow(idx) {
+  return `<div class="payment-row" style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:end; margin-bottom:8px;">
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Método</label>
+      <select name="attendance[attendance_payments_attributes][${idx}][payment_method]" class="sv-select">
+        <option value="cash">Efectivo</option>
+        <option value="transfer">Transferencia</option>
+        <option value="card">Tarjeta</option>
+        <option value="other">Otro</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Monto $</label>
+      <input type="number" name="attendance[attendance_payments_attributes][${idx}][amount_cents]" class="sv-input payment-amount" value="0" min="0" oninput="updateTotals()">
+    </div>
+    <div>
+      <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Nota</label>
+      <input type="text" name="attendance[attendance_payments_attributes][${idx}][note]" class="sv-input" placeholder="Ej: abono, saldo">
+    </div>
+    <button type="button" onclick="removePayment(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; margin-bottom:2px;">×</button>
+  </div>`;
+}
+
+function removePayment(btn) {
+  btn.closest('.payment-row').remove();
+  updateTotals();
+}
+
+// ── Cálculo de totales ────────────────────────────────────────────
+function updateTotals() {
+  let total = 0, commissionByStylist = {};
+
+  document.querySelectorAll('.item-row').forEach(row => {
+    if (row.style.display === 'none') return;
+    const price      = parseInt(row.querySelector('.item-price')?.value) || 0;
+    const commPct    = parseInt(row.querySelector('.item-commission')?.value) || 0;
+    const commission = Math.round(price * commPct / 100);
+    const stylistSel = row.querySelector('select[name*="stylist_id"]');
+    const stylistName = stylistSel?.options[stylistSel.selectedIndex]?.text || 'Sin asignar';
+
+    total += price;
+    commissionByStylist[stylistName] = (commissionByStylist[stylistName] || 0) + commission;
+    const disp = row.querySelector('.item-commission-display');
+    if (disp) disp.textContent = 'Comisión: ' + formatCLP(commission);
+  });
+
+  let paid = 0;
+  document.querySelectorAll('.payment-amount').forEach(inp => { paid += parseInt(inp.value) || 0; });
+
+  document.getElementById('total-amount').textContent   = formatCLP(total);
+  document.getElementById('paid-amount').textContent    = formatCLP(paid);
+  document.getElementById('balance-amount').textContent = formatCLP(total - paid);
+  document.getElementById('balance-amount').style.color = total - paid > 0 ? '#dc2626' : '#16a34a';
+
+  // Resumen comisiones
+  const summary = document.getElementById('commission-summary');
+  const detail  = document.getElementById('commission-by-stylist');
+  const entries = Object.entries(commissionByStylist);
+  if (entries.length) {
+    summary.style.display = 'block';
+    detail.innerHTML = entries.map(([name, amt]) =>
+      `<div style="display:flex;justify-content:space-between;padding:3px 0;"><span>${name}</span><strong>${formatCLP(amt)}</strong></div>`
+    ).join('');
+  } else { summary.style.display = 'none'; }
+}
+
+function formatCLP(cents) {
+  return '$' + (cents / 100).toLocaleString('es-CL', { minimumFractionDigits: 0 });
+}
+
+// Inicializar con ítems existentes
+updateTotals();
+</script>

@@ -1,0 +1,84 @@
+<% content_for :page_title, "Comisiones" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <h1 style="font-size:20px; font-weight:700;">Comisiones por estilista</h1>
+  <div class="period-tabs">
+    <%= link_to "Hoy",    supervisor_commissions_path(period: "today"),  class: "period-tab #{current_period == "today"  ? "active" : ""}" %>
+    <%= link_to "Semana", supervisor_commissions_path(period: "week"),   class: "period-tab #{current_period == "week"   ? "active" : ""}" %>
+    <%= link_to "Mes",    supervisor_commissions_path(period: "month"),  class: "period-tab #{current_period == "month"  ? "active" : ""}" %>
+    <%= link_to "Rango",  supervisor_commissions_path(period: "custom"), class: "period-tab #{current_period == "custom" ? "active" : ""}" %>
+  </div>
+</div>
+
+<!-- Resumen global -->
+<div class="sv-cards" style="grid-template-columns: repeat(<%= [@commission_summary.size, 4].min %>, 1fr);">
+  <% @commission_summary.each do |s| %>
+    <div class="sv-card" style="border-top:3px solid #C9A96E; cursor:pointer;"
+         onclick="window.location='<%= supervisor_commissions_path(period: current_period, stylist_id: s[:stylist_id]) %>'">
+      <div class="sv-card-label"><%= s[:name] %></div>
+      <div class="sv-card-value" style="color:#C9A96E; font-size:22px;">
+        <%= number_to_currency(s[:total_commission_cents] / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+      </div>
+      <div class="sv-card-sub">
+        Ventas: <%= number_to_currency(s[:total_sales_cents] / 100.0, unit: "$", delimiter: ".", precision: 0) %> ·
+        <%= s[:items_count] %> items
+      </div>
+    </div>
+  <% end %>
+  <% if @commission_summary.empty? %>
+    <div class="sv-card" style="grid-column:1/-1; text-align:center; color:#9ca3af;">Sin datos en este período</div>
+  <% end %>
+</div>
+
+<!-- Gráfico -->
+<% if @chart_data.any? %>
+  <div class="chart-wrap" style="margin-bottom:24px;">
+    <h3>Comisiones por estilista</h3>
+    <canvas id="commissionChart" height="100"></canvas>
+  </div>
+  <script>
+    new Chart(document.getElementById('commissionChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= raw @chart_data.keys.to_json %>,
+        datasets: [{
+          label: 'Comisión ($)',
+          data: <%= raw @chart_data.values.to_json %>,
+          backgroundColor: '#C9A96E', borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { ticks: { callback: v => '$' + v.toLocaleString('es-CL') } } }
+      }
+    });
+  </script>
+<% end %>
+
+<!-- Detalle de estilista seleccionada -->
+<% if @selected_stylist %>
+  <div class="sv-table-wrap">
+    <div class="sv-table-head" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Detalle: <%= @selected_stylist.full_name %></h3>
+      <%= link_to "Ver todos", supervisor_commissions_path(period: current_period), class: "btn btn-outline btn-sm" %>
+    </div>
+    <table class="sv-table">
+      <thead><tr><th>Fecha</th><th>N° Atención</th><th>Descripción</th><th>Tipo</th><th>Precio</th><th>Comisión %</th><th>Comisión $</th></tr></thead>
+      <tbody>
+        <% @items.each do |item| %>
+          <tr>
+            <td><%= item.attendance.attended_on.strftime("%d/%m/%Y") %></td>
+            <td><code style="font-size:12px;"><%= item.attendance.number %></code></td>
+            <td><%= item.description %></td>
+            <td><span class="badge <%= item.service? ? "badge-yellow" : "badge-blue" %>"><%= item.service? ? "Servicio" : "Producto" %></span></td>
+            <td><%= number_to_currency(item.price_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td><%= item.commission_percent %>%</td>
+            <td style="color:#C9A96E; font-weight:600;"><%= number_to_currency(item.commission_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+  </div>
+<% end %>

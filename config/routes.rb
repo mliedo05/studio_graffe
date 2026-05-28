@@ -57,6 +57,24 @@ Rails.application.routes.draw do
     member { patch :set_default }
   end
 
+  # ── Panel Supervisor ──────────────────────────────────────────────
+  namespace :supervisor do
+    root to: "dashboard#index"
+    resources :attendances, only: [ :index, :new, :create, :show, :edit, :update ] do
+      member { patch :close }
+      collection { get :search_client }
+    end
+    get "/comisiones",          to: "commissions#index",   as: :commissions
+    get "/comisiones/exportar", to: "commissions#export",  as: :commissions_export
+    get "/ventas",              to: "sales#index",         as: :sales
+  end
+
+  # ── Panel Estilista ───────────────────────────────────────────────
+  namespace :stylist_panel, path: "mi-panel" do
+    root to: "dashboard#index"
+    get "/comisiones", to: "commissions#index", as: :commissions
+  end
+
   get "/inicio", to: "shop#landing", as: :landing
   root to: "shop#landing"
 end

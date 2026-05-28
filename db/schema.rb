@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_27_215337) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_28_144139) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -93,6 +93,54 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_215337) do
     t.index ["starts_at"], name: "index_appointments_on_starts_at"
     t.index ["status"], name: "index_appointments_on_status"
     t.index ["stylist_id"], name: "index_appointments_on_stylist_id"
+  end
+
+  create_table "attendance_items", force: :cascade do |t|
+    t.bigint "attendance_id", null: false
+    t.integer "commission_cents", default: 0, null: false
+    t.integer "commission_percent", null: false
+    t.datetime "created_at", null: false
+    t.string "description", null: false
+    t.string "item_type", null: false
+    t.integer "price_cents", null: false
+    t.bigint "product_id"
+    t.bigint "service_id"
+    t.bigint "stylist_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attendance_id"], name: "index_attendance_items_on_attendance_id"
+    t.index ["item_type"], name: "index_attendance_items_on_item_type"
+    t.index ["product_id"], name: "index_attendance_items_on_product_id"
+    t.index ["service_id"], name: "index_attendance_items_on_service_id"
+    t.index ["stylist_id"], name: "index_attendance_items_on_stylist_id"
+  end
+
+  create_table "attendance_payments", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.bigint "attendance_id", null: false
+    t.datetime "created_at", null: false
+    t.string "note"
+    t.string "payment_method", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attendance_id"], name: "index_attendance_payments_on_attendance_id"
+  end
+
+  create_table "attendances", force: :cascade do |t|
+    t.date "attended_on", null: false
+    t.bigint "client_id"
+    t.string "client_name"
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.string "number", null: false
+    t.integer "paid_cents", default: 0, null: false
+    t.bigint "registered_by_id", null: false
+    t.string "status", default: "open", null: false
+    t.integer "total_cents", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["attended_on"], name: "index_attendances_on_attended_on"
+    t.index ["client_id"], name: "index_attendances_on_client_id"
+    t.index ["number"], name: "index_attendances_on_number", unique: true
+    t.index ["registered_by_id"], name: "index_attendances_on_registered_by_id"
+    t.index ["status"], name: "index_attendances_on_status"
   end
 
   create_table "commissions", force: :cascade do |t|
@@ -207,6 +255,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_215337) do
     t.boolean "active", default: true, null: false
     t.string "category", null: false
     t.datetime "created_at", null: false
+    t.integer "default_commission_percent", default: 40, null: false
     t.text "description"
     t.integer "duration_minutes", default: 60, null: false
     t.string "name", null: false
@@ -278,6 +327,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_27_215337) do
   add_foreign_key "appointments", "services"
   add_foreign_key "appointments", "users", column: "client_id"
   add_foreign_key "appointments", "users", column: "stylist_id"
+  add_foreign_key "attendance_items", "attendances"
+  add_foreign_key "attendance_items", "products"
+  add_foreign_key "attendance_items", "services"
+  add_foreign_key "attendance_items", "users", column: "stylist_id"
+  add_foreign_key "attendance_payments", "attendances"
+  add_foreign_key "attendances", "users", column: "client_id"
+  add_foreign_key "attendances", "users", column: "registered_by_id"
   add_foreign_key "commissions", "appointments"
   add_foreign_key "commissions", "users", column: "stylist_id"
   add_foreign_key "inventory_entries", "products"

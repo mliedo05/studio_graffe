@@ -1,0 +1,49 @@
+<% content_for :page_title, "Atenciones" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:20px; font-weight:700;">Registro de atenciones</h1>
+    <p style="font-size:13px; color:#9ca3af; margin-top:2px;">Todas las atenciones del período</p>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <div class="period-tabs">
+      <%= link_to "Hoy",    supervisor_attendances_path(period: "today"),  class: "period-tab #{current_period == "today"  ? "active" : ""}" %>
+      <%= link_to "Semana", supervisor_attendances_path(period: "week"),   class: "period-tab #{current_period == "week"   ? "active" : ""}" %>
+      <%= link_to "Mes",    supervisor_attendances_path(period: "month"),  class: "period-tab #{current_period == "month"  ? "active" : ""}" %>
+    </div>
+    <%= link_to "➕ Nueva atención", new_supervisor_attendance_path, class: "btn btn-gold" %>
+  </div>
+</div>
+
+<div class="sv-table-wrap">
+  <table class="sv-table">
+    <thead>
+      <tr><th>N° Atención</th><th>Fecha</th><th>Cliente</th><th>Servicios</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% @attendances.each do |a| %>
+        <tr>
+          <td><code style="font-size:12px;"><%= a.number %></code></td>
+          <td><%= a.attended_on.strftime("%d/%m/%Y") %></td>
+          <td style="font-weight:500;"><%= a.display_client_name %></td>
+          <td style="color:#6b7280;"><%= a.attendance_items.size %> item(s)</td>
+          <td style="font-weight:600;"><%= number_to_currency(a.total_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="color:#16a34a;"><%= number_to_currency(a.paid_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="color:<%= a.balance_cents > 0 ? "#dc2626" : "#6b7280" %>; font-weight:<%= a.balance_cents > 0 ? "600" : "400" %>;">
+            <%= number_to_currency(a.balance_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+          </td>
+          <td>
+            <span class="badge <%= a.status == "closed" ? "badge-green" : "badge-yellow" %>">
+              <%= a.status == "closed" ? "Cerrada" : "Abierta" %>
+            </span>
+          </td>
+          <td><%= link_to "Ver", supervisor_attendance_path(a), class: "btn btn-outline btn-sm" %></td>
+        </tr>
+      <% end %>
+      <% if @attendances.empty? %>
+        <tr><td colspan="9" style="text-align:center; color:#9ca3af; padding:32px;">Sin atenciones en este período</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

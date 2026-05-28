@@ -58,6 +58,7 @@
     <canvas id="commissionChart" height="100"></canvas>
   </div>
   <script>
+    (function() { const p = Chart.getChart('commissionChart'); if (p) p.destroy(); })();
     new Chart(document.getElementById('commissionChart'), {
       type: 'bar',
       data: {
@@ -90,9 +91,15 @@
     </div>
   </div>
   <script>
+    function mkChart(id, config) {
+      const prev = Chart.getChart(id);
+      if (prev) prev.destroy();
+      const el = document.getElementById(id);
+      if (el) new Chart(el, config);
+    }
     const PIE_COLORS = ['#C9A96E','#1A1A1A','#4f46e5','#16a34a','#dc2626','#d97706','#0891b2','#7c3aed','#be185d','#059669'];
 
-    new Chart(document.getElementById('servicesFreqChart'), {
+    mkChart('servicesFreqChart', {
       type: 'doughnut',
       data: {
         labels: <%= raw @services_frequency.keys.to_json %>,
@@ -107,7 +114,7 @@
       }
     });
 
-    new Chart(document.getElementById('servicesRevChart'), {
+    mkChart('servicesRevChart', {
       type: 'doughnut',
       data: {
         labels: <%= raw @services_revenue.keys.to_json %>,

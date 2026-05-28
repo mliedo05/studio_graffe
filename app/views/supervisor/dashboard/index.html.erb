@@ -128,8 +128,16 @@
 </div>
 
 <script>
+// Destruye la instancia anterior si Turbo reutilizó el canvas
+function mkChart(id, config) {
+  const prev = Chart.getChart(id);
+  if (prev) prev.destroy();
+  const el = document.getElementById(id);
+  if (el) new Chart(el, config);
+}
+
 // Ventas por día
-new Chart(document.getElementById('salesChart'), {
+mkChart('salesChart', {
   type: 'bar',
   data: {
     labels: <%= raw @sales_by_day.keys.to_json %>,
@@ -145,7 +153,7 @@ new Chart(document.getElementById('salesChart'), {
 });
 
 // Comisiones por estilista
-new Chart(document.getElementById('commissionChart'), {
+mkChart('commissionChart', {
   type: 'doughnut',
   data: {
     labels: <%= raw @commissions_by_stylist.keys.to_json %>,
@@ -160,7 +168,7 @@ new Chart(document.getElementById('commissionChart'), {
 <% if @services_frequency.any? %>
 const PIE_COLORS = ['#C9A96E','#1A1A1A','#4f46e5','#16a34a','#dc2626','#d97706','#0891b2','#7c3aed','#be185d','#059669'];
 
-new Chart(document.getElementById('servicesFreqChart'), {
+mkChart('servicesFreqChart', {
   type: 'doughnut',
   data: {
     labels: <%= raw @services_frequency.keys.to_json %>,
@@ -175,7 +183,7 @@ new Chart(document.getElementById('servicesFreqChart'), {
   }
 });
 
-new Chart(document.getElementById('servicesRevChart'), {
+mkChart('servicesRevChart', {
   type: 'doughnut',
   data: {
     labels: <%= raw @services_revenue.keys.to_json %>,

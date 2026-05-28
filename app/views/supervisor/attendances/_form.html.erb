@@ -1,3 +1,27 @@
+<%# Clases mínimas que necesita phone_country_controller (Tailwind no carga en este layout) %>
+<style>
+  .hidden { display: none !important; }
+  /* Items del dropdown generados por renderList() */
+  #new-client-modal [data-phone-country-target="list"] button {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 8px 14px; text-align: left; border: none; background: #fff;
+    cursor: pointer; transition: background 0.1s;
+  }
+  #new-client-modal [data-phone-country-target="list"] button:hover,
+  #new-client-modal [data-phone-country-target="list"] button.bg-stone-100 {
+    background: #f5f5f4;
+  }
+  #new-client-modal [data-phone-country-target="list"] button .flex-1 {
+    flex: 1; font-size: 13px; color: #1c1917;
+  }
+  #new-client-modal [data-phone-country-target="list"] button .shrink-0 {
+    flex-shrink: 0; font-size: 11px; color: #a8a29e;
+  }
+  #new-client-modal [data-phone-country-target="list"] button .w-7 {
+    width: 28px; flex-shrink: 0;
+  }
+</style>
+
 <%# Datos para JS %>
 <script>
   const SERVICES_DATA = <%= raw Service.active.ordered.map { |s|

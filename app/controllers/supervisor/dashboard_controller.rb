@@ -49,7 +49,7 @@ module Supervisor
 
       # Tabla resumen mensual: últimos 12 meses (raw SQL para evitar monetize conflict)
       since = 12.months.ago.beginning_of_month
-      monthly_sql = ActiveRecord::Base.sanitize_sql_array([<<~SQL, since])
+      monthly_sql = ActiveRecord::Base.sanitize_sql_array([ <<~SQL, since ])
         SELECT
           DATE_TRUNC('month', a.attended_on)                             AS month,
           SUM(ai.price_cents)                                            AS total_cents,

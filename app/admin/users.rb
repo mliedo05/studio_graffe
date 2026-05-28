@@ -8,12 +8,12 @@ ActiveAdmin.register User do
     column :email
     column("Rol") { |u|
       labels = {
-        "admin"      => ["⚙️ Admin",      "background:#ede9fe; color:#7c3aed"],
-        "supervisor" => ["👁️ Supervisor", "background:#fef3c7; color:#d97706"],
-        "stylist"    => ["✂️ Estilista",  "background:#dbeafe; color:#1d4ed8"],
-        "client"     => ["👤 Cliente",    "background:#f3f4f6; color:#6b7280"]
+        "admin"      => [ "⚙️ Admin",      "background:#ede9fe; color:#7c3aed" ],
+        "supervisor" => [ "👁️ Supervisor", "background:#fef3c7; color:#d97706" ],
+        "stylist"    => [ "✂️ Estilista",  "background:#dbeafe; color:#1d4ed8" ],
+        "client"     => [ "👤 Cliente",    "background:#f3f4f6; color:#6b7280" ]
       }
-      text, style = labels[u.role] || [u.role, "background:#f3f4f6; color:#6b7280"]
+      text, style = labels[u.role] || [ u.role, "background:#f3f4f6; color:#6b7280" ]
       span text, style: "#{style}; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold"
     }
     column :phone
@@ -22,7 +22,7 @@ ActiveAdmin.register User do
   end
 
   filter :role, as: :select,
-         collection: User::ROLES.map { |r| [r.capitalize, r] },
+         collection: User::ROLES.map { |r| [ r.capitalize, r ] },
          label: "Rol"
   filter :email_cont,      label: "Email"
   filter :first_name_cont, label: "Nombre"
@@ -35,7 +35,7 @@ ActiveAdmin.register User do
       f.input :phone,      label: "Teléfono"
       f.input :role, as: :select,
               label: "Rol",
-              collection: User::ROLES.map { |r| [r.capitalize, r] }
+              collection: User::ROLES.map { |r| [ r.capitalize, r ] }
     end
     f.inputs "Contraseña #{f.object.new_record? ? "(requerida)" : "(dejar en blanco para no cambiar)"}" do
       f.input :password,              label: "Contraseña",         required: f.object.new_record?

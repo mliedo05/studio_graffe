@@ -15,7 +15,7 @@ module Supervisor
 
     def new
       @attendance = Attendance.new(attended_on: Date.current)
-      @attendance.attendance_items.build
+      @attendance.attendance_items.build(item_type: "service")
       @attendance.attendance_payments.build
     end
 

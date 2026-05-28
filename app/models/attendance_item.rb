@@ -9,7 +9,7 @@ class AttendanceItem < ApplicationRecord
 
   ITEM_TYPES = %w[service product].freeze
 
-  validates :item_type,          inclusion: { in: ITEM_TYPES }
+  validates :item_type, inclusion: { in: ITEM_TYPES }, allow_blank: false
   # description se auto-llena desde el nombre del servicio/producto en set_description
   validates :price_cents,        numericality: { greater_than_or_equal_to: 0 }
   validates :commission_percent, numericality: { in: 0..100 }

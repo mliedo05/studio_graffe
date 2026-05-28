@@ -47,6 +47,33 @@ module Supervisor
                                       .first(10)
                                       .to_h { |r| [ r.service_name, r.total_revenue.to_i ] }
 
+      # Tabla resumen mensual: últimos 12 meses
+      monthly_raw = AttendanceItem
+        .joins(:attendance)
+        .where("attendances.attended_on >= ?", 12.months.ago.beginning_of_month)
+        .group(Arel.sql("DATE_TRUNC('month', attendances.attended_on)"))
+        .select(
+          Arel.sql("DATE_TRUNC('month', attendances.attended_on) AS month"),
+          "SUM(attendance_items.price_cents)                                            AS total_cents",
+          "SUM(ROUND(attendance_items.price_cents / 1.19))                              AS net_cents",
+          "SUM(attendance_items.price_cents - ROUND(attendance_items.price_cents / 1.19)) AS iva_cents",
+          "SUM(attendance_items.commission_cents)                                        AS stylist_cents"
+        )
+        .order(Arel.sql("DATE_TRUNC('month', attendances.attended_on)"))
+
+      @monthly_summary = monthly_raw.map do |r|
+        net     = r.net_cents.to_i
+        stylist = r.stylist_cents.to_i
+        {
+          month:        Date.parse(r.month.to_s).strftime("%b %Y").capitalize,
+          total:        r.total_cents.to_i,
+          iva:          r.iva_cents.to_i,
+          net:          net,
+          stylist:      stylist,
+          studio:       net - stylist
+        }
+      end
+
       # Stock crítico
       @critical_stock = Product.active.where("stock_quantity <= 3").order(:stock_quantity)
     end

@@ -7,15 +7,16 @@ class AttendanceItem < ApplicationRecord
   monetize :price_cents
   monetize :commission_cents
 
-  ITEM_TYPES = %w[service product].freeze
+  ITEM_TYPES  = %w[service product].freeze
+  IVA_FACTOR  = 1.19 # IVA Chile 19%
 
-  validates :item_type, inclusion: { in: ITEM_TYPES }, allow_blank: false
+  validates :item_type,          inclusion: { in: ITEM_TYPES }, allow_blank: false
   # description se auto-llena desde el nombre del servicio/producto en set_description
   validates :price_cents,        numericality: { greater_than_or_equal_to: 0 }
   validates :commission_percent, numericality: { in: 0..100 }
   validates :commission_cents,   numericality: { greater_than_or_equal_to: 0 }
-  validates :service, presence: true, if: -> { item_type == "service" }
-  validates :product, presence: true, if: -> { item_type == "product" }
+  validates :service,            presence: true, if: -> { item_type == "service" }
+  validates :product,            presence: true, if: -> { item_type == "product" }
 
   before_validation :set_description
   before_validation :calculate_commission
@@ -28,6 +29,21 @@ class AttendanceItem < ApplicationRecord
 
   def product?
     item_type == "product"
+  end
+
+  # Precio sin IVA (base imponible para el cálculo de comisión)
+  def net_price_cents
+    (price_cents / IVA_FACTOR).round
+  end
+
+  # IVA incluido en el precio
+  def iva_cents
+    price_cents - net_price_cents
+  end
+
+  # Parte del estudio luego de descontar la comisión (sobre neto)
+  def studio_cents
+    net_price_cents - commission_cents
   end
 
   private
@@ -43,7 +59,8 @@ class AttendanceItem < ApplicationRecord
 
   def calculate_commission
     return unless price_cents && commission_percent
-    self.commission_cents = (price_cents * commission_percent / 100.0).round
+    # La comisión se calcula sobre el precio NETO (sin IVA)
+    self.commission_cents = (net_price_cents * commission_percent / 100.0).round
   end
 
   def recalculate_attendance

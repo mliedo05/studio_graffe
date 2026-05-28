@@ -1,0 +1,39 @@
+# Atención cerrada, totalmente pagada
+atencion_cerrada:
+  number: "20260101-001"
+  attended_on: "2026-01-15"
+  status: closed
+  total_cents: 119000
+  paid_cents: 119000
+  client: cliente
+  registered_by: admin
+
+# Atención abierta, sin cobrar
+atencion_pendiente:
+  number: "20260101-002"
+  attended_on: "2026-01-15"
+  status: open
+  total_cents: 59500
+  paid_cents: 0
+  client: cliente
+  registered_by: admin
+
+# Atención parcialmente pagada
+atencion_parcial:
+  number: "20260101-003"
+  attended_on: "2026-01-15"
+  status: open
+  total_cents: 45000
+  paid_cents: 20000
+  client: cliente
+  registered_by: admin
+
+# Atención de este mes (para filtros de período)
+atencion_este_mes:
+  number: "20260501-001"
+  attended_on: <%= Date.current.strftime("%Y-%m-%d") %>
+  status: closed
+  total_cents: 23800
+  paid_cents: 23800
+  client_name: "Clienta Walk-in"
+  registered_by: admin

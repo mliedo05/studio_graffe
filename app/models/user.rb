@@ -71,4 +71,8 @@ class User < ApplicationRecord
   def oauth_user?
     provider.present?
   end
+
+  def self.ransackable_attributes(auth_object = nil)
+    %w[first_name last_name email]
+  end
 end

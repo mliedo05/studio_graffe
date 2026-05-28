@@ -3,8 +3,95 @@ ActiveAdmin.register Order do
 
   actions :index, :show
 
-  # ── Listado ──────────────────────────────────────────────────────
+  # ── Ransack: permitir búsqueda por atributos del usuario ─────────
+  config.sort_order = "created_at_desc"
+  config.per_page   = 50
+
+  # ── Filtros sidebar (complementan el buscador inline) ────────────
+  filter :payment_method, as: :select,
+         collection: [ [ "Getnet", "getnet" ], [ "Efectivo", "efectivo" ] ],
+         label: "Método de pago"
+  filter :shipping_type, as: :select,
+         collection: [ [ "Retiro", "pickup" ], [ "Delivery", "delivery" ] ],
+         label: "Tipo de envío"
+
+  # ── Panel resumen encima del listado ─────────────────────────────
   index do
+    # ── Barra de búsqueda + fechas inline ──────────────────────────
+    div style: "background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px 20px; margin-bottom:20px;" do
+      div style: "font-size:12px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;" do
+        "🔍 Buscar órdenes"
+      end
+      render partial: "admin/orders/search_form", locals: { url: admin_orders_path }
+    end
+
+    scope_orders = collection
+
+    paid_orders      = scope_orders.where(status: "paid")
+    cancelled_orders = scope_orders.where(status: "cancelled")
+    checkout_orders  = scope_orders.where(status: "checkout")
+    cart_orders      = scope_orders.where(status: "cart")
+
+    paid_total      = paid_orders.sum(:total_cents)
+    cancelled_total = cancelled_orders.sum(:total_cents)
+
+    # ── Tarjetas de resumen ──
+    div style: "display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;" do
+
+      # Ventas pagadas
+      div style: "background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:20px;" do
+        div style: "font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#16a34a; margin-bottom:8px;" do
+          "✅ Ventas pagadas"
+        end
+        div style: "font-size:28px; font-weight:800; color:#15803d; line-height:1;" do
+          number_to_currency(paid_total, unit: "$", delimiter: ".", precision: 0)
+        end
+        div style: "font-size:13px; color:#4ade80; margin-top:6px;" do
+          "#{paid_orders.count} #{"orden".pluralize(paid_orders.count)}"
+        end
+      end
+
+      # Canceladas
+      div style: "background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:20px;" do
+        div style: "font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#dc2626; margin-bottom:8px;" do
+          "❌ Canceladas"
+        end
+        div style: "font-size:28px; font-weight:800; color:#b91c1c; line-height:1;" do
+          number_to_currency(cancelled_total, unit: "$", delimiter: ".", precision: 0)
+        end
+        div style: "font-size:13px; color:#f87171; margin-top:6px;" do
+          "#{cancelled_orders.count} #{"orden".pluralize(cancelled_orders.count)}"
+        end
+      end
+
+      # En proceso (checkout)
+      div style: "background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:20px;" do
+        div style: "font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#d97706; margin-bottom:8px;" do
+          "⏳ En proceso"
+        end
+        div style: "font-size:28px; font-weight:800; color:#b45309; line-height:1;" do
+          checkout_orders.count.to_s
+        end
+        div style: "font-size:13px; color:#fbbf24; margin-top:6px;" do
+          "#{checkout_orders.count == 1 ? "orden esperando pago" : "órdenes esperando pago"}"
+        end
+      end
+
+      # Carritos activos
+      div style: "background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:20px;" do
+        div style: "font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280; margin-bottom:8px;" do
+          "🛒 Carritos activos"
+        end
+        div style: "font-size:28px; font-weight:800; color:#374151; line-height:1;" do
+          cart_orders.count.to_s
+        end
+        div style: "font-size:13px; color:#9ca3af; margin-top:6px;" do
+          "sin confirmar"
+        end
+      end
+    end
+
+    # ── Tabla de órdenes ──
     selectable_column
     column("Orden") { |o| link_to o.number, admin_order_path(o), style: "font-weight:600; font-family:monospace" }
     column("Cliente") do |o|
@@ -41,20 +128,6 @@ ActiveAdmin.register Order do
     column("Fecha") { |o| o.created_at.strftime("%d/%m/%Y %H:%M") }
     actions only: [ :show ]
   end
-
-  # ── Filtros ───────────────────────────────────────────────────────
-  filter :status, as: :select,
-         collection: Order::STATUSES.map { |s| [ s.capitalize, s ] },
-         label: "Estado"
-  filter :payment_method, as: :select,
-         collection: [ [ "Getnet", "getnet" ], [ "Efectivo", "efectivo" ] ],
-         label: "Método de pago"
-  filter :shipping_type, as: :select,
-         collection: [ [ "Retiro", "pickup" ], [ "Delivery", "delivery" ] ],
-         label: "Tipo de envío"
-  filter :number_cont,        label: "Número de orden"
-  filter :created_at_gteq,    label: "Desde"
-  filter :created_at_lteq,    label: "Hasta"
 
   # ── Vista detalle ─────────────────────────────────────────────────
   show do
@@ -99,11 +172,11 @@ ActiveAdmin.register Order do
 
         panel "🛍️ Productos" do
           table_for order.order_items.includes(:product) do
-            column("Producto")       { |i| i.product.name }
-            column("Marca")          { |i| i.product.brand }
-            column("Cantidad")       { |i| i.quantity }
+            column("Producto")        { |i| i.product.name }
+            column("Marca")           { |i| i.product.brand }
+            column("Cantidad")        { |i| i.quantity }
             column("Precio unitario") { |i| number_to_currency(i.unit_price_cents, unit: "$", delimiter: ".", precision: 0) }
-            column("Subtotal")       { |i| number_to_currency(i.total_price_cents, unit: "$", delimiter: ".", precision: 0) }
+            column("Subtotal")        { |i| number_to_currency(i.total_price_cents, unit: "$", delimiter: ".", precision: 0) }
           end
           div style: "text-align:right; font-weight:bold; padding:8px 0; border-top:2px solid #e5e7eb; margin-top:8px" do
             "TOTAL: #{number_to_currency(order.total_cents, unit: "$", delimiter: ".", precision: 0)}"

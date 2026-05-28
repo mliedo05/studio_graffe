@@ -146,4 +146,27 @@ class Order < ApplicationRecord
       total_cost_cents: total_cost
     )
   end
+
+  # ── Búsqueda libre: número, nombre o email del cliente ───────────
+  scope :search_text, ->(q) {
+    return all if q.blank?
+    term = "%#{q.strip}%"
+    joins(:user).where(
+      "orders.number ILIKE :t OR users.first_name ILIKE :t OR users.last_name ILIKE :t OR users.email ILIKE :t",
+      t: term
+    )
+  }
+
+  # ── Ransack ───────────────────────────────────────────────────────
+  def self.ransackable_attributes(auth_object = nil)
+    %w[number status payment_status payment_method shipping_type total_cents created_at]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[user order_items]
+  end
+
+  def self.ransackable_scopes(auth_object = nil)
+    %i[search_text]
+  end
 end

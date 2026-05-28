@@ -51,12 +51,15 @@
   <% end %>
 </div>
 
-<!-- Gráfico -->
-<% if @chart_data.any? %>
-  <div class="chart-wrap" style="margin-bottom:24px;">
-    <h3>Comisiones por estilista</h3>
+<!-- Gráfico comisiones -->
+<div class="chart-wrap" style="margin-bottom:24px;">
+  <h3>Comisiones por estilista</h3>
+  <% if @chart_data.any? %>
     <canvas id="commissionChart" height="100"></canvas>
-  </div>
+  <% else %>
+    <div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>
+  <% end %>
+</div>
   <script>
     (function() { const p = Chart.getChart('commissionChart'); if (p) p.destroy(); })();
     new Chart(document.getElementById('commissionChart'), {
@@ -76,60 +79,46 @@
       }
     });
   </script>
-<% end %>
 
 <!-- Gráficos de servicios: frecuencia + ingresos -->
-<% if @services_frequency.any? %>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
-    <div class="chart-wrap">
-      <h3>✂️ Servicios más realizados</h3>
+<!-- Gráficos de servicios: frecuencia + ingresos -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+  <div class="chart-wrap">
+    <h3>✂️ Servicios más realizados</h3>
+    <% if @services_frequency.any? %>
       <canvas id="servicesFreqChart"></canvas>
-    </div>
-    <div class="chart-wrap">
-      <h3>💰 Servicios que más ingresos generan</h3>
-      <canvas id="servicesRevChart"></canvas>
-    </div>
+    <% else %>
+      <div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>
+    <% end %>
   </div>
+  <div class="chart-wrap">
+    <h3>💰 Servicios que más ingresos generan</h3>
+    <% if @services_revenue.any? %>
+      <canvas id="servicesRevChart"></canvas>
+    <% else %>
+      <div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>
+    <% end %>
+  </div>
+</div>
+<% if @services_frequency.any? %>
   <script>
-  (function() { // IIFE: evita conflictos de const al navegar con Turbo
+  (function() {
     function mkChart(id, config) {
-      const prev = Chart.getChart(id);
-      if (prev) prev.destroy();
-      const el = document.getElementById(id);
-      if (el) new Chart(el, config);
+      const prev = Chart.getChart(id); if (prev) prev.destroy();
+      const el = document.getElementById(id); if (el) new Chart(el, config);
     }
     const PIE_COLORS = ['#C9A96E','#1A1A1A','#4f46e5','#16a34a','#dc2626','#d97706','#0891b2','#7c3aed','#be185d','#059669'];
-
     mkChart('servicesFreqChart', {
       type: 'doughnut',
-      data: {
-        labels: <%= raw @services_frequency.keys.to_json %>,
-        datasets: [{ data: <%= raw @services_frequency.values.to_json %>, backgroundColor: PIE_COLORS }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} ${ctx.raw === 1 ? 'vez' : 'veces'}` } }
-        }
-      }
+      data: { labels: <%= raw @services_frequency.keys.to_json %>, datasets: [{ data: <%= raw @services_frequency.values.to_json %>, backgroundColor: PIE_COLORS }] },
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} ${ctx.raw === 1 ? 'vez' : 'veces'}` } } } }
     });
-
     mkChart('servicesRevChart', {
       type: 'doughnut',
-      data: {
-        labels: <%= raw @services_revenue.keys.to_json %>,
-        datasets: [{ data: <%= raw @services_revenue.values.to_json %>, backgroundColor: PIE_COLORS }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $${ctx.raw.toLocaleString('es-CL')}` } }
-        }
-      }
+      data: { labels: <%= raw @services_revenue.keys.to_json %>, datasets: [{ data: <%= raw @services_revenue.values.to_json %>, backgroundColor: PIE_COLORS }] },
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $${ctx.raw.toLocaleString('es-CL')}` } } } }
     });
-  })(); // fin IIFE
+  })();
   </script>
 <% end %>
 

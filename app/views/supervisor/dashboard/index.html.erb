@@ -65,31 +65,48 @@
   </div>
 </div>
 
-<!-- Gráficos -->
+<%# Helper local para mostrar placeholder cuando no hay datos %>
+<% no_data_placeholder = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>' %>
+
+<!-- Gráficos ventas + comisiones -->
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
   <div class="chart-wrap">
     <h3>Ventas por día</h3>
-    <canvas id="salesChart" height="200"></canvas>
+    <% if @sales_by_day.any? %>
+      <canvas id="salesChart" height="200"></canvas>
+    <% else %>
+      <%= no_data_placeholder.html_safe %>
+    <% end %>
   </div>
   <div class="chart-wrap">
     <h3>Comisiones por estilista</h3>
-    <canvas id="commissionChart" height="200"></canvas>
+    <% if @commissions_by_stylist.any? %>
+      <canvas id="commissionChart" height="200"></canvas>
+    <% else %>
+      <%= no_data_placeholder.html_safe %>
+    <% end %>
   </div>
 </div>
 
 <!-- Gráfico servicios: frecuencia + ingresos -->
-<% if @services_frequency.any? %>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
-    <div class="chart-wrap">
-      <h3>✂️ Servicios más realizados</h3>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
+  <div class="chart-wrap">
+    <h3>✂️ Servicios más realizados</h3>
+    <% if @services_frequency.any? %>
       <canvas id="servicesFreqChart"></canvas>
-    </div>
-    <div class="chart-wrap">
-      <h3>💰 Servicios que más ingresos generan</h3>
-      <canvas id="servicesRevChart"></canvas>
-    </div>
+    <% else %>
+      <%= no_data_placeholder.html_safe %>
+    <% end %>
   </div>
-<% end %>
+  <div class="chart-wrap">
+    <h3>💰 Servicios que más ingresos generan</h3>
+    <% if @services_revenue.any? %>
+      <canvas id="servicesRevChart"></canvas>
+    <% else %>
+      <%= no_data_placeholder.html_safe %>
+    <% end %>
+  </div>
+</div>
 
 <!-- Últimas atenciones -->
 <div class="sv-table-wrap">

@@ -10,13 +10,14 @@ class AttendanceItem < ApplicationRecord
   ITEM_TYPES = %w[service product].freeze
 
   validates :item_type,          inclusion: { in: ITEM_TYPES }
-  validates :description,        presence: true
+  validates :description, presence: true
   validates :price_cents,        numericality: { greater_than_or_equal_to: 0 }
   validates :commission_percent, numericality: { in: 0..100 }
   validates :commission_cents,   numericality: { greater_than_or_equal_to: 0 }
   validates :service, presence: true, if: -> { item_type == "service" }
   validates :product, presence: true, if: -> { item_type == "product" }
 
+  before_validation :set_description
   before_validation :calculate_commission
   after_save    :recalculate_attendance
   after_destroy :recalculate_attendance
@@ -30,6 +31,15 @@ class AttendanceItem < ApplicationRecord
   end
 
   private
+
+  def set_description
+    return if description.present?
+    self.description = if service?
+                         service&.name
+    elsif product?
+                         product ? "#{product.brand} — #{product.name}" : nil
+    end
+  end
 
   def calculate_commission
     return unless price_cents && commission_percent

@@ -228,6 +228,9 @@
 <% end %>
 
 <script>
+// IIFE para evitar conflictos de const/let al re-ejecutar con Turbo.
+// Las funciones usadas en onclick se asignan a window para que sean globales.
+(function() {
 let itemIndex    = <%= attendance.attendance_items.size %>;
 let paymentIndex = <%= attendance.attendance_payments.size %>;
 
@@ -591,4 +594,18 @@ function updateTotals() {
 }
 
 updateTotals();
+
+// Exponer al scope global las funciones llamadas desde onclick en el HTML
+window.openClientModal  = openClientModal;
+window.closeClientModal = closeClientModal;
+window.submitNewClient  = submitNewClient;
+window.selectClient     = selectClient;
+window.clearClient      = clearClient;
+window.addItem          = addItem;
+window.removeItem       = removeItem;
+window.addPayment       = addPayment;
+window.removePayment    = removePayment;
+window.updateTotals     = updateTotals;
+window.onExistingItemChange = onExistingItemChange;
+})();
 </script>

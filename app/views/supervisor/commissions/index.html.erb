@@ -91,6 +91,7 @@
     </div>
   </div>
   <script>
+  (function() { // IIFE: evita conflictos de const al navegar con Turbo
     function mkChart(id, config) {
       const prev = Chart.getChart(id);
       if (prev) prev.destroy();
@@ -128,6 +129,7 @@
         }
       }
     });
+  })(); // fin IIFE
   </script>
 <% end %>
 

@@ -128,7 +128,7 @@
 </div>
 
 <script>
-// Destruye la instancia anterior si Turbo reutilizó el canvas
+(function() { // IIFE: evita que const/let fallen al re-ejecutar con Turbo
 function mkChart(id, config) {
   const prev = Chart.getChart(id);
   if (prev) prev.destroy();
@@ -198,4 +198,5 @@ mkChart('servicesRevChart', {
   }
 });
 <% end %>
+})(); // fin IIFE
 </script>

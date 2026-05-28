@@ -17,10 +17,10 @@
          onclick="window.location='<%= supervisor_commissions_path(period: current_period, stylist_id: s[:stylist_id]) %>'">
       <div class="sv-card-label"><%= s[:name] %></div>
       <div class="sv-card-value" style="color:#C9A96E; font-size:22px;">
-        <%= number_to_currency(s[:total_commission_cents] / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+        <%= number_to_currency(s[:total_commission_cents] , unit: "$", delimiter: ".", precision: 0) %>
       </div>
       <div class="sv-card-sub">
-        Ventas: <%= number_to_currency(s[:total_sales_cents] / 100.0, unit: "$", delimiter: ".", precision: 0) %> ·
+        Ventas: <%= number_to_currency(s[:total_sales_cents] , unit: "$", delimiter: ".", precision: 0) %> ·
         <%= s[:items_count] %> items
       </div>
     </div>
@@ -72,9 +72,9 @@
             <td><code style="font-size:12px;"><%= item.attendance.number %></code></td>
             <td><%= item.description %></td>
             <td><span class="badge <%= item.service? ? "badge-yellow" : "badge-blue" %>"><%= item.service? ? "Servicio" : "Producto" %></span></td>
-            <td><%= number_to_currency(item.price_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td><%= number_to_currency(item.price_cents , unit: "$", delimiter: ".", precision: 0) %></td>
             <td><%= item.commission_percent %>%</td>
-            <td style="color:#C9A96E; font-weight:600;"><%= number_to_currency(item.commission_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="color:#C9A96E; font-weight:600;"><%= number_to_currency(item.commission_cents , unit: "$", delimiter: ".", precision: 0) %></td>
           </tr>
         <% end %>
       </tbody>

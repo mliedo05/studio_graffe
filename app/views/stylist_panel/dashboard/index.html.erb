@@ -5,14 +5,14 @@
   <div class="sv-card" style="border-top:3px solid #C9A96E;">
     <div class="sv-card-label">💰 Mis comisiones</div>
     <div class="sv-card-value" style="color:#C9A96E;">
-      <%= number_to_currency(@total_commission_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+      <%= number_to_currency(@total_commission_cents , unit: "$", delimiter: ".", precision: 0) %>
     </div>
     <div class="sv-card-sub">este mes</div>
   </div>
   <div class="sv-card">
     <div class="sv-card-label">💇 Ventas generadas</div>
     <div class="sv-card-value">
-      <%= number_to_currency(@total_sales_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+      <%= number_to_currency(@total_sales_cents , unit: "$", delimiter: ".", precision: 0) %>
     </div>
     <div class="sv-card-sub">en servicios y productos</div>
   </div>
@@ -39,7 +39,7 @@
         <tr>
           <td style="font-weight:500;"><%= item.description %></td>
           <td><%= item.count %></td>
-          <td style="color:#C9A96E; font-weight:600;"><%= number_to_currency(item.total_commission_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="color:#C9A96E; font-weight:600;"><%= number_to_currency(item.total_commission_cents , unit: "$", delimiter: ".", precision: 0) %></td>
         </tr>
       <% end %>
       <% if @by_service.empty? %>
@@ -60,7 +60,7 @@ new Chart(document.getElementById('historyChart'), {
     labels: <%= raw @monthly_history.map { |m| m[:month] }.to_json %>,
     datasets: [{
       label: 'Comisión ($)',
-      data: <%= raw @monthly_history.map { |m| m[:total_cents] / 100.0 }.to_json %>,
+      data: <%= raw @monthly_history.map { |m| m[:total_cents]  }.to_json %>,
       backgroundColor: 'rgba(201,169,110,0.7)',
       borderColor: '#C9A96E',
       borderWidth: 1, borderRadius: 4

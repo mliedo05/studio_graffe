@@ -27,10 +27,10 @@
           <td><%= a.attended_on.strftime("%d/%m/%Y") %></td>
           <td style="font-weight:500;"><%= a.display_client_name %></td>
           <td style="color:#6b7280;"><%= a.attendance_items.size %> item(s)</td>
-          <td style="font-weight:600;"><%= number_to_currency(a.total_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
-          <td style="color:#16a34a;"><%= number_to_currency(a.paid_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="font-weight:600;"><%= number_to_currency(a.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="color:#16a34a;"><%= number_to_currency(a.paid_cents , unit: "$", delimiter: ".", precision: 0) %></td>
           <td style="color:<%= a.balance_cents > 0 ? "#dc2626" : "#6b7280" %>; font-weight:<%= a.balance_cents > 0 ? "600" : "400" %>;">
-            <%= number_to_currency(a.balance_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+            <%= number_to_currency(a.balance_cents , unit: "$", delimiter: ".", precision: 0) %>
           </td>
           <td>
             <span class="badge <%= a.status == "closed" ? "badge-green" : "badge-yellow" %>">

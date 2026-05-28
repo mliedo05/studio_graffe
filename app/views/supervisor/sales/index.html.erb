@@ -22,7 +22,7 @@
             <td style="font-weight:500;"><%= r.product_name %></td>
             <td style="color:#9ca3af;"><%= r.product_brand %></td>
             <td style="font-weight:600; color:#1d4ed8;"><%= r.units_sold %></td>
-            <td style="font-weight:600;"><%= number_to_currency(r.total_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="font-weight:600;"><%= number_to_currency(r.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
           </tr>
         <% end %>
         <% if @product_totals.empty? %>
@@ -36,7 +36,7 @@
   <div class="sv-table-wrap">
     <div class="sv-table-head" style="display:flex; justify-content:space-between; align-items:center;">
       <h3>🛍️ Tienda online</h3>
-      <strong><%= number_to_currency(@online_total / 100.0, unit: "$", delimiter: ".", precision: 0) %></strong>
+      <strong><%= number_to_currency(@online_total , unit: "$", delimiter: ".", precision: 0) %></strong>
     </div>
     <table class="sv-table">
       <thead><tr><th>N° Orden</th><th>Cliente</th><th>Total</th><th>Fecha</th></tr></thead>
@@ -45,7 +45,7 @@
           <tr>
             <td><code style="font-size:12px;"><%= o.number %></code></td>
             <td><%= o.user.full_name %></td>
-            <td style="font-weight:600;"><%= number_to_currency(o.total_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="font-weight:600;"><%= number_to_currency(o.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
             <td style="color:#9ca3af;"><%= o.created_at.strftime("%d/%m/%Y") %></td>
           </tr>
         <% end %>

@@ -37,14 +37,14 @@
   <div class="sv-card">
     <div class="sv-card-label">💰 Ventas totales</div>
     <div class="sv-card-value" style="color:#16a34a;">
-      <%= number_to_currency(@total_sales_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+      <%= number_to_currency(@total_sales_cents , unit: "$", delimiter: ".", precision: 0) %>
     </div>
     <div class="sv-card-sub"><%= @attendances_count %> atenciones</div>
   </div>
   <div class="sv-card">
     <div class="sv-card-label">💸 Total comisiones</div>
     <div class="sv-card-value" style="color:#C9A96E;">
-      <%= number_to_currency(@total_commissions_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %>
+      <%= number_to_currency(@total_commissions_cents , unit: "$", delimiter: ".", precision: 0) %>
     </div>
     <div class="sv-card-sub">
       <% margin = @total_sales_cents > 0 ? ((@total_sales_cents - @total_commissions_cents) * 100.0 / @total_sales_cents).round(1) : 0 %>
@@ -96,8 +96,8 @@
           <td><%= a.attended_on.strftime("%d/%m/%Y") %></td>
           <td><%= a.display_client_name %></td>
           <td><%= a.attendance_items.size %></td>
-          <td style="font-weight:600;"><%= number_to_currency(a.total_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
-          <td><%= number_to_currency(a.paid_cents / 100.0, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="font-weight:600;"><%= number_to_currency(a.total_cents , unit: "$", delimiter: ".", precision: 0) %></td>
+          <td><%= number_to_currency(a.paid_cents , unit: "$", delimiter: ".", precision: 0) %></td>
           <td>
             <span class="badge <%= a.status == "closed" ? "badge-green" : "badge-yellow" %>">
               <%= a.status == "closed" ? "Cerrada" : "Abierta" %>
@@ -121,7 +121,7 @@ new Chart(document.getElementById('salesChart'), {
     labels: <%= raw @sales_by_day.keys.to_json %>,
     datasets: [{
       label: 'Ventas ($)',
-      data: <%= raw @sales_by_day.values.map { |v| v / 100.0 }.to_json %>,
+      data: <%= raw @sales_by_day.values.map { |v| v  }.to_json %>,
       backgroundColor: 'rgba(201,169,110,0.7)',
       borderColor: '#C9A96E',
       borderWidth: 1, borderRadius: 4
@@ -136,7 +136,7 @@ new Chart(document.getElementById('commissionChart'), {
   data: {
     labels: <%= raw @commissions_by_stylist.keys.to_json %>,
     datasets: [{
-      data: <%= raw @commissions_by_stylist.values.map { |v| v / 100.0 }.to_json %>,
+      data: <%= raw @commissions_by_stylist.values.map { |v| v  }.to_json %>,
       backgroundColor: ['#C9A96E','#1A1A1A','#4f46e5','#16a34a','#dc2626','#d97706'],
     }]
   },

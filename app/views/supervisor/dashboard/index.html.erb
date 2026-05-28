@@ -68,6 +68,51 @@
 <%# Helper local para mostrar placeholder cuando no hay datos %>
 <% no_data_placeholder = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>' %>
 
+<!-- Resumen mensual acumulado -->
+<div class="sv-table-wrap" style="margin-bottom:28px;">
+  <div class="sv-table-head">
+    <h3>📅 Resumen mensual acumulado (últimos 12 meses)</h3>
+  </div>
+  <table class="sv-table">
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th style="text-align:right;">Total (c/IVA)</th>
+        <th style="text-align:right;">IVA (19%)</th>
+        <th style="text-align:right;">Neto (s/IVA)</th>
+        <th style="text-align:right; color:#C9A96E;">Monto estilistas</th>
+        <th style="text-align:right; color:#1A1A1A;">Monto estudio</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @monthly_summary.any? %>
+        <% @monthly_summary.each do |m| %>
+          <tr>
+            <td style="font-weight:600; text-transform:capitalize;"><%= m[:month] %></td>
+            <td style="text-align:right; font-weight:600;"><%= number_to_currency(m[:total],   unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; color:#6b7280;"><%= number_to_currency(m[:iva],     unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right;"><%= number_to_currency(m[:net],     unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; color:#C9A96E; font-weight:600;"><%= number_to_currency(m[:stylist], unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; font-weight:600;"><%= number_to_currency(m[:studio],  unit: "$", delimiter: ".", precision: 0) %></td>
+          </tr>
+        <% end %>
+        <%# Fila de totales %>
+        <% totals = @monthly_summary.each_with_object(Hash.new(0)) { |m, h| m.except(:month).each { |k, v| h[k] += v } } %>
+        <tr style="background:#f9fafb; font-weight:700; border-top:2px solid #e5e7eb;">
+          <td>TOTAL</td>
+          <td style="text-align:right;"><%= number_to_currency(totals[:total],   unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="text-align:right; color:#6b7280;"><%= number_to_currency(totals[:iva],     unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="text-align:right;"><%= number_to_currency(totals[:net],     unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="text-align:right; color:#C9A96E;"><%= number_to_currency(totals[:stylist], unit: "$", delimiter: ".", precision: 0) %></td>
+          <td style="text-align:right;"><%= number_to_currency(totals[:studio],  unit: "$", delimiter: ".", precision: 0) %></td>
+        </tr>
+      <% else %>
+        <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:24px;">Sin registros</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
 <!-- Gráficos ventas + comisiones -->
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px;">
   <div class="chart-wrap">
@@ -139,51 +184,6 @@
       <% end %>
       <% if @recent_attendances.empty? %>
         <tr><td colspan="8" style="text-align:center; color:#9ca3af; padding:24px;">Sin atenciones en este período</td></tr>
-      <% end %>
-    </tbody>
-  </table>
-</div>
-
-<!-- Resumen mensual acumulado -->
-<div class="sv-table-wrap" style="margin-top:28px;">
-  <div class="sv-table-head">
-    <h3>📅 Resumen mensual acumulado (últimos 12 meses)</h3>
-  </div>
-  <table class="sv-table">
-    <thead>
-      <tr>
-        <th>Mes</th>
-        <th style="text-align:right;">Total (c/IVA)</th>
-        <th style="text-align:right;">IVA (19%)</th>
-        <th style="text-align:right;">Neto (s/IVA)</th>
-        <th style="text-align:right; color:#C9A96E;">Monto estilistas</th>
-        <th style="text-align:right; color:#1A1A1A;">Monto estudio</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% if @monthly_summary.any? %>
-        <% @monthly_summary.each do |m| %>
-          <tr>
-            <td style="font-weight:600; text-transform:capitalize;"><%= m[:month] %></td>
-            <td style="text-align:right; font-weight:600;"><%= number_to_currency(m[:total],   unit: "$", delimiter: ".", precision: 0) %></td>
-            <td style="text-align:right; color:#6b7280;"><%= number_to_currency(m[:iva],     unit: "$", delimiter: ".", precision: 0) %></td>
-            <td style="text-align:right;"><%= number_to_currency(m[:net],     unit: "$", delimiter: ".", precision: 0) %></td>
-            <td style="text-align:right; color:#C9A96E; font-weight:600;"><%= number_to_currency(m[:stylist], unit: "$", delimiter: ".", precision: 0) %></td>
-            <td style="text-align:right; font-weight:600;"><%= number_to_currency(m[:studio],  unit: "$", delimiter: ".", precision: 0) %></td>
-          </tr>
-        <% end %>
-        <%# Fila de totales %>
-        <% totals = @monthly_summary.each_with_object(Hash.new(0)) { |m, h| m.except(:month).each { |k, v| h[k] += v } } %>
-        <tr style="background:#f9fafb; font-weight:700; border-top:2px solid #e5e7eb;">
-          <td>TOTAL</td>
-          <td style="text-align:right;"><%= number_to_currency(totals[:total],   unit: "$", delimiter: ".", precision: 0) %></td>
-          <td style="text-align:right; color:#6b7280;"><%= number_to_currency(totals[:iva],     unit: "$", delimiter: ".", precision: 0) %></td>
-          <td style="text-align:right;"><%= number_to_currency(totals[:net],     unit: "$", delimiter: ".", precision: 0) %></td>
-          <td style="text-align:right; color:#C9A96E;"><%= number_to_currency(totals[:stylist], unit: "$", delimiter: ".", precision: 0) %></td>
-          <td style="text-align:right;"><%= number_to_currency(totals[:studio],  unit: "$", delimiter: ".", precision: 0) %></td>
-        </tr>
-      <% else %>
-        <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:24px;">Sin registros</td></tr>
       <% end %>
     </tbody>
   </table>

@@ -76,7 +76,8 @@ module Supervisor
         email:      params[:email].to_s.strip.downcase,
         phone:      params[:phone],
         role:       "client",
-        password:   SecureRandom.hex(12)   # contraseña temporal — puede resetearla luego
+        walk_in:    true,
+        password:   SecureRandom.hex(12)   # contraseña temporal — recupera acceso vía email
       )
 
       if user.save

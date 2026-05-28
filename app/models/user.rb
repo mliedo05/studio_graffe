@@ -27,6 +27,7 @@ class User < ApplicationRecord
   scope :stylists,    -> { where(role: "stylist") }
   scope :clients,     -> { where(role: "client") }
   scope :staff,       -> { where(role: %w[admin supervisor stylist]) }
+  scope :walk_ins,    -> { where(walk_in: true) }
 
   def full_name
     "#{first_name} #{last_name}"

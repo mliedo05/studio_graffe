@@ -41,7 +41,40 @@
     </div>
     <div style="margin-bottom:20px;">
       <label class="sv-label">Teléfono</label>
-      <input type="text" id="nc-phone" class="sv-input" placeholder="Ej: +56 9 1234 5678">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <%# Selector de prefijo de país (reutiliza phone_country_controller) %>
+        <div class="relative shrink-0"
+             data-controller="phone-country"
+             data-phone-country-selected-value="+56">
+          <input type="hidden" id="nc-phone-prefix" value="+56"
+                 data-phone-country-target="hidden">
+          <button type="button"
+                  data-action="click->phone-country#toggle"
+                  data-phone-country-target="trigger"
+                  style="display:flex; align-items:center; gap:4px; padding:6px 10px; background:#f3f4f6; border:1px solid #d1d5db; border-radius:6px; cursor:pointer; font-size:13px;">
+            <span data-phone-country-target="triggerFlag" style="font-size:16px; line-height:1;">🇨🇱</span>
+            <span data-phone-country-target="triggerCode" style="font-weight:600; color:#374151; font-variant-numeric:tabular-nums;">+56</span>
+            <span style="color:#9ca3af; font-size:11px;">▾</span>
+          </button>
+          <div data-phone-country-target="dropdown"
+               class="hidden"
+               style="position:absolute; left:0; top:calc(100% + 4px); z-index:1100; width:280px; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.15); overflow:hidden;"
+               data-action="keydown->phone-country#onKeydown">
+            <div style="padding:10px 12px; border-bottom:1px solid #f3f4f6;">
+              <input type="text"
+                     data-phone-country-target="search"
+                     data-action="input->phone-country#filter"
+                     placeholder="Buscar país..."
+                     style="width:100%; border:1px solid #e5e7eb; border-radius:6px; padding:5px 10px; font-size:13px;">
+            </div>
+            <div data-phone-country-target="list"
+                 style="overflow-y:auto; max-height:200px; padding:4px 0;"></div>
+          </div>
+        </div>
+        <%# Número sin prefijo %>
+        <input type="tel" id="nc-phone" class="sv-input" placeholder="9 1234 5678"
+               style="flex:1; margin-bottom:0;">
+      </div>
     </div>
 
     <div id="nc-error" style="display:none; background:#fee2e2; color:#991b1b; padding:10px 12px; border-radius:6px; font-size:13px; margin-bottom:12px;"></div>
@@ -243,13 +276,18 @@ function closeClientModal() {
   document.getElementById('new-client-modal').style.display = 'none';
   document.getElementById('nc-error').style.display = 'none';
   ['nc-first-name','nc-last-name','nc-email','nc-phone'].forEach(id => document.getElementById(id).value = '');
+  // Resetear prefijo a Chile
+  const prefixEl = document.getElementById('nc-phone-prefix');
+  if (prefixEl) prefixEl.value = '+56';
 }
 
 function submitNewClient() {
   const firstName = document.getElementById('nc-first-name').value.trim();
   const lastName  = document.getElementById('nc-last-name').value.trim();
   const email     = document.getElementById('nc-email').value.trim();
-  const phone     = document.getElementById('nc-phone').value.trim();
+  const phonePrefix = document.getElementById('nc-phone-prefix').value.trim();
+  const phoneNumber = document.getElementById('nc-phone').value.trim();
+  const phone       = phoneNumber ? `${phonePrefix} ${phoneNumber}` : '';
   const errDiv    = document.getElementById('nc-error');
   const btn       = document.getElementById('nc-submit');
 

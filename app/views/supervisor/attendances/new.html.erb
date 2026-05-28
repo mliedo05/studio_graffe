@@ -1,0 +1,11 @@
+<% content_for :page_title, "Nueva atención" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:20px; font-weight:700;">Nueva atención</h1>
+    <p style="font-size:13px; color:#9ca3af; margin-top:2px;">Registra los servicios, estilistas y formas de pago</p>
+  </div>
+  <%= link_to "← Volver", supervisor_attendances_path, class: "btn btn-outline" %>
+</div>
+
+<%= render "form", attendance: @attendance %>

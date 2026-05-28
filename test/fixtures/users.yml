@@ -4,6 +4,7 @@ admin:
   email: admin@studiograffe.cl
   encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
   role: admin
+  walk_in: false
 
 valentina:
   first_name: Valentina
@@ -11,6 +12,7 @@ valentina:
   email: vale@studiograffe.cl
   encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
   role: stylist
+  walk_in: false
 
 camila:
   first_name: Camila
@@ -18,6 +20,7 @@ camila:
   email: cami@studiograffe.cl
   encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
   role: stylist
+  walk_in: false
 
 cliente:
   first_name: María
@@ -25,3 +28,12 @@ cliente:
   email: maria@example.com
   encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
   role: client
+  walk_in: false
+
+cliente_walk_in:
+  first_name: Ana
+  last_name: Torres
+  email: ana@example.com
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: client
+  walk_in: true

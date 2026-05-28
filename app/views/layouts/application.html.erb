@@ -217,6 +217,36 @@
                   <span class="font-body-sm text-[14px] text-purple-600">Panel Admin</span>
                 <% end %>
               <% end %>
+
+              <% if current_user.admin? || current_user.supervisor? %>
+                <div class="mx-3 my-1 border-t border-stone-100"></div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9ca3af; padding:6px 16px 2px;">Supervisor</p>
+                <%= link_to supervisor_root_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">dashboard</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Dashboard</span>
+                <% end %>
+                <%= link_to new_supervisor_attendance_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">add_circle</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Nueva atención</span>
+                <% end %>
+                <%= link_to supervisor_commissions_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">payments</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Comisiones</span>
+                <% end %>
+                <%= link_to supervisor_sales_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-amber-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-amber-500 group-hover/item:text-amber-600 transition-colors">storefront</span>
+                  <span class="font-body-sm text-[14px] text-amber-700">Ventas</span>
+                <% end %>
+              <% end %>
+
+              <% if current_user.stylist? %>
+                <div class="mx-3 my-1 border-t border-stone-100"></div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9ca3af; padding:6px 16px 2px;">Mi panel</p>
+                <%= link_to stylist_panel_root_path, class: "flex items-center gap-3 px-4 py-3 text-on-surface hover:bg-blue-50 transition-colors group/item" do %>
+                  <span class="material-symbols-outlined text-[20px] text-blue-400 group-hover/item:text-blue-600 transition-colors">bar_chart</span>
+                  <span class="font-body-sm text-[14px] text-blue-600">Mis comisiones</span>
+                <% end %>
+              <% end %>
             </div>
 
             <!-- Sign out -->

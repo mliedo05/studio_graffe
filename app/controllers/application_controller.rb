@@ -22,4 +22,16 @@ class ApplicationController < ActionController::Base
       redirect_to new_user_session_path, alert: "Debes iniciar sesión como administrador."
     end
   end
+
+  def authenticate_supervisor!
+    unless current_user&.admin? || current_user&.supervisor?
+      redirect_to root_path, alert: "No tienes permiso para acceder a esta sección."
+    end
+  end
+
+  def authenticate_staff!
+    unless current_user&.staff?
+      redirect_to root_path, alert: "No tienes permiso para acceder a esta sección."
+    end
+  end
 end

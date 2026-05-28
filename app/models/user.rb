@@ -3,7 +3,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable,
          :omniauthable, omniauth_providers: [ :google_oauth2 ]
 
-  ROLES = %w[admin stylist client].freeze
+  ROLES = %w[admin supervisor stylist client].freeze
 
   has_one :stylist_profile, foreign_key: :stylist_id, dependent: :destroy
   has_many :stylist_schedules, foreign_key: :stylist_id, dependent: :destroy
@@ -14,20 +14,30 @@ class User < ApplicationRecord
   has_many :addresses, dependent: :destroy
   has_many :commissions, foreign_key: :stylist_id, dependent: :destroy
 
+  # Attendance associations
+  has_many :attendances_as_client,      class_name: "Attendance", foreign_key: :client_id, dependent: :nullify
+  has_many :attendances_registered,     class_name: "Attendance", foreign_key: :registered_by_id, dependent: :restrict_with_error
+  has_many :attendance_items_as_stylist, class_name: "AttendanceItem", foreign_key: :stylist_id, dependent: :restrict_with_error
+
   validates :first_name, :last_name, presence: true
   validates :role, inclusion: { in: ROLES }
 
-  scope :admins,   -> { where(role: "admin") }
-  scope :stylists, -> { where(role: "stylist") }
-  scope :clients,  -> { where(role: "client") }
+  scope :admins,      -> { where(role: "admin") }
+  scope :supervisors, -> { where(role: "supervisor") }
+  scope :stylists,    -> { where(role: "stylist") }
+  scope :clients,     -> { where(role: "client") }
+  scope :staff,       -> { where(role: %w[admin supervisor stylist]) }
+  scope :walk_ins,    -> { where(walk_in: true) }
 
   def full_name
     "#{first_name} #{last_name}"
   end
 
-  def admin?   = role == "admin"
-  def stylist? = role == "stylist"
-  def client?  = role == "client"
+  def admin?      = role == "admin"
+  def supervisor? = role == "supervisor"
+  def stylist?    = role == "stylist"
+  def client?     = role == "client"
+  def staff?      = admin? || supervisor? || stylist?
 
   def current_cart
     # Always use the most recent cart; if somehow multiple exist, collapse them
@@ -73,6 +83,6 @@ class User < ApplicationRecord
   end
 
   def self.ransackable_attributes(auth_object = nil)
-    %w[first_name last_name email]
+    %w[first_name last_name email role created_at id]
   end
 end

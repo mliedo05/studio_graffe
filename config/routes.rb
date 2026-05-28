@@ -6,7 +6,8 @@ Rails.application.routes.draw do
     sign_out: "salir",
     sign_up:  "registro"
   }, controllers: {
-    omniauth_callbacks: "users/omniauth_callbacks"
+    omniauth_callbacks: "users/omniauth_callbacks",
+    registrations:      "users/registrations"
   }
 
   # Tienda
@@ -55,6 +56,29 @@ Rails.application.routes.draw do
   # Direcciones guardadas
   resources :addresses, path: "direcciones", only: [ :create, :update, :destroy ] do
     member { patch :set_default }
+  end
+
+  # ── Panel Supervisor ──────────────────────────────────────────────
+  namespace :supervisor do
+    root to: "dashboard#index"
+    resources :attendances, only: [ :index, :new, :create, :show, :edit, :update ] do
+      member { patch :close }
+      collection do
+        get  :search_client
+        post :create_client
+      end
+    end
+    get "/comisiones",           to: "commissions#index",        as: :commissions
+    get "/comisiones/exportar",  to: "commissions#export",       as: :commissions_export
+    get "/ventas",               to: "sales#index",              as: :sales
+    get  "/caja",                to: "caja#index",               as: :caja
+    post "/caja/registrar_pago", to: "caja#registrar_pago",      as: :caja_registrar_pago
+  end
+
+  # ── Panel Estilista ───────────────────────────────────────────────
+  namespace :stylist_panel, path: "mi-panel" do
+    root to: "dashboard#index"
+    get "/comisiones", to: "commissions#index", as: :commissions
   end
 
   get "/inicio", to: "shop#landing", as: :landing

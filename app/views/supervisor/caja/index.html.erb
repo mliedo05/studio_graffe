@@ -1,0 +1,249 @@
+<% content_for :page_title, "Caja" %>
+
+<!-- Header + período -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <h1 style="font-size:20px; font-weight:700;">💵 Cuadre de caja</h1>
+  <div class="period-tabs">
+    <%= link_to "Hoy",    supervisor_caja_path(period: "today"),  class: "period-tab #{current_period == "today"  ? "active" : ""}" %>
+    <%= link_to "Semana", supervisor_caja_path(period: "week"),   class: "period-tab #{current_period == "week"   ? "active" : ""}" %>
+    <%= link_to "Mes",    supervisor_caja_path(period: "month"),  class: "period-tab #{current_period == "month"  ? "active" : ""}" %>
+    <%= link_to "Rango",  supervisor_caja_path(period: "custom"), class: "period-tab #{current_period == "custom" ? "active" : ""}" %>
+  </div>
+</div>
+
+<% if current_period == "custom" %>
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px 20px; margin-bottom:24px; display:flex; gap:16px; align-items:flex-end;">
+    <div>
+      <label style="font-size:11px; font-weight:600; color:#9ca3af; display:block; margin-bottom:4px;">Desde</label>
+      <input type="date" id="from-date" value="<%= params[:from] %>" style="padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+    </div>
+    <div>
+      <label style="font-size:11px; font-weight:600; color:#9ca3af; display:block; margin-bottom:4px;">Hasta</label>
+      <input type="date" id="to-date" value="<%= params[:to] %>" style="padding:8px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+    </div>
+    <button onclick="applyCajaRange()" class="btn btn-gold btn-sm">Aplicar</button>
+  </div>
+  <script>
+    function applyCajaRange() {
+      var from = document.getElementById('from-date').value;
+      var to   = document.getElementById('to-date').value;
+      window.location.href = '<%= supervisor_caja_path(period: "custom") %>&from=' + from + '&to=' + to;
+    }
+  </script>
+<% end %>
+
+<!-- KPI cards por método de pago -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; margin-bottom:28px;">
+
+  <% method_info = {
+    "cash"     => { label: "💵 Efectivo",        color: "#16a34a" },
+    "transfer" => { label: "🏦 Transferencia",   color: "#2563eb" },
+    "card"     => { label: "💳 Tarjeta",          color: "#7c3aed" },
+    "other"    => { label: "📌 Otro",             color: "#6b7280" }
+  } %>
+
+  <% method_info.each do |method, info| %>
+    <div class="sv-card" style="border-top:3px solid <%= info[:color] %>;">
+      <div class="sv-card-label"><%= info[:label] %></div>
+      <div class="sv-card-value" style="color:<%= info[:color] %>; font-size:22px;">
+        <%= number_to_currency(@by_method[method].to_i, unit: "$", delimiter: ".", precision: 0) %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="sv-card" style="border-top:3px solid #1A1A1A;">
+    <div class="sv-card-label">✅ Total cobrado</div>
+    <div class="sv-card-value" style="font-size:22px;">
+      <%= number_to_currency(@total_cobrado_cents, unit: "$", delimiter: ".", precision: 0) %>
+    </div>
+  </div>
+
+  <div class="sv-card" style="border-top:3px solid #dc2626;">
+    <div class="sv-card-label">⏳ Pendiente cobro</div>
+    <div class="sv-card-value" style="color:#dc2626; font-size:22px;">
+      <%= number_to_currency(@total_pendiente_cents, unit: "$", delimiter: ".", precision: 0) %>
+    </div>
+    <div class="sv-card-sub"><%= @pending_attendances.size %> atenciones</div>
+  </div>
+
+</div>
+
+<!-- Atenciones pendientes de cobro -->
+<div class="sv-table-wrap" style="margin-bottom:28px;">
+  <div class="sv-table-head">
+    <h3>⏳ Pendientes de cobro</h3>
+    <% if @pending_attendances.any? %>
+      <span style="font-size:12px; color:#dc2626; font-weight:600;"><%= @pending_attendances.size %> atenciones · <%= number_to_currency(@total_pendiente_cents, unit: "$", delimiter: ".", precision: 0) %> por cobrar</span>
+    <% end %>
+  </div>
+  <table class="sv-table">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th style="text-align:right;">Total</th>
+        <th style="text-align:right;">Cobrado</th>
+        <th style="text-align:right; color:#dc2626;">Pendiente</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @pending_attendances.any? %>
+        <% @pending_attendances.each do |a| %>
+          <tr>
+            <td><code style="font-size:12px;"><%= a.number %></code></td>
+            <td><%= a.attended_on.strftime("%d/%m/%Y") %></td>
+            <td><%= a.display_client_name %></td>
+            <td style="text-align:right; font-weight:600;"><%= number_to_currency(a.total_cents,  unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; color:#16a34a;"><%= number_to_currency(a.paid_cents,   unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; color:#dc2626; font-weight:700;"><%= number_to_currency(a.balance_cents, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td>
+              <% if a.paid_cents > 0 %>
+                <span class="badge badge-yellow">Parcial</span>
+              <% else %>
+                <span class="badge badge-red">Sin cobrar</span>
+              <% end %>
+            </td>
+            <td style="display:flex; gap:6px;">
+              <button class="btn btn-gold btn-sm"
+                      onclick="abrirPago('<%= a.id %>', '<%= j a.display_client_name %>', <%= a.balance_cents %>, '<%= a.number %>')">
+                Registrar pago
+              </button>
+              <%= link_to "Ver", supervisor_attendance_path(a), class: "btn btn-outline btn-sm" %>
+            </td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="8" style="text-align:center; color:#16a34a; padding:32px; font-weight:600;">
+            ✅ Sin cobros pendientes en este período
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Log de pagos del período -->
+<div class="sv-table-wrap">
+  <div class="sv-table-head">
+    <h3>📋 Log de pagos del período</h3>
+    <span style="font-size:12px; color:#9ca3af;"><%= @payments.size %> registros</span>
+  </div>
+  <table class="sv-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>N° Atención</th>
+        <th>Cliente</th>
+        <th>Método</th>
+        <th style="text-align:right;">Monto</th>
+        <th>Nota</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if @payments.any? %>
+        <% @payments.each do |p| %>
+          <% color = AttendancePayment::METHOD_COLORS[p.payment_method] || "#6b7280" %>
+          <tr>
+            <td><%= p.attendance.attended_on.strftime("%d/%m/%Y") %></td>
+            <td><code style="font-size:12px;"><%= p.attendance.number %></code></td>
+            <td><%= p.attendance.display_client_name %></td>
+            <td>
+              <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600; background:<%= color %>22; color:<%= color %>;">
+                <%= AttendancePayment::METHOD_LABELS[p.payment_method] %>
+              </span>
+            </td>
+            <td style="text-align:right; font-weight:600;">
+              <span style="color:<%= p.payment_method == "pending" ? "#dc2626" : "#1A1A1A" %>">
+                <%= number_to_currency(p.amount_cents, unit: "$", delimiter: ".", precision: 0) %>
+              </span>
+            </td>
+            <td style="color:#9ca3af; font-size:12px;"><%= p.note.presence || "—" %></td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:24px;">Sin pagos en este período</td></tr>
+      <% end %>
+    </tbody>
+    <% if @payments.any? %>
+      <tfoot>
+        <% real_total = @payments.reject { |p| p.payment_method == "pending" }.sum(&:amount_cents) %>
+        <tr style="background:#f9fafb; font-weight:700; border-top:2px solid #e5e7eb;">
+          <td colspan="4">TOTAL COBRADO</td>
+          <td style="text-align:right; font-size:15px;"><%= number_to_currency(real_total, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    <% end %>
+  </table>
+</div>
+
+<!-- Modal registrar pago -->
+<div id="modal-pago" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:12px; padding:28px; width:420px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">Registrar pago</h3>
+    <p id="modal-pago-cliente" style="font-size:13px; color:#9ca3af; margin-bottom:20px;"></p>
+
+    <%= form_tag supervisor_caja_registrar_pago_path, method: :post, id: "form-pago" do %>
+      <input type="hidden" name="period" value="<%= current_period %>">
+      <input type="hidden" name="from"   value="<%= params[:from] %>">
+      <input type="hidden" name="to"     value="<%= params[:to] %>">
+      <input type="hidden" name="attendance_id" id="pago-attendance-id">
+
+      <div class="sv-form-group">
+        <label class="sv-label">Método de pago</label>
+        <select name="payment_method" class="sv-select" id="pago-method">
+          <option value="cash">💵 Efectivo</option>
+          <option value="transfer">🏦 Transferencia</option>
+          <option value="card">💳 Tarjeta</option>
+          <option value="other">📌 Otro</option>
+        </select>
+      </div>
+
+      <div class="sv-form-group">
+        <label class="sv-label">Monto ($)</label>
+        <input type="text" name="amount_cents" id="pago-monto" class="sv-input"
+               placeholder="Ej: 50000" style="font-size:18px; font-weight:700;">
+        <p id="pago-balance-hint" style="font-size:12px; color:#9ca3af; margin-top:4px;"></p>
+      </div>
+
+      <div class="sv-form-group">
+        <label class="sv-label">Nota (opcional)</label>
+        <input type="text" name="note" class="sv-input" placeholder="Ej: Transferencia recibida 28/05">
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+        <button type="button" onclick="cerrarPago()" class="btn btn-outline">Cancelar</button>
+        <button type="submit" class="btn btn-gold">Registrar pago</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+(function() {
+  window.abrirPago = function(id, cliente, balanceCents, numero) {
+    document.getElementById('pago-attendance-id').value = id;
+    document.getElementById('modal-pago-cliente').textContent =
+      'Atención ' + numero + ' · ' + cliente;
+    var fmt = '$' + balanceCents.toLocaleString('es-CL');
+    document.getElementById('pago-balance-hint').textContent =
+      'Saldo pendiente: ' + fmt;
+    document.getElementById('pago-monto').value = balanceCents;
+    var modal = document.getElementById('modal-pago');
+    modal.style.display = 'flex';
+  };
+
+  window.cerrarPago = function() {
+    document.getElementById('modal-pago').style.display = 'none';
+  };
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modal-pago').addEventListener('click', function(e) {
+    if (e.target === this) cerrarPago();
+  });
+})();
+</script>

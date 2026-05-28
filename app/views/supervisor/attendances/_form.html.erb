@@ -396,7 +396,7 @@ function buildServiceItem(idx) {
     <div style="display:grid; grid-template-columns:2fr 1.5fr 90px 80px auto; gap:8px; align-items:end;">
       <div>
         <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Servicio</label>
-        <select name="attendance[attendance_items_attributes][${idx}][service_id]" class="sv-select item-service-sel" onchange="onServiceChange(this)">
+        <select name="attendance[attendance_items_attributes][${idx}][service_id]" class="sv-select item-service-sel">
           <option value="">Seleccionar...</option>${opts}
         </select>
       </div>
@@ -435,7 +435,7 @@ function buildProductItem(idx) {
     <div style="display:grid; grid-template-columns:2fr 1.5fr 90px 80px auto; gap:8px; align-items:end;">
       <div>
         <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Producto</label>
-        <select name="attendance[attendance_items_attributes][${idx}][product_id]" class="sv-select item-product-sel" onchange="onProductChange(this)">
+        <select name="attendance[attendance_items_attributes][${idx}][product_id]" class="sv-select item-product-sel">
           <option value="">Seleccionar...</option>${opts}
         </select>
       </div>
@@ -459,35 +459,32 @@ function buildProductItem(idx) {
   </div>`;
 }
 
-function onServiceChange(sel) {
+// ── Event delegation: un solo listener en el contenedor ──────────
+// Captura cambios en cualquier select de servicio o producto,
+// sin importar si el row fue generado por Rails o por JS.
+document.getElementById('items-container').addEventListener('change', function(e) {
+  const sel = e.target;
+  if (sel.classList.contains('item-service-sel') || sel.classList.contains('item-product-sel')) {
+    applyItemChange(sel);
+  }
+  updateTotals();
+});
+
+function applyItemChange(sel) {
   const opt = sel.options[sel.selectedIndex];
   const row = sel.closest('.item-row');
-  if (opt.dataset.price)      row.querySelector('.item-price').value      = opt.dataset.price;
-  if (opt.dataset.commission) row.querySelector('.item-commission').value = opt.dataset.commission;
+  if (!row || !opt) return;
+  if (opt.dataset.price !== undefined && opt.dataset.price !== '')
+    row.querySelector('.item-price').value = opt.dataset.price;
+  if (opt.dataset.commission !== undefined && opt.dataset.commission !== '')
+    row.querySelector('.item-commission').value = opt.dataset.commission;
   const desc = row.querySelector('.item-desc');
-  if (desc) desc.value = opt.text;
-  updateTotals();
+  if (desc && opt.value) desc.value = opt.text;
 }
 
-function onProductChange(sel) {
-  const opt = sel.options[sel.selectedIndex];
-  const row = sel.closest('.item-row');
-  if (opt.dataset.price) row.querySelector('.item-price').value = opt.dataset.price;
-  row.querySelector('.item-commission').value = 10;
-  const desc = row.querySelector('.item-desc');
-  if (desc) desc.value = opt.text;
-  updateTotals();
-}
+// Mantener por compatibilidad con el partial _item_fields.html.erb (onExistingItemChange)
+function onExistingItemChange(sel) { applyItemChange(sel); updateTotals(); }
 
-function onExistingItemChange(sel) {
-  const opt = sel.options[sel.selectedIndex];
-  const row = sel.closest('.item-row');
-  if (opt.dataset.price)      row.querySelector('.item-price').value      = opt.dataset.price;
-  if (opt.dataset.commission) row.querySelector('.item-commission').value = opt.dataset.commission;
-  const desc = row.querySelector('.item-desc');
-  if (desc) desc.value = opt.text;
-  updateTotals();
-}
 
 function removeItem(btn) {
   const row = btn.closest('.item-row');
@@ -596,16 +593,16 @@ function updateTotals() {
 updateTotals();
 
 // Exponer al scope global las funciones llamadas desde onclick en el HTML
-window.openClientModal  = openClientModal;
-window.closeClientModal = closeClientModal;
-window.submitNewClient  = submitNewClient;
-window.selectClient     = selectClient;
-window.clearClient      = clearClient;
-window.addItem          = addItem;
-window.removeItem       = removeItem;
-window.addPayment       = addPayment;
-window.removePayment    = removePayment;
-window.updateTotals     = updateTotals;
-window.onExistingItemChange = onExistingItemChange;
+window.openClientModal      = openClientModal;
+window.closeClientModal     = closeClientModal;
+window.submitNewClient      = submitNewClient;
+window.selectClient         = selectClient;
+window.clearClient          = clearClient;
+window.addItem              = addItem;
+window.removeItem           = removeItem;
+window.addPayment           = addPayment;
+window.removePayment        = removePayment;
+window.updateTotals         = updateTotals;
+window.onExistingItemChange = onExistingItemChange; // usado en _item_fields.html.erb
 })();
 </script>

@@ -294,6 +294,17 @@ function removePayment(btn) {
   updateTotals();
 }
 
+// ── Cambio en ítem existente (edición) ───────────────────────────
+function onExistingItemChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const row = sel.closest('.item-row');
+  if (opt.dataset.price)      row.querySelector('.item-price').value      = opt.dataset.price;
+  if (opt.dataset.commission) row.querySelector('.item-commission').value = opt.dataset.commission;
+  const descField = row.querySelector('.item-desc');
+  if (descField) descField.value = opt.text;
+  updateTotals();
+}
+
 // ── Cálculo de totales ────────────────────────────────────────────
 function updateTotals() {
   let total = 0, commissionByStylist = {};

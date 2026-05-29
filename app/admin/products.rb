@@ -2,7 +2,8 @@ ActiveAdmin.register Product do
   menu label: "🛍️ Productos", priority: 2
 
   permit_params :name, :brand, :product_category_id, :description,
-                :price_cents, :stock_quantity, :featured, :active, :sku, :image
+                :price_cents, :stock_quantity, :featured, :active, :sku, :image,
+                :track_in_grams, :cost_per_gram_cents
 
   # ── Listado ──────────────────────────────────────────────────────
   index do
@@ -73,7 +74,14 @@ ActiveAdmin.register Product do
 
         f.inputs "💲 Precio e inventario" do
           f.input :price_cents,    label: "Precio en pesos (ej: 34990)", hint: "Ingresa el precio sin puntos"
-          f.input :stock_quantity, label: "Unidades en stock"
+          f.input :stock_quantity, label: "Stock (unidades o gramos según tipo)"
+        end
+
+        f.inputs "🧴 Insumo de salón (opcional)" do
+          f.input :track_in_grams,      label: "¿Es insumo medido en gramos?",
+                                        hint: "Actívalo si este producto se usa en servicios y se mide en gramos"
+          f.input :cost_per_gram_cents, label: "Costo por gramo ($ CLP)",
+                                        hint: "Valor que se descuenta de la comisión por cada gramo usado"
         end
 
         f.inputs "⚙️ Opciones" do

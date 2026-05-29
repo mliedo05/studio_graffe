@@ -67,6 +67,24 @@ class Attendance < ApplicationRecord
     attendance_items.sum(:commission_cents)
   end
 
+  # Descuenta los gramos usados del stock de cada insumo (solo al cerrar)
+  # Idempotente: solo descuenta ítems donde stock_deducted = false
+  def deduct_insumo_stock!
+    attendance_items
+      .where.not(consumed_product_id: nil)
+      .where(stock_deducted: false)
+      .each do |item|
+        next unless item.grams_used.to_f > 0
+
+        product = item.consumed_product
+        grams   = item.grams_used.to_f.ceil   # redondea hacia arriba
+
+        Product.where(id: product.id)
+               .update_all("stock_quantity = GREATEST(stock_quantity - #{grams}, 0)")
+        item.update_column(:stock_deducted, true)
+      end
+  end
+
   private
 
   def set_number

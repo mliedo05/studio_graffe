@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_002145) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,15 +99,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.bigint "attendance_id", null: false
     t.integer "commission_cents", default: 0, null: false
     t.integer "commission_percent", null: false
+    t.bigint "consumed_product_id"
     t.datetime "created_at", null: false
     t.string "description", null: false
+    t.decimal "grams_used", precision: 8, scale: 2
     t.string "item_type", null: false
     t.integer "price_cents", null: false
+    t.integer "product_cost_cents", default: 0, null: false
     t.bigint "product_id"
     t.bigint "service_id"
+    t.boolean "stock_deducted", default: false, null: false
     t.bigint "stylist_id", null: false
     t.datetime "updated_at", null: false
     t.index ["attendance_id"], name: "index_attendance_items_on_attendance_id"
+    t.index ["consumed_product_id"], name: "index_attendance_items_on_consumed_product_id"
     t.index ["item_type"], name: "index_attendance_items_on_item_type"
     t.index ["product_id"], name: "index_attendance_items_on_product_id"
     t.index ["service_id"], name: "index_attendance_items_on_service_id"
@@ -234,6 +239,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
   create_table "products", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "brand", null: false
+    t.integer "cost_per_gram_cents", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.boolean "featured", default: false, null: false
@@ -244,11 +250,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
     t.string "sku"
     t.string "slug", null: false
     t.integer "stock_quantity", default: 0, null: false
+    t.boolean "track_in_grams", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["active"], name: "index_products_on_active"
     t.index ["featured"], name: "index_products_on_featured"
     t.index ["product_category_id"], name: "index_products_on_product_category_id"
     t.index ["slug"], name: "index_products_on_slug", unique: true
+    t.index ["track_in_grams"], name: "index_products_on_track_in_grams"
   end
 
   create_table "services", force: :cascade do |t|
@@ -330,6 +338,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_190032) do
   add_foreign_key "appointments", "users", column: "stylist_id"
   add_foreign_key "attendance_items", "attendances"
   add_foreign_key "attendance_items", "products"
+  add_foreign_key "attendance_items", "products", column: "consumed_product_id"
   add_foreign_key "attendance_items", "services"
   add_foreign_key "attendance_items", "users", column: "stylist_id"
   add_foreign_key "attendance_payments", "attendances"

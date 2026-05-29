@@ -46,6 +46,7 @@ module Supervisor
 
     def close
       @attendance.update!(status: "closed")
+      @attendance.deduct_insumo_stock!
       redirect_to supervisor_attendance_path(@attendance), notice: "Atención cerrada."
     end
 

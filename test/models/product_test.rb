@@ -144,6 +144,38 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal 11200, product.weighted_average_cost.fractional
   end
 
+  # ── Insumo de salón ───────────────────────────────────────────────
+
+  test "scope insumos incluye solo productos con track_in_grams = true" do
+    assert_includes     Product.insumos, products(:tinte_insumo)
+    assert_not_includes Product.insumos, products(:shampoo_wella)
+  end
+
+  test "válido con track_in_grams y cost_per_gram_cents" do
+    product = Product.new(
+      name:               "Tinte Castaño Medio",
+      brand:              "Koleston",
+      price_cents:        0,
+      stock_quantity:     200,
+      track_in_grams:     true,
+      cost_per_gram_cents: 500,
+      product_category:   product_categories(:tratamientos)
+    )
+    assert product.valid?, product.errors.full_messages.inspect
+  end
+
+  test "cost_per_gram_cents por defecto es 0" do
+    product = Product.new(name: "X", brand: "Y", price_cents: 0,
+                          stock_quantity: 1, product_category: product_categories(:shampoo))
+    assert_equal 0, product.cost_per_gram_cents
+  end
+
+  test "track_in_grams por defecto es false" do
+    product = Product.new(name: "X", brand: "Y", price_cents: 0,
+                          stock_quantity: 1, product_category: product_categories(:shampoo))
+    assert_not product.track_in_grams
+  end
+
   test "weighted_average_cost ignora lotes agotados" do
     product = products(:shampoo_wella)
     product.inventory_entries.destroy_all

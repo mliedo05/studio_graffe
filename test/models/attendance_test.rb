@@ -13,14 +13,15 @@ class AttendanceTest < ActiveSupport::TestCase
     assert a.valid?, a.errors.full_messages.inspect
   end
 
-  test "válida con client_name cuando no hay client" do
+  test "inválida sin cliente asociado" do
     a = Attendance.new(
       attended_on:   Date.current,
       registered_by: users(:admin),
-      client_name:   "Clienta Walk-in",
+      client_name:   "Sin cliente",
       status:        "open"
     )
-    assert a.valid?
+    assert_not a.valid?
+    assert_includes a.errors[:client], "debe seleccionarse una clienta"
   end
 
   test "inválida sin attended_on" do
@@ -109,9 +110,9 @@ class AttendanceTest < ActiveSupport::TestCase
     assert_equal users(:cliente).full_name, a.display_client_name
   end
 
-  test "display_client_name usa client_name cuando no hay cliente asociado" do
+  test "display_client_name usa full_name del cliente asociado" do
     a = attendances(:atencion_este_mes)
-    assert_equal "Clienta Walk-in", a.display_client_name
+    assert_equal a.client.full_name, a.display_client_name
   end
 
   # ── total_commission_cents ────────────────────────────────────────

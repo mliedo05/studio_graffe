@@ -441,7 +441,7 @@ function buildServiceItem(idx) {
           <div>
             <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Gramos usados</label>
             <input type="number" name="attendance[attendance_items_attributes][${idx}][grams_used]"
-                   class="sv-input item-grams" value="" min="0.1" step="0.5" placeholder="ej: 10"
+                   class="sv-input item-grams" value="" min="1" step="1" placeholder="ej: 10"
                    oninput="updateInsumo(this.closest('.insumo-panel').querySelector('.item-insumo-sel'))">
           </div>
           <div>
@@ -651,6 +651,30 @@ function updateTotals() {
 }
 
 updateTotals();
+
+// ── Validación antes de enviar ────────────────────────────────────
+document.getElementById('attendance-form').addEventListener('submit', function(e) {
+  // 1. Debe haber un cliente seleccionado
+  const clientId = document.getElementById('client-id-field').value;
+  if (!clientId) {
+    e.preventDefault();
+    alert('⚠️ Debes seleccionar una clienta antes de registrar la atención.');
+    document.getElementById('client-search').focus();
+    return;
+  }
+
+  // 2. El saldo pendiente debe ser $0 (pagos deben cubrir el total)
+  const totalEl   = document.getElementById('total-amount').textContent;
+  const balanceEl = document.getElementById('balance-amount').textContent;
+  const total     = parseInt(totalEl.replace(/\D/g, '')) || 0;
+  const balance   = parseInt(balanceEl.replace(/\D/g, '')) || 0;
+
+  if (total > 0 && balance > 0) {
+    e.preventDefault();
+    alert('⚠️ El saldo pendiente debe ser $0. Agrega los pagos correspondientes o registra el saldo como "Pendiente de pago".');
+    return;
+  }
+});
 
 // Exponer al scope global las funciones llamadas desde onclick en el HTML
 window.openClientModal      = openClientModal;

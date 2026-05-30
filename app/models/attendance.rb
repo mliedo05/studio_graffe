@@ -16,6 +16,7 @@ class Attendance < ApplicationRecord
   validates :number,      presence: true, uniqueness: true
   validates :attended_on, presence: true
   validates :status,      inclusion: { in: STATUSES }
+  validates :client,      presence: { message: "debe seleccionarse una clienta" }
   validates :client_name, presence: true, if: -> { client.nil? }
 
   before_validation :set_number, on: :create

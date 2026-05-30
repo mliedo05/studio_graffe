@@ -99,7 +99,8 @@ module Supervisor
         :attended_on, :client_id, :client_name, :notes, :status,
         attendance_items_attributes: [
           :id, :item_type, :service_id, :product_id, :description,
-          :stylist_id, :price_cents, :commission_percent, :_destroy
+          :stylist_id, :price_cents, :commission_percent,
+          :consumed_product_id, :grams_used, :product_cost_cents, :_destroy
         ],
         attendance_payments_attributes: [
           :id, :payment_method, :amount_cents, :note, :_destroy

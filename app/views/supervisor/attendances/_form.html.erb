@@ -581,9 +581,28 @@ function updateTotals() {
     const commInput   = row.querySelector('.item-commission');
     if (!priceInput || !commInput) return;
 
-    const price      = parseInt(priceInput.value) || 0;
-    const commPct    = parseFloat(commInput.value) || 0;
-    const commission = Math.round(price * commPct / 100);
+    const price   = parseInt(priceInput.value) || 0;
+    const commPct = parseFloat(commInput.value) || 0;
+
+    // Replicar lógica del modelo: neto (÷1.19) − costo_insumo = base comisionable
+    const netPrice = Math.round(price / 1.19);
+
+    // Costo de insumo: leer del panel si está abierto y tiene producto+gramos
+    let productCost = 0;
+    const insumoPanel = row.querySelector('.insumo-panel');
+    if (insumoPanel && insumoPanel.style.display !== 'none') {
+      const insumoSel = insumoPanel.querySelector('.item-insumo-sel');
+      const gramsEl   = insumoPanel.querySelector('.item-grams');
+      if (insumoSel && gramsEl) {
+        const opt      = insumoSel.options[insumoSel.selectedIndex];
+        const costPerG = parseFloat(opt?.dataset?.cost || 0);
+        const grams    = parseFloat(gramsEl.value || 0);
+        productCost    = Math.round(costPerG * grams);
+      }
+    }
+
+    const commissionBase = Math.max(netPrice - productCost, 0);
+    const commission     = Math.round(commissionBase * commPct / 100);
 
     const stylistSel  = row.querySelector('select[name*="stylist_id"]');
     const stylistName = stylistSel?.options[stylistSel.selectedIndex]?.text || 'Sin asignar';
@@ -592,7 +611,11 @@ function updateTotals() {
     commissionByStylist[stylistName] = (commissionByStylist[stylistName] || 0) + commission;
 
     const disp = row.querySelector('.item-commission-display');
-    if (disp) disp.textContent = 'Comisión: ' + formatCLP(commission);
+    if (disp) {
+      let label = 'Comisión: ' + formatCLP(commission);
+      if (productCost > 0) label += ' <span style="color:#c2410c; font-size:10px;">(insumo −' + formatCLP(productCost) + ')</span>';
+      disp.innerHTML = label;
+    }
   });
 
   let paid = 0;

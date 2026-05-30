@@ -46,5 +46,47 @@
     <button type="button" onclick="removeItem(this)"
             style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; margin-bottom:2px;">×</button>
   </div>
+  <% unless is_product %>
+    <%# ── Sección insumo (solo servicios) ──────────────────────── %>
+    <% has_insumo = f.object.consumed_product_id.present? %>
+    <div style="margin-top:10px;">
+      <button type="button" onclick="toggleInsumo(this)"
+              style="background:none; border:1px dashed <%= has_insumo ? "#fed7aa" : "#d1d5db" %>; border-radius:6px; padding:4px 10px; font-size:11px; color:<%= has_insumo ? "#c2410c" : "#9ca3af" %>; cursor:pointer; width:100%; text-align:left;">
+        <%= has_insumo ? "▲ Ocultar insumo de salón" : "＋ ¿Se usó insumo de salón? (opcional)" %>
+      </button>
+      <div class="insumo-panel" style="display:<%= has_insumo ? "block" : "none" %>; margin-top:8px; background:#fff8f0; border:1px solid #fed7aa; border-radius:6px; padding:10px;">
+        <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;">🧴 Insumo utilizado</div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px; align-items:end;">
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Producto insumo</label>
+            <%= f.select :consumed_product_id,
+                  Product.insumos.map { |p| ["#{p.brand} — #{p.name} (#{p.stock_quantity} gr disponibles)", p.id,
+                    { data: { cost: p.cost_per_gram_cents, stock: p.stock_quantity } }] },
+                  { include_blank: "Sin insumo" },
+                  class: "sv-select item-insumo-sel",
+                  onchange: "updateInsumo(this)" %>
+          </div>
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Gramos usados</label>
+            <%= f.number_field :grams_used,
+                  class: "sv-input item-grams",
+                  min: 1, step: 1,
+                  placeholder: "ej: 10",
+                  oninput: "updateInsumo(this.closest('.insumo-panel').querySelector('.item-insumo-sel'))" %>
+          </div>
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Costo insumo</label>
+            <div class="insumo-cost-display" style="font-size:14px; font-weight:700; color:#c2410c; padding:9px 0;">
+              <% if has_insumo %>
+                $<%= number_with_delimiter(f.object.product_cost_cents, delimiter: ".") %>
+              <% else %>
+                $0
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
   <div style="font-size:11px; color:<%= is_product ? "#1d4ed8" : "#C9A96E" %>; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
 </div>

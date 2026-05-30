@@ -13,14 +13,15 @@ class AttendanceTest < ActiveSupport::TestCase
     assert a.valid?, a.errors.full_messages.inspect
   end
 
-  test "válida con client_name cuando no hay client" do
+  test "inválida sin cliente asociado" do
     a = Attendance.new(
       attended_on:   Date.current,
       registered_by: users(:admin),
-      client_name:   "Clienta Walk-in",
+      client_name:   "Sin cliente",
       status:        "open"
     )
-    assert a.valid?
+    assert_not a.valid?
+    assert_includes a.errors[:client], "debe seleccionarse una clienta"
   end
 
   test "inválida sin attended_on" do
@@ -109,9 +110,9 @@ class AttendanceTest < ActiveSupport::TestCase
     assert_equal users(:cliente).full_name, a.display_client_name
   end
 
-  test "display_client_name usa client_name cuando no hay cliente asociado" do
+  test "display_client_name usa full_name del cliente asociado" do
     a = attendances(:atencion_este_mes)
-    assert_equal "Clienta Walk-in", a.display_client_name
+    assert_equal a.client.full_name, a.display_client_name
   end
 
   # ── total_commission_cents ────────────────────────────────────────
@@ -120,6 +121,185 @@ class AttendanceTest < ActiveSupport::TestCase
     a = attendances(:atencion_cerrada)
     expected = a.attendance_items.sum(:commission_cents)
     assert_equal expected, a.total_commission_cents
+  end
+
+  # ── deduct_insumo_stock! ─────────────────────────────────────────
+
+  test "deduct_insumo_stock! descuenta gramos del insumo y marca stock_deducted" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    item = a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          10,
+      stock_deducted:      false
+    )
+
+    a.deduct_insumo_stock!
+
+    assert_equal before - 10, insumo.reload.stock_quantity
+    assert item.reload.stock_deducted
+  end
+
+  test "deduct_insumo_stock! es idempotente: no descuenta dos veces" do
+    insumo = products(:tinte_insumo)
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "closed"
+    )
+    a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          10,
+      stock_deducted:      true   # ya descontado
+    )
+
+    stock_antes = insumo.stock_quantity
+    a.deduct_insumo_stock!
+    assert_equal stock_antes, insumo.reload.stock_quantity
+  end
+
+  test "deduct_insumo_stock! no descuenta si no hay grams_used" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          nil,
+      stock_deducted:      false
+    )
+
+    a.deduct_insumo_stock!
+    assert_equal before, insumo.reload.stock_quantity
+  end
+
+  test "deduct_insumo_stock! no descuenta por debajo de 0 (GREATEST)" do
+    insumo = products(:tinte_insumo)
+    # Forzar stock a 5
+    insumo.update_columns(stock_quantity: 5)
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          100,
+      stock_deducted:      false
+    )
+
+    a.deduct_insumo_stock!
+    assert_equal 0, insumo.reload.stock_quantity
+  end
+
+  # ── restore_stock! ───────────────────────────────────────────────
+
+  test "restore_stock! devuelve 1 unidad al stock por producto vendido" do
+    product = products(:shampoo_wella)
+    before  = product.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:          "product",
+      product:            product,
+      stylist:            users(:valentina),
+      price_cents:        18990,
+      commission_percent: 10
+    )
+
+    a.restore_stock!
+    assert_equal before + 1, product.reload.stock_quantity
+  end
+
+  test "restore_stock! devuelve gramos de insumo solo si stock_deducted = true" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "closed"
+    )
+    item = a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          15,
+      stock_deducted:      true
+    )
+
+    a.restore_stock!
+    assert_equal before + 15, insumo.reload.stock_quantity
+  end
+
+  test "restore_stock! no devuelve gramos si stock_deducted = false" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          15,
+      stock_deducted:      false
+    )
+
+    a.restore_stock!
+    assert_equal before, insumo.reload.stock_quantity
   end
 
   # ── scope ordered ────────────────────────────────────────────────

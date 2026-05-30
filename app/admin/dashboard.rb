@@ -95,5 +95,29 @@ ActiveAdmin.register_page "Dashboard" do
         end
       end
     end
+
+    # ── Acceso rápido al panel Supervisor ────────────────────────────
+    panel "🗂️ Panel Supervisor — Acceso directo" do
+      div style: "margin-bottom:12px; font-size:13px; color:#6b7280;" do
+        text_node "Gestión de atenciones, comisiones, caja y ventas del salón."
+      end
+
+      btn_style = "display:inline-block; padding:10px 20px; margin:4px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; border:none; cursor:pointer;"
+
+      links = [
+        { label: "📊 Dashboard supervisor", path: :supervisor_root_path,        bg: "#1A1A1A", color: "#C9A96E" },
+        { label: "📋 Registro de atenciones", path: :supervisor_attendances_path, bg: "#fff",   color: "#1A1A1A", border: "1px solid #e5e7eb" },
+        { label: "➕ Nueva atención",          path: :new_supervisor_attendance_path, bg: "#C9A96E", color: "#fff" },
+        { label: "💵 Caja",                   path: :supervisor_caja_path,        bg: "#fff",   color: "#16a34a", border: "1px solid #bbf7d0" },
+        { label: "💰 Comisiones",             path: :supervisor_commissions_path, bg: "#fff",   color: "#7c3aed", border: "1px solid #ddd6fe" },
+        { label: "🛍️ Ventas",                path: :supervisor_sales_path,       bg: "#fff",   color: "#2563eb", border: "1px solid #bfdbfe" }
+      ]
+
+      links.each do |lnk|
+        style = btn_style + "background:#{lnk[:bg]}; color:#{lnk[:color]};"
+        style += "border:#{lnk[:border]};" if lnk[:border]
+        link_to lnk[:label], send(lnk[:path]), style: style, target: "_blank"
+      end
+    end
   end
 end

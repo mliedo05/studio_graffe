@@ -42,6 +42,12 @@
     { id: u.id, name: u.full_name, commission_percent: u.stylist_profile&.commission_percentage || 40 }
   }.to_json %>;
 
+  const INSUMOS_DATA = <%= raw Product.insumos.map { |p|
+    { id: p.id, name: p.name, brand: p.brand,
+      cost_per_gram_cents: p.cost_per_gram_cents,
+      stock: p.stock_quantity }
+  }.to_json %>;
+
   const CREATE_CLIENT_URL = '<%= create_client_supervisor_attendances_path %>';
   const CSRF_TOKEN = '<%= form_authenticity_token %>';
 </script>
@@ -416,6 +422,35 @@ function buildServiceItem(idx) {
       </div>
       <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; align-self:end; margin-bottom:1px;">×</button>
     </div>
+    <div style="margin-top:10px;">
+      <button type="button" onclick="toggleInsumo(this)"
+              style="background:none; border:1px dashed #d1d5db; border-radius:6px; padding:4px 10px; font-size:11px; color:#9ca3af; cursor:pointer; width:100%; text-align:left;">
+        ＋ ¿Se usó insumo de salón? (opcional)
+      </button>
+      <div class="insumo-panel" style="display:none; margin-top:8px; background:#fff8f0; border:1px solid #fed7aa; border-radius:6px; padding:10px;">
+        <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;">🧴 Insumo utilizado</div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px; align-items:end;">
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Producto insumo</label>
+            <select name="attendance[attendance_items_attributes][${idx}][consumed_product_id]"
+                    class="sv-select item-insumo-sel" onchange="updateInsumo(this)">
+              <option value="">Sin insumo</option>
+              ${INSUMOS_DATA.map(i => `<option value="${i.id}" data-cost="${i.cost_per_gram_cents}" data-stock="${i.stock}">${i.brand} — ${i.name} (${i.stock} gr disponibles)</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Gramos usados</label>
+            <input type="number" name="attendance[attendance_items_attributes][${idx}][grams_used]"
+                   class="sv-input item-grams" value="" min="1" step="1" placeholder="ej: 10"
+                   oninput="updateInsumo(this.closest('.insumo-panel').querySelector('.item-insumo-sel'))">
+          </div>
+          <div>
+            <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Costo insumo</label>
+            <div class="insumo-cost-display" style="font-size:14px; font-weight:700; color:#c2410c; padding:9px 0;">$0</div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="font-size:12px; color:#C9A96E; font-weight:600; margin-top:6px; text-align:right;" class="item-commission-display">Comisión: $0</div>
   </div>`;
 }
@@ -546,9 +581,29 @@ function updateTotals() {
     const commInput   = row.querySelector('.item-commission');
     if (!priceInput || !commInput) return;
 
-    const price      = parseInt(priceInput.value) || 0;
-    const commPct    = parseFloat(commInput.value) || 0;
-    const commission = Math.round(price * commPct / 100);
+    const price   = parseInt(priceInput.value) || 0;
+    const commPct = parseFloat(commInput.value) || 0;
+
+    // Replicar lógica del modelo:
+    //   comisión = (neto × %) − costo_insumo
+    const netPrice       = Math.round(price / 1.19);
+    const grossCommission = Math.round(netPrice * commPct / 100);
+
+    // Costo de insumo: leer del panel si está abierto
+    let productCost = 0;
+    const insumoPanel = row.querySelector('.insumo-panel');
+    if (insumoPanel && insumoPanel.style.display !== 'none') {
+      const insumoSel = insumoPanel.querySelector('.item-insumo-sel');
+      const gramsEl   = insumoPanel.querySelector('.item-grams');
+      if (insumoSel && gramsEl) {
+        const opt      = insumoSel.options[insumoSel.selectedIndex];
+        const costPerG = parseFloat(opt?.dataset?.cost || 0);
+        const grams    = parseFloat(gramsEl.value || 0);
+        productCost    = Math.round(costPerG * grams);
+      }
+    }
+
+    const commission = Math.max(grossCommission - productCost, 0);
 
     const stylistSel  = row.querySelector('select[name*="stylist_id"]');
     const stylistName = stylistSel?.options[stylistSel.selectedIndex]?.text || 'Sin asignar';
@@ -557,7 +612,11 @@ function updateTotals() {
     commissionByStylist[stylistName] = (commissionByStylist[stylistName] || 0) + commission;
 
     const disp = row.querySelector('.item-commission-display');
-    if (disp) disp.textContent = 'Comisión: ' + formatCLP(commission);
+    if (disp) {
+      let label = 'Comisión: ' + formatCLP(commission);
+      if (productCost > 0) label += ' <span style="color:#c2410c; font-size:10px;">(insumo −' + formatCLP(productCost) + ')</span>';
+      disp.innerHTML = label;
+    }
   });
 
   let paid = 0;
@@ -593,6 +652,30 @@ function updateTotals() {
 
 updateTotals();
 
+// ── Validación antes de enviar ────────────────────────────────────
+document.getElementById('attendance-form').addEventListener('submit', function(e) {
+  // 1. Debe haber un cliente seleccionado
+  const clientId = document.getElementById('client-id-field').value;
+  if (!clientId) {
+    e.preventDefault();
+    alert('⚠️ Debes seleccionar una clienta antes de registrar la atención.');
+    document.getElementById('client-search').focus();
+    return;
+  }
+
+  // 2. El saldo pendiente debe ser $0 (pagos deben cubrir el total)
+  const totalEl   = document.getElementById('total-amount').textContent;
+  const balanceEl = document.getElementById('balance-amount').textContent;
+  const total     = parseInt(totalEl.replace(/\D/g, '')) || 0;
+  const balance   = parseInt(balanceEl.replace(/\D/g, '')) || 0;
+
+  if (total > 0 && balance > 0) {
+    e.preventDefault();
+    alert('⚠️ El saldo pendiente debe ser $0. Agrega los pagos correspondientes o registra el saldo como "Pendiente de pago".');
+    return;
+  }
+});
+
 // Exponer al scope global las funciones llamadas desde onclick en el HTML
 window.openClientModal      = openClientModal;
 window.closeClientModal     = closeClientModal;
@@ -604,6 +687,38 @@ window.removeItem           = removeItem;
 window.addPayment           = addPayment;
 window.removePayment        = removePayment;
 window.updateTotals         = updateTotals;
-window.onExistingItemChange = onExistingItemChange; // usado en _item_fields.html.erb
+window.onExistingItemChange = onExistingItemChange;
+window.toggleInsumo         = toggleInsumo;
+window.updateInsumo         = updateInsumo;
+
+// ── Insumo helpers ───────────────────────────────────────────────
+function toggleInsumo(btn) {
+  var panel = btn.nextElementSibling;
+  var open  = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = open
+    ? '▲ Ocultar insumo de salón'
+    : '＋ ¿Se usó insumo de salón? (opcional)';
+  btn.style.color = open ? '#c2410c' : '#9ca3af';
+  if (!open) {
+    // limpiar al cerrar
+    panel.querySelector('.item-insumo-sel').value = '';
+    panel.querySelector('.item-grams').value      = '';
+    panel.querySelector('.insumo-cost-display').textContent = '$0';
+  }
+  updateTotals();
+}
+
+function updateInsumo(sel) {
+  var panel    = sel.closest('.insumo-panel');
+  var gramsEl  = panel.querySelector('.item-grams');
+  var costEl   = panel.querySelector('.insumo-cost-display');
+  var option   = sel.options[sel.selectedIndex];
+  var costPerG = parseFloat(option.dataset.cost || 0);
+  var grams    = parseFloat(gramsEl.value || 0);
+  var cost     = Math.round(costPerG * grams);
+  costEl.textContent = '$' + cost.toLocaleString('es-CL');
+  updateTotals();
+}
 })();
 </script>

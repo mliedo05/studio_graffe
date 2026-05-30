@@ -35,5 +35,5 @@ atencion_este_mes:
   status: closed
   total_cents: 23800
   paid_cents: 23800
-  client_name: "Clienta Walk-in"
+  client: cliente
   registered_by: admin

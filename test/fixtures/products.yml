@@ -31,6 +31,19 @@ olaplex:
   active: true
   position: 2
 
+tinte_insumo:
+  product_category: tratamientos
+  name: Tinte Castaño
+  brand: Black Diva
+  slug: black-diva-tinte-castano
+  price_cents: 0
+  stock_quantity: 100
+  featured: false
+  active: true
+  track_in_grams: true
+  cost_per_gram_cents: 680
+  position: 50
+
 producto_inactivo:
   product_category: shampoo
   name: Producto Descontinuado

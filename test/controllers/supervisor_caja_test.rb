@@ -58,7 +58,7 @@ class SupervisorCajaTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:admin))
     get supervisor_caja_path(period: "custom", from: "2026-01-01", to: "2026-01-31")
     assert_select "h3", text: /Pendientes de cobro/i
-    assert_select "h3", text: /Log de pagos/i
+    assert_select "h3", text: /Registro de cobros/i
   end
 
   test "caja muestra atenciones con saldo pendiente" do

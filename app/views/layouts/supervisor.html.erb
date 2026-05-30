@@ -147,7 +147,10 @@
     <div class="sv-sidebar-footer">
       <div><%= current_user.full_name %></div>
       <div style="margin-top:4px;">
-        <%= link_to "← Volver al sitio", root_path %> ·
+        <% if current_user.admin? %>
+          <%= link_to "⚙️ Panel Admin", admin_root_path %> ·
+        <% end %>
+        <%= link_to "← Sitio", root_path %> ·
         <%= button_to "Salir", destroy_user_session_path, method: :delete,
               style: "background:none; border:none; color:#C9A96E; cursor:pointer; font-size:12px; padding:0;" %>
       </div>

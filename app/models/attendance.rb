@@ -16,6 +16,7 @@ class Attendance < ApplicationRecord
   validates :number,      presence: true, uniqueness: true
   validates :attended_on, presence: true
   validates :status,      inclusion: { in: STATUSES }
+  validates :client,      presence: { message: "debe seleccionarse una clienta" }
   validates :client_name, presence: true, if: -> { client.nil? }
 
   before_validation :set_number, on: :create
@@ -65,6 +66,48 @@ class Attendance < ApplicationRecord
   # ── Total comisiones ──────────────────────────────────────────────
   def total_commission_cents
     attendance_items.sum(:commission_cents)
+  end
+
+  # Revierte todos los movimientos de stock antes de eliminar la atención.
+  # Seguro de llamar en cualquier estado (open o closed):
+  #   · Productos vendidos → devuelve 1 unidad por ítem
+  #   · Insumos usados     → devuelve gramos solo si ya se descontaron (stock_deducted = true)
+  def restore_stock!
+    # 1) Productos vendidos
+    attendance_items.where(item_type: "product").each do |item|
+      next unless item.product_id
+      Product.where(id: item.product_id)
+             .update_all("stock_quantity = stock_quantity + 1")
+    end
+
+    # 2) Insumos utilizados (solo los que ya se descontaron del stock)
+    attendance_items
+      .where.not(consumed_product_id: nil)
+      .where(stock_deducted: true)
+      .each do |item|
+        next unless item.grams_used.to_f > 0
+        grams = item.grams_used.to_f.ceil
+        Product.where(id: item.consumed_product_id)
+               .update_all([ "stock_quantity = stock_quantity + ?", grams ])
+      end
+  end
+
+  # Descuenta los gramos usados del stock de cada insumo (solo al cerrar)
+  # Idempotente: solo descuenta ítems donde stock_deducted = false
+  def deduct_insumo_stock!
+    attendance_items
+      .where.not(consumed_product_id: nil)
+      .where(stock_deducted: false)
+      .each do |item|
+        next unless item.grams_used.to_f > 0
+
+        product = item.consumed_product
+        grams   = item.grams_used.to_f.ceil   # redondea hacia arriba
+
+        Product.where(id: product.id)
+               .update_all([ "stock_quantity = GREATEST(stock_quantity - ?, 0)", grams ])
+        item.update_column(:stock_deducted, true)
+      end
   end
 
   private

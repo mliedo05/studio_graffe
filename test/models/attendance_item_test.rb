@@ -171,4 +171,158 @@ class AttendanceItemTest < ActiveSupport::TestCase
     assert attendance_items(:item_producto).product?
     assert_not attendance_items(:item_producto).service?
   end
+
+  # ── Insumo de salón ───────────────────────────────────────────────
+
+  test "válido con consumed_product y grams_used > 0" do
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          15
+    )
+    assert item.valid?, item.errors.full_messages.inspect
+  end
+
+  test "inválido con grams_used pero sin consumed_product" do
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      grams_used:          10
+    )
+    assert_not item.valid?
+    assert item.errors[:consumed_product].any?
+  end
+
+  test "inválido con grams_used <= 0" do
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          0
+    )
+    assert_not item.valid?
+    assert item.errors[:grams_used].any?
+  end
+
+  test "uses_insumo? es true cuando hay consumed_product y grams_used > 0" do
+    item = AttendanceItem.new(
+      consumed_product_id: products(:tinte_insumo).id,
+      grams_used:          10
+    )
+    assert item.uses_insumo?
+  end
+
+  test "uses_insumo? es false sin consumed_product" do
+    item = attendance_items(:item_servicio)
+    assert_not item.uses_insumo?
+  end
+
+  # ── calculate_product_cost ────────────────────────────────────────
+
+  test "calculate_product_cost calcula costo correcto en pesos" do
+    # tinte_insumo: cost_per_gram_cents = 680
+    # 15 gramos × 680 = 10.200
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          15
+    )
+    item.valid?
+    assert_equal 10200, item.product_cost_cents
+  end
+
+  test "calculate_product_cost es 0 sin insumo" do
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40
+    )
+    item.valid?
+    assert_equal 0, item.product_cost_cents
+  end
+
+  # ── gross_commission_cents / commissionable_cents ─────────────────
+
+  test "gross_commission_cents es neto × %" do
+    # $119.000 → neto $100.000 · 40% = $40.000
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40
+    )
+    item.valid?
+    assert_equal 40000, item.gross_commission_cents
+  end
+
+  test "commissionable_cents descuenta costo de insumo de la comisión" do
+    # $119.000 → neto $100.000 · 40% = $40.000 − insumo $10.200 = $29.800
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          15
+    )
+    item.valid?
+    assert_equal 29800, item.commissionable_cents
+  end
+
+  test "commissionable_cents nunca es negativo (mínimo 0)" do
+    # Insumo muy caro que supera la comisión bruta
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         11900,          # neto $10.000 · 10% = $1.000 comisión bruta
+      commission_percent:  10,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          100             # 100 gr × 680 = $68.000 > $1.000
+    )
+    item.valid?
+    assert_equal 0, item.commissionable_cents
+  end
+
+  test "commission_cents guarda el commissionable_cents calculado" do
+    # Verifica que el before_validation asigna correctamente
+    item = AttendanceItem.new(
+      attendance:          attendances(:atencion_cerrada),
+      stylist:             users(:valentina),
+      service:             services(:corte_damas),
+      item_type:           "service",
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    products(:tinte_insumo),
+      grams_used:          15
+    )
+    item.valid?
+    assert_equal item.commissionable_cents, item.commission_cents
+  end
 end

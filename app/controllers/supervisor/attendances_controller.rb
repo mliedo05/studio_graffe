@@ -1,6 +1,6 @@
 module Supervisor
   class AttendancesController < BaseController
-    before_action :set_attendance, only: [ :show, :edit, :update, :close ]
+    before_action :set_attendance, only: [ :show, :edit, :update, :close, :destroy ]
 
     def index
       range = period_range
@@ -46,7 +46,17 @@ module Supervisor
 
     def close
       @attendance.update!(status: "closed")
+      @attendance.deduct_insumo_stock!
       redirect_to supervisor_attendance_path(@attendance), notice: "Atención cerrada."
+    end
+
+    def destroy
+      number = @attendance.number
+      # Revertir stock antes de destruir los ítems
+      @attendance.restore_stock!
+      @attendance.destroy!
+      redirect_to supervisor_attendances_path,
+                  notice: "Atención #{number} eliminada. El inventario ha sido restaurado."
     end
 
     # GET /supervisor/atenciones/search_client?q=Juan
@@ -98,7 +108,8 @@ module Supervisor
         :attended_on, :client_id, :client_name, :notes, :status,
         attendance_items_attributes: [
           :id, :item_type, :service_id, :product_id, :description,
-          :stylist_id, :price_cents, :commission_percent, :_destroy
+          :stylist_id, :price_cents, :commission_percent,
+          :consumed_product_id, :grams_used, :product_cost_cents, :_destroy
         ],
         attendance_payments_attributes: [
           :id, :payment_method, :amount_cents, :note, :_destroy

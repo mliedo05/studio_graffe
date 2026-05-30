@@ -88,7 +88,7 @@ class Attendance < ApplicationRecord
         next unless item.grams_used.to_f > 0
         grams = item.grams_used.to_f.ceil
         Product.where(id: item.consumed_product_id)
-               .update_all("stock_quantity = stock_quantity + #{grams}")
+               .update_all([ "stock_quantity = stock_quantity + ?", grams ])
       end
   end
 
@@ -105,7 +105,7 @@ class Attendance < ApplicationRecord
         grams   = item.grams_used.to_f.ceil   # redondea hacia arriba
 
         Product.where(id: product.id)
-               .update_all("stock_quantity = GREATEST(stock_quantity - #{grams}, 0)")
+               .update_all([ "stock_quantity = GREATEST(stock_quantity - ?, 0)", grams ])
         item.update_column(:stock_deducted, true)
       end
   end

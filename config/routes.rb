@@ -61,7 +61,7 @@ Rails.application.routes.draw do
   # ── Panel Supervisor ──────────────────────────────────────────────
   namespace :supervisor do
     root to: "dashboard#index"
-    resources :attendances, only: [ :index, :new, :create, :show, :edit, :update ] do
+    resources :attendances, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
       member { patch :close }
       collection do
         get  :search_client

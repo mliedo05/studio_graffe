@@ -17,6 +17,10 @@
             method: :patch, class: "btn btn-gold",
             data: { confirm: "¿Confirmar cierre de esta atención?" } %>
     <% end %>
+    <%= button_to "🗑 Eliminar", supervisor_attendance_path(@attendance),
+          method: :delete, class: "btn",
+          style: "background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;",
+          data: { confirm: "¿Eliminar la atención #{@attendance.number}?\n\nEsto restaurará automáticamente:\n· Inventario de productos vendidos (+1 unidad por producto)\n· Stock de insumos de salón utilizados (+gramos descontados)\n· Se eliminarán pagos y comisiones registrados\n\nEsta acción NO se puede deshacer." } %>
     <%= link_to "← Lista", supervisor_attendances_path, class: "btn btn-outline" %>
   </div>
 </div>

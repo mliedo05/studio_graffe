@@ -123,6 +123,80 @@ class AttendanceTest < ActiveSupport::TestCase
     assert_equal expected, a.total_commission_cents
   end
 
+  # ── restore_stock! ───────────────────────────────────────────────
+
+  test "restore_stock! devuelve 1 unidad al stock por producto vendido" do
+    product = products(:shampoo_wella)
+    before  = product.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:          "product",
+      product:            product,
+      stylist:            users(:valentina),
+      price_cents:        18990,
+      commission_percent: 10
+    )
+
+    a.restore_stock!
+    assert_equal before + 1, product.reload.stock_quantity
+  end
+
+  test "restore_stock! devuelve gramos de insumo solo si stock_deducted = true" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "closed"
+    )
+    item = a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          15,
+      stock_deducted:      true
+    )
+
+    a.restore_stock!
+    assert_equal before + 15, insumo.reload.stock_quantity
+  end
+
+  test "restore_stock! no devuelve gramos si stock_deducted = false" do
+    insumo = products(:tinte_insumo)
+    before = insumo.stock_quantity
+
+    a = Attendance.create!(
+      attended_on:   Date.current,
+      registered_by: users(:admin),
+      client:        users(:cliente),
+      status:        "open"
+    )
+    a.attendance_items.create!(
+      item_type:           "service",
+      service:             services(:corte_damas),
+      stylist:             users(:valentina),
+      price_cents:         119000,
+      commission_percent:  40,
+      consumed_product:    insumo,
+      grams_used:          15,
+      stock_deducted:      false
+    )
+
+    a.restore_stock!
+    assert_equal before, insumo.reload.stock_quantity
+  end
+
   # ── scope ordered ────────────────────────────────────────────────
 
   test "scope ordered devuelve por fecha desc" do

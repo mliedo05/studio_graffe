@@ -584,10 +584,12 @@ function updateTotals() {
     const price   = parseInt(priceInput.value) || 0;
     const commPct = parseFloat(commInput.value) || 0;
 
-    // Replicar lógica del modelo: neto (÷1.19) − costo_insumo = base comisionable
-    const netPrice = Math.round(price / 1.19);
+    // Replicar lógica del modelo:
+    //   comisión = (neto × %) − costo_insumo
+    const netPrice       = Math.round(price / 1.19);
+    const grossCommission = Math.round(netPrice * commPct / 100);
 
-    // Costo de insumo: leer del panel si está abierto y tiene producto+gramos
+    // Costo de insumo: leer del panel si está abierto
     let productCost = 0;
     const insumoPanel = row.querySelector('.insumo-panel');
     if (insumoPanel && insumoPanel.style.display !== 'none') {
@@ -601,8 +603,7 @@ function updateTotals() {
       }
     }
 
-    const commissionBase = Math.max(netPrice - productCost, 0);
-    const commission     = Math.round(commissionBase * commPct / 100);
+    const commission = Math.max(grossCommission - productCost, 0);
 
     const stylistSel  = row.querySelector('select[name*="stylist_id"]');
     const stylistName = stylistSel?.options[stylistSel.selectedIndex]?.text || 'Sin asignar';

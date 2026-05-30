@@ -49,14 +49,19 @@ class AttendanceItem < ApplicationRecord
     price_cents - net_price_cents
   end
 
-  # Base comisionable = neto - costo insumo
-  def commissionable_cents
-    [ net_price_cents - product_cost_cents.to_i, 0 ].max
+  # Comisión bruta sobre neto (sin descontar insumo)
+  def gross_commission_cents
+    (net_price_cents * commission_percent / 100.0).round
   end
 
-  # Parte del estudio luego de descontar la comisión (sobre base comisionable)
+  # Comisión final = (neto × %) − costo_insumo
+  def commissionable_cents
+    [ gross_commission_cents - product_cost_cents.to_i, 0 ].max
+  end
+
+  # Parte del estudio = neto − comisión final
   def studio_cents
-    commissionable_cents - commission_cents
+    net_price_cents - commissionable_cents
   end
 
   private
@@ -80,8 +85,8 @@ class AttendanceItem < ApplicationRecord
 
   def calculate_commission
     return unless price_cents && commission_percent
-    # Comisión sobre base comisionable (neto - costo insumo)
-    self.commission_cents = (commissionable_cents * commission_percent / 100.0).round
+    # Comisión = (neto × %) − costo_insumo
+    self.commission_cents = commissionable_cents
   end
 
   def recalculate_attendance

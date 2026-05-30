@@ -32,38 +32,56 @@
   </script>
 <% end %>
 
-<!-- KPI cards por método de pago -->
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; margin-bottom:28px;">
+<!-- KPI cards + Pie chart -->
+<div style="display:grid; grid-template-columns:1fr 280px; gap:20px; margin-bottom:28px; align-items:start;">
 
-  <% method_info = {
-    "cash"     => { label: "💵 Efectivo",        color: "#16a34a" },
-    "transfer" => { label: "🏦 Transferencia",   color: "#2563eb" },
-    "card"     => { label: "💳 Tarjeta",          color: "#7c3aed" },
-    "other"    => { label: "📌 Otro",             color: "#6b7280" }
-  } %>
-
-  <% method_info.each do |method, info| %>
-    <div class="sv-card" style="border-top:3px solid <%= info[:color] %>;">
-      <div class="sv-card-label"><%= info[:label] %></div>
-      <div class="sv-card-value" style="color:<%= info[:color] %>; font-size:22px;">
-        <%= number_to_currency(@by_method[method].to_i, unit: "$", delimiter: ".", precision: 0) %>
-      </div>
+  <!-- KPI cards -->
+  <div>
+    <% method_info = {
+      "cash"     => { label: "💵 Efectivo",      color: "#16a34a" },
+      "transfer" => { label: "🏦 Transferencia", color: "#2563eb" },
+      "card"     => { label: "💳 Tarjeta",        color: "#7c3aed" },
+      "other"    => { label: "📌 Otro",           color: "#6b7280" }
+    } %>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:12px;">
+      <% method_info.each do |method, info| %>
+        <div class="sv-card" style="border-top:3px solid <%= info[:color] %>;">
+          <div class="sv-card-label"><%= info[:label] %></div>
+          <div class="sv-card-value" style="color:<%= info[:color] %>; font-size:20px;">
+            <%= number_to_currency(@by_method[method].to_i, unit: "$", delimiter: ".", precision: 0) %>
+          </div>
+        </div>
+      <% end %>
     </div>
-  <% end %>
-
-  <div class="sv-card" style="border-top:3px solid #1A1A1A;">
-    <div class="sv-card-label">✅ Total cobrado</div>
-    <div class="sv-card-value" style="font-size:22px;">
-      <%= number_to_currency(@total_cobrado_cents, unit: "$", delimiter: ".", precision: 0) %>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="sv-card" style="border-top:3px solid #1A1A1A;">
+        <div class="sv-card-label">✅ Total cobrado</div>
+        <div class="sv-card-value" style="font-size:22px;">
+          <%= number_to_currency(@total_cobrado_cents, unit: "$", delimiter: ".", precision: 0) %>
+        </div>
+      </div>
+      <div class="sv-card" style="border-top:3px solid #dc2626;">
+        <div class="sv-card-label">⏳ Pendiente cobro</div>
+        <div class="sv-card-value" style="color:#dc2626; font-size:22px;">
+          <%= number_to_currency(@total_pendiente_cents, unit: "$", delimiter: ".", precision: 0) %>
+        </div>
+        <div class="sv-card-sub"><%= @pending_attendances.size %> atenciones</div>
+      </div>
     </div>
   </div>
 
-  <div class="sv-card" style="border-top:3px solid #dc2626;">
-    <div class="sv-card-label">⏳ Pendiente cobro</div>
-    <div class="sv-card-value" style="color:#dc2626; font-size:22px;">
-      <%= number_to_currency(@total_pendiente_cents, unit: "$", delimiter: ".", precision: 0) %>
-    </div>
-    <div class="sv-card-sub"><%= @pending_attendances.size %> atenciones</div>
+  <!-- Pie chart distribución por método -->
+  <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; padding:20px;">
+    <p style="font-size:12px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:16px;">Distribución por método</p>
+    <% total_for_chart = @by_method.values.sum %>
+    <% if total_for_chart > 0 %>
+      <div style="position:relative; width:180px; height:180px; margin:0 auto 16px;">
+        <canvas id="caja-pie-chart"></canvas>
+      </div>
+      <div id="chart-legend" style="font-size:12px;"></div>
+    <% else %>
+      <div style="text-align:center; color:#9ca3af; padding:40px 0; font-size:13px;">Sin movimientos en este período</div>
+    <% end %>
   </div>
 
 </div>
@@ -126,11 +144,13 @@
   </table>
 </div>
 
-<!-- Log de pagos del período -->
+<!-- Log de pagos agrupado por atención -->
+<% total_atenciones = @payments_by_attendance.size %>
+<% total_cobrado_log = @payments_by_attendance.values.flatten.reject { |p| p.payment_method == "pending" }.sum(&:amount_cents) %>
 <div class="sv-table-wrap">
   <div class="sv-table-head">
-    <h3>📋 Log de pagos del período</h3>
-    <span style="font-size:12px; color:#9ca3af;"><%= @payments.size %> registros</span>
+    <h3>📋 Registro de cobros del período</h3>
+    <span style="font-size:12px; color:#9ca3af;"><%= total_atenciones %> atenciones · <%= number_to_currency(total_cobrado_log, unit: "$", delimiter: ".", precision: 0) %> cobrado</span>
   </div>
   <table class="sv-table">
     <thead>
@@ -138,47 +158,113 @@
         <th>Fecha</th>
         <th>N° Atención</th>
         <th>Cliente</th>
-        <th>Método</th>
-        <th style="text-align:right;">Monto</th>
-        <th>Nota</th>
+        <th>Métodos</th>
+        <th style="text-align:right;">Total atención</th>
+        <th style="text-align:right;">Cobrado</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
-      <% if @payments.any? %>
-        <% @payments.each do |p| %>
-          <% color = AttendancePayment::METHOD_COLORS[p.payment_method] || "#6b7280" %>
+      <% if @payments_by_attendance.any? %>
+        <% @payments_by_attendance.each do |attendance, payments| %>
+          <%
+            real_payments    = payments.reject { |p| p.payment_method == "pending" }
+            cobrado_atencion = real_payments.sum(&:amount_cents)
+            metodos_unicos   = real_payments.map(&:payment_method).uniq
+          %>
           <tr>
-            <td><%= p.attendance.attended_on.strftime("%d/%m/%Y") %></td>
-            <td><code style="font-size:12px;"><%= p.attendance.number %></code></td>
-            <td><%= p.attendance.display_client_name %></td>
+            <td><%= attendance.attended_on.strftime("%d/%m/%Y") %></td>
+            <td><code style="font-size:12px;"><%= attendance.number %></code></td>
+            <td style="font-weight:500;"><%= attendance.display_client_name %></td>
             <td>
-              <span style="display:inline-block; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:600; background:<%= color %>22; color:<%= color %>;">
-                <%= AttendancePayment::METHOD_LABELS[p.payment_method] %>
-              </span>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <% metodos_unicos.each do |m| %>
+                  <% color = AttendancePayment::METHOD_COLORS[m] || "#6b7280" %>
+                  <span style="display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:600; background:<%= color %>22; color:<%= color %>;">
+                    <%= AttendancePayment::METHOD_LABELS[m] %>
+                  </span>
+                <% end %>
+              </div>
             </td>
-            <td style="text-align:right; font-weight:600;">
-              <span style="color:<%= p.payment_method == "pending" ? "#dc2626" : "#1A1A1A" %>">
-                <%= number_to_currency(p.amount_cents, unit: "$", delimiter: ".", precision: 0) %>
-              </span>
+            <td style="text-align:right; font-weight:600;"><%= number_to_currency(attendance.total_cents, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td style="text-align:right; color:#16a34a; font-weight:700;"><%= number_to_currency(cobrado_atencion, unit: "$", delimiter: ".", precision: 0) %></td>
+            <td>
+              <%# Serializar pagos para el modal (JSON en data attribute) %>
+              <%
+                pagos_json = payments.map { |p| {
+                  method: p.payment_method,
+                  label:  AttendancePayment::METHOD_LABELS[p.payment_method],
+                  color:  AttendancePayment::METHOD_COLORS[p.payment_method] || "#6b7280",
+                  amount: p.amount_cents,
+                  note:   p.note.presence || ""
+                }}.to_json
+              %>
+              <button class="btn btn-outline btn-sm"
+                      onclick="verPagos(this)"
+                      data-numero="<%= attendance.number %>"
+                      data-cliente="<%= j attendance.display_client_name %>"
+                      data-total="<%= attendance.total_cents %>"
+                      data-pagos="<%= h pagos_json %>">
+                Ver detalle
+              </button>
             </td>
-            <td style="color:#9ca3af; font-size:12px;"><%= p.note.presence || "—" %></td>
           </tr>
         <% end %>
       <% else %>
-        <tr><td colspan="6" style="text-align:center; color:#9ca3af; padding:24px;">Sin pagos en este período</td></tr>
+        <tr><td colspan="7" style="text-align:center; color:#9ca3af; padding:24px;">Sin cobros en este período</td></tr>
       <% end %>
     </tbody>
-    <% if @payments.any? %>
+    <% if @payments_by_attendance.any? %>
       <tfoot>
-        <% real_total = @payments.reject { |p| p.payment_method == "pending" }.sum(&:amount_cents) %>
         <tr style="background:#f9fafb; font-weight:700; border-top:2px solid #e5e7eb;">
-          <td colspan="4">TOTAL COBRADO</td>
-          <td style="text-align:right; font-size:15px;"><%= number_to_currency(real_total, unit: "$", delimiter: ".", precision: 0) %></td>
+          <td colspan="5">TOTAL COBRADO</td>
+          <td style="text-align:right; font-size:15px;"><%= number_to_currency(total_cobrado_log, unit: "$", delimiter: ".", precision: 0) %></td>
           <td></td>
         </tr>
       </tfoot>
     <% end %>
   </table>
+</div>
+
+<!-- Modal: detalle de pagos de una atención -->
+<div id="modal-detalle-pagos" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:12px; padding:28px; width:460px; max-width:92vw; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:16px; font-weight:700;" id="modal-det-numero"></h3>
+        <p style="font-size:13px; color:#9ca3af; margin-top:2px;" id="modal-det-cliente"></p>
+      </div>
+      <button type="button" onclick="cerrarDetalle()" style="background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer; line-height:1;">×</button>
+    </div>
+
+    <!-- Tabla de pagos -->
+    <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:16px;">
+      <thead>
+        <tr style="border-bottom:1px solid #f3f4f6;">
+          <th style="text-align:left; padding:6px 0; color:#9ca3af; font-weight:600; font-size:11px; text-transform:uppercase;">Método</th>
+          <th style="text-align:right; padding:6px 0; color:#9ca3af; font-weight:600; font-size:11px; text-transform:uppercase;">Monto</th>
+          <th style="text-align:left; padding:6px 12px; color:#9ca3af; font-weight:600; font-size:11px; text-transform:uppercase;">Nota</th>
+        </tr>
+      </thead>
+      <tbody id="modal-det-rows"></tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #f3f4f6;">
+          <td style="padding:10px 0 4px; font-weight:700; font-size:13px;">Total atención</td>
+          <td style="text-align:right; padding:10px 0 4px; font-weight:700; font-size:15px;" id="modal-det-total"></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td style="padding:2px 0; font-weight:600; font-size:13px; color:#16a34a;">Cobrado</td>
+          <td style="text-align:right; padding:2px 0; font-weight:700; font-size:15px; color:#16a34a;" id="modal-det-cobrado"></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="text-align:right;">
+      <button type="button" onclick="cerrarDetalle()" class="btn btn-outline btn-sm">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal registrar pago -->
@@ -225,6 +311,121 @@
 
 <script>
 (function() {
+  // ── Pie chart: distribución por método ─────────────────────────
+  <% total_for_chart = @by_method.values.sum %>
+  <% if total_for_chart > 0 %>
+  const PIE_DATA = <%= raw({
+    labels: [],
+    values: [],
+    colors: []
+  }.tap { |d|
+    method_map = {
+      "cash"     => { label: "Efectivo",      color: "#16a34a" },
+      "transfer" => { label: "Transferencia", color: "#2563eb" },
+      "card"     => { label: "Tarjeta",       color: "#7c3aed" },
+      "other"    => { label: "Otro",          color: "#6b7280" }
+    }
+    @by_method.each do |method, amount|
+      next if amount.to_i == 0
+      info = method_map[method] || { label: method.capitalize, color: "#9ca3af" }
+      d[:labels] << info[:label]
+      d[:values] << amount.to_i
+      d[:colors] << info[:color]
+    end
+  }.to_json) %>;
+
+  const ctx = document.getElementById('caja-pie-chart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels:   PIE_DATA.labels,
+        datasets: [{
+          data:            PIE_DATA.values,
+          backgroundColor: PIE_DATA.colors,
+          borderWidth:     2,
+          borderColor:     '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '60%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const val   = ctx.parsed;
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct   = ((val / total) * 100).toFixed(1);
+                return ' $' + val.toLocaleString('es-CL') + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Leyenda manual
+    const legend = document.getElementById('chart-legend');
+    const total  = PIE_DATA.values.reduce((a, b) => a + b, 0);
+    legend.innerHTML = PIE_DATA.labels.map((label, i) => {
+      const pct = ((PIE_DATA.values[i] / total) * 100).toFixed(1);
+      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${PIE_DATA.colors[i]};"></span>
+          <span style="font-size:12px; color:#374151;">${label}</span>
+        </div>
+        <span style="font-size:12px; font-weight:700; color:#374151;">${pct}%</span>
+      </div>`;
+    }).join('');
+  }
+  <% end %>
+
+  // ── Modal: detalle de pagos por atención ─────────────────────
+  window.verPagos = function(btn) {
+    const numero  = btn.dataset.numero;
+    const cliente = btn.dataset.cliente;
+    const total   = parseInt(btn.dataset.total) || 0;
+    const pagos   = JSON.parse(btn.dataset.pagos);
+
+    document.getElementById('modal-det-numero').textContent  = 'Atención ' + numero;
+    document.getElementById('modal-det-cliente').textContent = cliente;
+    document.getElementById('modal-det-total').textContent   = '$' + total.toLocaleString('es-CL');
+
+    let cobrado = 0;
+    const rows = pagos.map(p => {
+      const isPending = p.method === 'pending';
+      if (!isPending) cobrado += p.amount;
+      return `<tr style="border-bottom:1px solid #f9fafb;">
+        <td style="padding:8px 0;">
+          <span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; background:${p.color}22; color:${p.color};">
+            ${p.label}
+          </span>
+        </td>
+        <td style="text-align:right; padding:8px 0; font-weight:600; color:${isPending ? "#dc2626" : "#1A1A1A"};">
+          $${p.amount.toLocaleString('es-CL')}
+        </td>
+        <td style="padding:8px 12px; color:#9ca3af; font-size:12px;">${p.note || '—'}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('modal-det-rows').innerHTML    = rows;
+    document.getElementById('modal-det-cobrado').textContent = '$' + cobrado.toLocaleString('es-CL');
+
+    document.getElementById('modal-detalle-pagos').style.display = 'flex';
+  };
+
+  window.cerrarDetalle = function() {
+    document.getElementById('modal-detalle-pagos').style.display = 'none';
+  };
+
+  document.getElementById('modal-detalle-pagos').addEventListener('click', function(e) {
+    if (e.target === this) cerrarDetalle();
+  });
+
+  // ── Modal: registrar pago ──────────────────────────────────────
   window.abrirPago = function(id, cliente, balanceCents, numero) {
     document.getElementById('pago-attendance-id').value = id;
     document.getElementById('modal-pago-cliente').textContent =
@@ -233,15 +434,13 @@
     document.getElementById('pago-balance-hint').textContent =
       'Saldo pendiente: ' + fmt;
     document.getElementById('pago-monto').value = balanceCents;
-    var modal = document.getElementById('modal-pago');
-    modal.style.display = 'flex';
+    document.getElementById('modal-pago').style.display = 'flex';
   };
 
   window.cerrarPago = function() {
     document.getElementById('modal-pago').style.display = 'none';
   };
 
-  // Cerrar modal al hacer click fuera
   document.getElementById('modal-pago').addEventListener('click', function(e) {
     if (e.target === this) cerrarPago();
   });

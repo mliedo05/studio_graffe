@@ -22,12 +22,15 @@ module Supervisor
 
       @total_pendiente_cents = @pending_attendances.sum(&:balance_cents)
 
-      # ── Log completo de pagos del período (para conciliación) ─────────
-      @payments = AttendancePayment
+      # ── Log agrupado por atención ────────────────────────────────────
+      payments_raw = AttendancePayment
         .includes(attendance: :client)
         .joins(:attendance)
         .where(attendances: { attended_on: range })
-        .order("attendances.attended_on DESC, attendance_payments.created_at DESC")
+        .order("attendances.attended_on DESC, attendances.number DESC, attendance_payments.created_at ASC")
+
+      # Agrupamos preservando el orden por atención
+      @payments_by_attendance = payments_raw.group_by(&:attendance)
     end
 
     def registrar_pago

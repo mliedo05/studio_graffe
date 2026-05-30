@@ -6,6 +6,7 @@ class User < ApplicationRecord
   ROLES = %w[admin supervisor stylist client].freeze
 
   has_one :stylist_profile, foreign_key: :stylist_id, dependent: :destroy
+  accepts_nested_attributes_for :stylist_profile, update_only: true
   has_many :stylist_schedules, foreign_key: :stylist_id, dependent: :destroy
   has_many :stylist_blocked_times, foreign_key: :stylist_id, dependent: :destroy
   has_many :appointments_as_client, class_name: "Appointment", foreign_key: :client_id, dependent: :destroy

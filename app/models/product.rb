@@ -15,15 +15,18 @@ class Product < ApplicationRecord
   validates :name, uniqueness: { scope: :brand, message: "ya existe un producto con ese nombre y marca" }
   validates :price_cents,        numericality: { greater_than_or_equal_to: 0 }
   validates :stock_quantity,     numericality: { greater_than_or_equal_to: 0 }
-  validates :cost_per_gram_cents, numericality: { greater_than_or_equal_to: 0 },
-                                  if: :track_in_grams?
+  validates :cost_per_gram_cents,        numericality: { greater_than_or_equal_to: 0 },
+                                          if: :track_in_grams?
+  validates :default_commission_percent, numericality: { in: 0..100 }
 
   scope :active,    -> { where(active: true) }
   scope :featured,  -> { where(featured: true) }
   scope :in_stock,  -> { where("stock_quantity > 0") }
   scope :ordered,   -> { order(:position, :name) }
-  # Productos de insumo (medidos en gramos, usados en servicios)
+  # Productos de insumo (medidos en gramos, usados en servicios) — NO aparecen en ventas
   scope :insumos,   -> { where(track_in_grams: true).order(:brand, :name) }
+  # Productos para venta en atenciones (excluye insumos de salón)
+  scope :for_sale,  -> { where(track_in_grams: false) }
 
   # Unidad de stock según tipo de producto
   def stock_unit

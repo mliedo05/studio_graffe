@@ -13,8 +13,8 @@
       <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;"><%= is_product ? "Producto" : "Servicio" %></label>
       <% if is_product %>
         <%= f.select :product_id,
-              Product.active.in_stock.order(:name).map { |p| ["#{p.brand} — #{p.name}", p.id,
-                { data: { price: p.price_cents, commission: 10 } }] },
+              Product.active.for_sale.in_stock.order(:name).map { |p| ["#{p.brand} — #{p.name}", p.id,
+                { data: { price: p.price_cents, commission: p.default_commission_percent } }] },
               { include_blank: "Seleccionar..." },
               class: "sv-select item-product-sel",
               onchange: "onExistingItemChange(this)" %>

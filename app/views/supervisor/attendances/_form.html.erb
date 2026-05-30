@@ -34,8 +34,8 @@
     { id: s.id, name: s.name, price_cents: s.price_cents, commission_percent: s.default_commission_percent }
   }.to_json %>;
 
-  const PRODUCTS_DATA = <%= raw Product.active.in_stock.order(:name).map { |p|
-    { id: p.id, name: p.name, brand: p.brand, price_cents: p.price_cents, commission_percent: 10 }
+  const PRODUCTS_DATA = <%= raw Product.active.for_sale.in_stock.order(:name).map { |p|
+    { id: p.id, name: p.name, brand: p.brand, price_cents: p.price_cents, commission_percent: p.default_commission_percent }
   }.to_json %>;
 
   const STYLISTS_DATA = <%= raw User.stylists.map { |u|
@@ -486,7 +486,7 @@ function buildProductItem(idx) {
       </div>
       <div>
         <label style="font-size:11px; color:#9ca3af; font-weight:600; display:block; margin-bottom:3px;">Com. %</label>
-        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="10" min="0" max="100" oninput="updateTotals()">
+        <input type="number" name="attendance[attendance_items_attributes][${idx}][commission_percent]" class="sv-input item-commission" value="0" min="0" max="100" oninput="updateTotals()">
       </div>
       <button type="button" onclick="removeItem(this)" style="background:#fee2e2; color:#dc2626; border:none; border-radius:6px; width:32px; height:32px; cursor:pointer; font-size:16px; align-self:end; margin-bottom:1px;">×</button>
     </div>

@@ -3,7 +3,7 @@ ActiveAdmin.register Product do
 
   permit_params :name, :brand, :product_category_id, :description,
                 :price_cents, :stock_quantity, :featured, :active, :sku, :image,
-                :track_in_grams, :cost_per_gram_cents
+                :track_in_grams, :cost_per_gram_cents, :default_commission_percent
 
   # ── Listado ──────────────────────────────────────────────────────
   index do
@@ -29,6 +29,13 @@ ActiveAdmin.register Product do
         span "⚠️ #{p.stock_quantity} uds.", style: "background:#fef3c7; color:#d97706; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold"
       else
         span "#{p.stock_quantity} uds.", style: "background:#dcfce7; color:#16a34a; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold"
+      end
+    end
+    column("Comisión %") do |p|
+      if p.track_in_grams?
+        span "Insumo", style: "background:#fff8f0; color:#c2410c; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:bold;"
+      else
+        span "#{p.default_commission_percent}%", style: "background:#ede9fe; color:#7c3aed; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:bold;"
       end
     end
     column("Destacado") { |p| p.featured? ? status_tag("Sí", class: "yes") : status_tag("No") }
@@ -75,6 +82,9 @@ ActiveAdmin.register Product do
         f.inputs "💲 Precio e inventario" do
           f.input :price_cents,    label: "Precio en pesos (ej: 34990)", hint: "Ingresa el precio sin puntos"
           f.input :stock_quantity, label: "Stock (unidades o gramos según tipo)"
+          f.input :default_commission_percent,
+                  label: "Comisión por defecto (%)",
+                  hint: "Se pre-carga al registrar este producto en una atención (0 = sin comisión). Rango: 0–100."
         end
 
         f.inputs "🧴 Insumo de salón (opcional)" do

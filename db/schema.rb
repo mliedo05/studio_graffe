@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_002145) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -241,6 +241,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_002145) do
     t.string "brand", null: false
     t.integer "cost_per_gram_cents", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "default_commission_percent", default: 10, null: false
     t.text "description"
     t.boolean "featured", default: false, null: false
     t.string "name", null: false

@@ -151,6 +151,30 @@ class ProductTest < ActiveSupport::TestCase
     assert_not_includes Product.insumos, products(:shampoo_wella)
   end
 
+  test "scope for_sale excluye productos insumo" do
+    assert_includes     Product.for_sale, products(:shampoo_wella)
+    assert_not_includes Product.for_sale, products(:tinte_insumo)
+  end
+
+  test "default_commission_percent por defecto es 10" do
+    product = Product.new(name: "X", brand: "Y", price_cents: 0,
+                          stock_quantity: 1, product_category: product_categories(:shampoo))
+    assert_equal 10, product.default_commission_percent
+  end
+
+  test "default_commission_percent acepta 0" do
+    product = products(:shampoo_wella)
+    product.default_commission_percent = 0
+    assert product.valid?
+  end
+
+  test "default_commission_percent rechaza valores fuera de 0..100" do
+    product = products(:shampoo_wella)
+    product.default_commission_percent = 110
+    assert_not product.valid?
+    assert product.errors[:default_commission_percent].any?
+  end
+
   test "válido con track_in_grams y cost_per_gram_cents" do
     product = Product.new(
       name:               "Tinte Castaño Medio",

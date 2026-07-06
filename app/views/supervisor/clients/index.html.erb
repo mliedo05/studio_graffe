@@ -1,0 +1,83 @@
+<% content_for :page_title, "Clientes" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:20px; font-weight:700;">Clientes</h1>
+    <p style="font-size:13px; color:#9ca3af; margin-top:2px;">Historial y datos de clientas registradas</p>
+  </div>
+</div>
+
+<!-- Búsqueda -->
+<div style="margin-bottom:20px;">
+  <%= form_with url: supervisor_clients_path, method: :get, local: true do |f| %>
+    <div style="display:flex; gap:8px;">
+      <%= f.text_field :q, value: @q,
+            placeholder: "Buscar por nombre, email o teléfono…",
+            style: "flex:1; padding:9px 14px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px;" %>
+      <%= f.submit "Buscar", class: "btn btn-gold", style: "padding:9px 20px;" %>
+      <% if @q.present? %>
+        <%= link_to "✕ Limpiar", supervisor_clients_path, class: "btn btn-outline", style: "padding:9px 16px;" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="sv-table-wrap">
+  <table class="sv-table">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Atenciones</th>
+        <th>Compras</th>
+        <th>Última visita</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @clients.each do |client| %>
+        <% last_attendance = client.attendances_as_client.ordered.first %>
+        <tr>
+          <td>
+            <div style="font-weight:600;"><%= client.full_name %></div>
+            <div style="font-size:11px; color:#9ca3af;">desde <%= client.created_at.strftime("%d/%m/%Y") %></div>
+          </td>
+          <td style="color:#6b7280; font-size:13px;"><%= client.email %></td>
+          <td style="color:#6b7280; font-size:13px;"><%= client.phone.presence || "—" %></td>
+          <td style="text-align:center;">
+            <span style="background:#dbeafe; color:#1d4ed8; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600;">
+              <%= client.attendances_as_client.count %>
+            </span>
+          </td>
+          <td style="text-align:center;">
+            <span style="background:#dcfce7; color:#16a34a; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:600;">
+              <%= client.orders.where(status: %w[paid shipped delivered]).count %>
+            </span>
+          </td>
+          <td style="font-size:13px; color:#6b7280;">
+            <% if last_attendance %>
+              <%= last_attendance.attended_on.strftime("%d/%m/%Y") %>
+            <% else %>
+              <span style="color:#d1d5db;">Sin atenciones</span>
+            <% end %>
+          </td>
+          <td>
+            <%= link_to "Ver historial", supervisor_client_path(client), class: "btn btn-outline btn-sm" %>
+          </td>
+        </tr>
+      <% end %>
+      <% if @clients.empty? %>
+        <tr>
+          <td colspan="7" style="text-align:center; color:#9ca3af; padding:40px;">
+            <% if @q.present? %>
+              Sin resultados para "<strong><%= @q %></strong>"
+            <% else %>
+              No hay clientas registradas aún.
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

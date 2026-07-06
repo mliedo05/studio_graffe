@@ -3,8 +3,8 @@ class ShopController < ApplicationController
 
   def landing
     @featured_services  = Service.active.ordered.limit(4)
-    @featured_products  = Product.active.where(featured: true).limit(6)
-    @stylists           = User.stylists.limit(3)
+    @featured_products  = Product.active.for_sale.where(featured: true).limit(6)
+    @stylists           = User.stylists.order(:first_name, :last_name)
     @instagram_posts    = InstagramService.fetch_posts(limit: 9)
     Rails.logger.info "[Landing] Instagram posts loaded: #{@instagram_posts.count}"
   end

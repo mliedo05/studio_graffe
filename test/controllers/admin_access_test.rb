@@ -64,4 +64,16 @@ class AdminAccessTest < ActionDispatch::IntegrationTest
     get admin_supervisor_path
     assert_redirected_to supervisor_root_path
   end
+
+  test "admin puede acceder a la lista de clientes del supervisor" do
+    sign_in_as(users(:admin))
+    get supervisor_clients_path
+    assert_response :success
+  end
+
+  test "admin puede ver historial de un cliente" do
+    sign_in_as(users(:admin))
+    get supervisor_client_path(users(:cliente))
+    assert_response :success
+  end
 end

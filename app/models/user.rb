@@ -5,8 +5,9 @@ class User < ApplicationRecord
 
   ROLES = %w[admin supervisor stylist client].freeze
 
-  has_one :stylist_profile, foreign_key: :stylist_id, dependent: :destroy
-  accepts_nested_attributes_for :stylist_profile, update_only: true
+  has_one_attached :avatar
+  has_one :stylist_profile, foreign_key: :stylist_id, dependent: :destroy, inverse_of: :stylist
+  accepts_nested_attributes_for :stylist_profile
   has_many :stylist_schedules, foreign_key: :stylist_id, dependent: :destroy
   has_many :stylist_blocked_times, foreign_key: :stylist_id, dependent: :destroy
   has_many :appointments_as_client, class_name: "Appointment", foreign_key: :client_id, dependent: :destroy
@@ -32,6 +33,19 @@ class User < ApplicationRecord
 
   def full_name
     "#{first_name} #{last_name}"
+  end
+
+  # Retorna la URL de la foto de perfil según disponibilidad:
+  # 1. Foto subida manualmente (ActiveStorage)
+  # 2. Foto de Google OAuth
+  # nil si no hay ninguna
+  def profile_photo_url
+    return nil unless avatar.attached? || avatar_url.present?
+    avatar.attached? ? nil : avatar_url  # ActiveStorage URL se genera en la vista con url_for
+  end
+
+  def has_profile_photo?
+    avatar.attached? || avatar_url.present?
   end
 
   def admin?      = role == "admin"

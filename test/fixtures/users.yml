@@ -6,6 +6,14 @@ admin:
   role: admin
   walk_in: false
 
+supervisor:
+  first_name: Sofia
+  last_name: Supervisora
+  email: supervisor@studiograffe.cl
+  encrypted_password: "$2a$12$wuhFfgKfR0kg/M6qqOdY/OPZsF1OIGfhVGOOAxLOOOpcdmGQf/rFW"
+  role: supervisor
+  walk_in: false
+
 valentina:
   first_name: Valentina
   last_name: Rojas

@@ -68,6 +68,7 @@ Rails.application.routes.draw do
         post :create_client
       end
     end
+    resources :clients, only: [ :index, :show ]
     get "/comisiones",           to: "commissions#index",        as: :commissions
     get "/comisiones/exportar",  to: "commissions#export",       as: :commissions_export
     get "/ventas",               to: "sales#index",              as: :sales

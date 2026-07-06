@@ -107,4 +107,47 @@ class UserTest < ActiveSupport::TestCase
   test "tiene stylist_schedules" do
     assert_respond_to users(:valentina), :stylist_schedules
   end
+
+  # ── Avatar ────────────────────────────────────────────────────────
+
+  test "has_one_attached :avatar está declarado" do
+    assert_respond_to User.new, :avatar
+  end
+
+  test "has_profile_photo? es false sin avatar ni avatar_url" do
+    user = users(:cliente)
+    assert_not user.has_profile_photo?
+  end
+
+  test "has_profile_photo? es true cuando avatar_url está presente" do
+    user = users(:cliente)
+    user.avatar_url = "https://example.com/foto.jpg"
+    assert user.has_profile_photo?
+  end
+
+  # ── Creación de estilista con perfil anidado ──────────────────────
+
+  test "crea estilista con stylist_profile_attributes en una sola operación" do
+    user = User.create!(
+      first_name: "Test", last_name: "Estilista",
+      email: "test_nested_stylist@test.com",
+      password: "password123", password_confirmation: "password123",
+      role: "stylist",
+      stylist_profile_attributes: { commission_percentage: 35 }
+    )
+    assert user.persisted?
+    assert_not_nil user.stylist_profile
+    assert_equal 35, user.stylist_profile.commission_percentage
+  end
+
+  test "inverse_of permite validar stylist_profile antes de guardar" do
+    user = User.new(
+      first_name: "Test", last_name: "Inv",
+      email: "inv_test@test.com",
+      password: "password123", password_confirmation: "password123",
+      role: "stylist",
+      stylist_profile_attributes: { commission_percentage: 50 }
+    )
+    assert user.valid?, user.errors.full_messages.inspect
+  end
 end

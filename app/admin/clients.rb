@@ -63,10 +63,10 @@ ActiveAdmin.register User, as: "Client" do
     # ── KPIs ──────────────────────────────────────────────────────
     div style: "display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;" do
       [
-        ["Atenciones",          attendances.count.to_s,          "#1d4ed8", "#dbeafe"],
-        ["Total en atenciones", number_to_currency(total_attendances, unit: "$", delimiter: ".", precision: 0), "#92400e", "#fef3c7"],
-        ["Compras online",      orders.count.to_s,               "#16a34a", "#dcfce7"],
-        ["Total en compras",    number_to_currency(total_orders, unit: "$", delimiter: ".", precision: 0), "#16a34a", "#dcfce7"]
+        [ "Atenciones",          attendances.count.to_s,          "#1d4ed8", "#dbeafe" ],
+        [ "Total en atenciones", number_to_currency(total_attendances, unit: "$", delimiter: ".", precision: 0), "#92400e", "#fef3c7" ],
+        [ "Compras online",      orders.count.to_s,               "#16a34a", "#dcfce7" ],
+        [ "Total en compras",    number_to_currency(total_orders, unit: "$", delimiter: ".", precision: 0), "#16a34a", "#dcfce7" ]
       ].each do |label, value, color, bg|
         div style: "background:#{bg}; border-radius:12px; padding:16px 20px;" do
           div style: "font-size:11px; color:#{color}; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;" do

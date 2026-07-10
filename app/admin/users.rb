@@ -107,12 +107,12 @@ ActiveAdmin.register User do
           row("Teléfono")  { |u| u.phone.presence || "—" }
           row("Rol") do |u|
             labels = {
-              "admin"      => ["⚙️ Admin",      "#7c3aed"],
-              "supervisor" => ["👁️ Supervisor", "#d97706"],
-              "stylist"    => ["✂️ Estilista",  "#1d4ed8"],
-              "client"     => ["👤 Cliente",    "#6b7280"]
+              "admin"      => [ "⚙️ Admin",      "#7c3aed" ],
+              "supervisor" => [ "👁️ Supervisor", "#d97706" ],
+              "stylist"    => [ "✂️ Estilista",  "#1d4ed8" ],
+              "client"     => [ "👤 Cliente",    "#6b7280" ]
             }
-            text, color = labels[u.role] || [u.role, "#6b7280"]
+            text, color = labels[u.role] || [ u.role, "#6b7280" ]
             span text, style: "font-weight:bold; color:#{color};"
           end
           row("Registrado") { |u| u.created_at.strftime("%d/%m/%Y") }

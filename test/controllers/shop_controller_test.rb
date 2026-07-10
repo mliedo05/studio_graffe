@@ -91,4 +91,33 @@ class ShopControllerTest < ActionDispatch::IntegrationTest
     get shop_brand_path(brand_slug: "olaplex")
     assert_response :success
   end
+
+  # ── Insumos excluidos de la tienda ───────────────────────────────
+
+  test "GET / landing no incluye productos insumo en destacados" do
+    get root_path
+    assert_response :success
+    assert_no_match products(:tinte_insumo).name, response.body
+  end
+
+  test "GET /tienda no muestra productos insumo" do
+    get shop_path
+    assert_response :success
+    assert_no_match products(:tinte_insumo).name, response.body
+  end
+
+  test "GET /tienda/:category_slug no muestra insumos de esa categoría" do
+    get shop_category_path(category_slug: product_categories(:tratamientos).slug)
+    assert_response :success
+    assert_no_match products(:tinte_insumo).name, response.body
+  end
+
+  # ── Landing muestra todas las estilistas ordenadas ───────────────
+
+  test "GET / muestra todas las estilistas activas" do
+    get root_path
+    assert_response :success
+    assert_match users(:valentina).full_name, response.body
+    assert_match users(:camila).full_name,    response.body
+  end
 end

@@ -1,0 +1,111 @@
+<% content_for :page_title, @client.full_name %>
+
+<!-- Header -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:20px; font-weight:700;"><%= @client.full_name %></h1>
+    <p style="font-size:13px; color:#9ca3af; margin-top:2px;">
+      <%= @client.email %>
+      <% if @client.phone.present? %> · <%= @client.phone %><% end %>
+      · Clienta desde <%= @client.created_at.strftime("%d/%m/%Y") %>
+    </p>
+  </div>
+  <%= link_to "← Volver", supervisor_clients_path, class: "btn btn-outline" %>
+</div>
+
+<!-- KPIs -->
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;">
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px;">
+    <div style="font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Atenciones</div>
+    <div style="font-size:26px; font-weight:700; color:#1d4ed8;"><%= @attendances.size %></div>
+  </div>
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px;">
+    <div style="font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Total en atenciones</div>
+    <div style="font-size:22px; font-weight:700; color:#C9A96E;"><%= number_to_currency(@total_spent_attendances, unit: "$", delimiter: ".", precision: 0) %></div>
+  </div>
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px;">
+    <div style="font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Compras online</div>
+    <div style="font-size:26px; font-weight:700; color:#16a34a;"><%= @orders.size %></div>
+  </div>
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px;">
+    <div style="font-size:11px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Total en compras</div>
+    <div style="font-size:22px; font-weight:700; color:#16a34a;"><%= number_to_currency(@total_spent_orders, unit: "$", delimiter: ".", precision: 0) %></div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+  <!-- Historial de atenciones -->
+  <div>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head">
+        <h3>✂️ Atenciones (<%= @attendances.size %>)</h3>
+      </div>
+      <% if @attendances.any? %>
+        <table class="sv-table">
+          <thead>
+            <tr><th>N° Atención</th><th>Fecha</th><th>Items</th><th>Total</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% @attendances.each do |a| %>
+              <tr>
+                <td><code style="font-size:12px;"><%= a.number %></code></td>
+                <td style="font-size:13px;"><%= a.attended_on.strftime("%d/%m/%Y") %></td>
+                <td style="color:#6b7280; font-size:13px;"><%= a.attendance_items.size %> item(s)</td>
+                <td style="font-weight:600;"><%= number_to_currency(a.total_cents, unit: "$", delimiter: ".", precision: 0) %></td>
+                <td>
+                  <span class="badge <%= a.status == "closed" ? "badge-green" : "badge-yellow" %>">
+                    <%= a.status == "closed" ? "Cerrada" : "Abierta" %>
+                  </span>
+                </td>
+                <td><%= link_to "Ver", supervisor_attendance_path(a), class: "btn btn-outline btn-sm" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div style="padding:32px; text-align:center; color:#9ca3af; font-size:14px;">Sin atenciones registradas.</div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Historial de compras online -->
+  <div>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head">
+        <h3>🛍️ Compras online (<%= @orders.size %>)</h3>
+      </div>
+      <% if @orders.any? %>
+        <table class="sv-table">
+          <thead>
+            <tr><th>N° Orden</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <% @orders.each do |order| %>
+              <tr>
+                <td><code style="font-size:12px;"><%= order.number %></code></td>
+                <td style="font-size:13px;"><%= order.created_at.strftime("%d/%m/%Y") %></td>
+                <td style="color:#6b7280; font-size:13px;"><%= order.item_count %> producto(s)</td>
+                <td style="font-weight:600;"><%= number_to_currency(order.total_cents, unit: "$", delimiter: ".", precision: 0) %></td>
+                <td>
+                  <%
+                    status_map = {
+                      "paid"      => ["Pagada",     "badge-green"],
+                      "shipped"   => ["Enviada",    "badge-green"],
+                      "delivered" => ["Entregada",  "badge-green"]
+                    }
+                    label, css = status_map[order.status] || [order.status, "badge-yellow"]
+                  %>
+                  <span class="badge <%= css %>"><%= label %></span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div style="padding:32px; text-align:center; color:#9ca3af; font-size:14px;">Sin compras online registradas.</div>
+      <% end %>
+    </div>
+  </div>
+
+</div>

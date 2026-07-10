@@ -76,4 +76,40 @@ class SupervisorDashboardTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "Sin registros", response.body
   end
+
+  # ── Modal stock crítico ───────────────────────────────────────────
+
+  test "dashboard muestra tarjeta de stock crítico con conteo correcto" do
+    sign_in_as(users(:admin))
+    get supervisor_root_path
+    expected = Product.active.where("stock_quantity <= 3").count.to_s
+    assert_select ".sv-card-label", text: /Stock crítico/i
+    assert_match expected, response.body
+  end
+
+  test "dashboard incluye modal de stock crítico cuando hay productos con stock bajo" do
+    Product.active.where("stock_quantity <= 3").tap do |critical|
+      if critical.any?
+        sign_in_as(users(:admin))
+        get supervisor_root_path
+        assert_select "#stock-modal"
+        assert_select "#stock-card"
+      end
+    end
+  end
+
+  test "dashboard no incluye modal si no hay stock crítico" do
+    Product.update_all(stock_quantity: 10)
+    sign_in_as(users(:admin))
+    get supervisor_root_path
+    assert_select "#stock-modal", count: 0
+  end
+
+  # ── Clientes accesibles desde el sidebar ─────────────────────────
+
+  test "dashboard incluye enlace a clientes en la navegación" do
+    sign_in_as(users(:admin))
+    get supervisor_root_path
+    assert_select "a[href='#{supervisor_clients_path}']"
+  end
 end

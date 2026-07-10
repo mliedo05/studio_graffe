@@ -6,7 +6,7 @@ ActiveAdmin.register_page "Supervisor" do
   # Redirigir inmediatamente al supervisor panel en lugar de mostrar una página vacía
   controller do
     def index
-      redirect_to supervisor_root_path
+      redirect_to supervisor_root_path, allow_other_host: false, status: :found
     end
   end
 

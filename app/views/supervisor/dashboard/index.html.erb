@@ -102,14 +102,90 @@
     <div class="sv-card-value"><%= @attendances_count %></div>
     <div class="sv-card-sub">registradas en el período</div>
   </div>
-  <div class="sv-card">
+  <div class="sv-card <%= @critical_stock.any? ? "sv-card-clickable" : "" %>" id="stock-card">
     <div class="sv-card-label">⚠️ Stock crítico</div>
     <div class="sv-card-value" style="color:<%= @critical_stock.any? ? "#dc2626" : "#16a34a" %>;">
       <%= @critical_stock.count %>
     </div>
-    <div class="sv-card-sub">productos con ≤ 3 unidades</div>
+    <div class="sv-card-sub">
+      productos con ≤ 3 unidades
+      <% if @critical_stock.any? %>
+        <span style="display:block; margin-top:4px; font-size:10px; color:#dc2626; font-weight:600; letter-spacing:0.04em;">VER DETALLE →</span>
+      <% end %>
+    </div>
   </div>
 </div>
+
+<% if @critical_stock.any? %>
+<div id="stock-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; display:none;" hidden>
+  <div style="background:#fff; border-radius:16px; width:520px; max-width:calc(100vw - 32px); max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid #f3f4f6;">
+      <div>
+        <div style="font-size:16px; font-weight:700; color:#1a1a1a;">⚠️ Stock crítico</div>
+        <div style="font-size:12px; color:#9ca3af; margin-top:2px;"><%= @critical_stock.count %> producto(s) con 3 unidades o menos</div>
+      </div>
+      <button id="stock-modal-close" style="background:#f3f4f6; border:none; border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:20px; color:#6b7280; line-height:1;">×</button>
+    </div>
+    <div style="overflow-y:auto; padding:8px 24px; flex:1;">
+      <% @critical_stock.each do |product| %>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f3f4f6;">
+          <div>
+            <div style="font-weight:600; font-size:14px; color:#1a1a1a;"><%= product.name %></div>
+            <div style="font-size:12px; color:#9ca3af; margin-top:2px;"><%= product.brand %> · <%= product.product_category.name %></div>
+          </div>
+          <% if product.stock_quantity == 0 %>
+            <span style="background:#fee2e2; color:#dc2626; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:700; white-space:nowrap; margin-left:16px;">0 — Sin stock</span>
+          <% elsif product.stock_quantity == 1 %>
+            <span style="background:#fee2e2; color:#dc2626; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:700; white-space:nowrap; margin-left:16px;">1 unidad</span>
+          <% else %>
+            <span style="background:#fef3c7; color:#d97706; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:700; white-space:nowrap; margin-left:16px;"><%= product.stock_quantity %> unidades</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <div style="padding:16px 24px; border-top:1px solid #f3f4f6; text-align:right;">
+      <button id="stock-modal-close-2" class="btn btn-outline" style="font-size:13px;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+(function() {
+  function bindStockModal() {
+    var card  = document.getElementById('stock-card');
+    var modal = document.getElementById('stock-modal');
+    var btnX  = document.getElementById('stock-modal-close');
+    var btnC  = document.getElementById('stock-modal-close-2');
+    if (!card || !modal) return;
+
+    function open() {
+      modal.removeAttribute('hidden');
+      modal.style.display = 'flex';
+    }
+    function close() {
+      modal.style.display = 'none';
+      modal.setAttribute('hidden', '');
+    }
+
+    card.onclick  = open;
+    btnX.onclick  = close;
+    btnC.onclick  = close;
+    modal.onclick = function(e) { if (e.target === modal) close(); };
+    document.onkeydown = function(e) { if (e.key === 'Escape') close(); };
+  }
+
+  // Carga inicial
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindStockModal);
+  } else {
+    bindStockModal();
+  }
+  // Re-bind tras navegación Turbo
+  document.addEventListener('turbo:load', bindStockModal);
+  document.addEventListener('turbo:render', bindStockModal);
+})();
+</script>
+<% end %>
 
 <%# Helper local para mostrar placeholder cuando no hay datos %>
 <% no_data_placeholder = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:#9ca3af;font-size:13px;">Sin registros para este período</div>' %>

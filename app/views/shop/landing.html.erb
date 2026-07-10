@@ -400,12 +400,22 @@
     <div class="flex flex-wrap justify-center gap-12">
       <% @stylists.each do |stylist| %>
         <%= link_to new_appointment_path, class: "group flex flex-col items-center gap-4 cursor-pointer" do %>
-          <div class="w-28 h-28 rounded-full overflow-hidden border-2 transition-all duration-300 group-hover:border-amber-400"
+          <div class="w-36 h-36 rounded-full overflow-hidden border-2 transition-all duration-300 group-hover:border-amber-400"
                style="border-color:#E8E5E2;">
-            <div class="w-full h-full flex items-center justify-center text-3xl font-light text-white"
-                 style="background:linear-gradient(135deg, #C9A96E, #8B7355);">
-              <%= stylist.first_name[0] %>
-            </div>
+            <% if stylist.avatar.attached? %>
+              <%= image_tag url_for(stylist.avatar),
+                    class: "w-full h-full object-cover",
+                    alt: stylist.full_name %>
+            <% elsif stylist.avatar_url.present? %>
+              <%= image_tag stylist.avatar_url,
+                    class: "w-full h-full object-cover",
+                    alt: stylist.full_name %>
+            <% else %>
+              <div class="w-full h-full flex items-center justify-center text-3xl font-light text-white"
+                   style="background:linear-gradient(135deg, #C9A96E, #8B7355);">
+                <%= stylist.first_name[0] %>
+              </div>
+            <% end %>
           </div>
           <div>
             <p class="font-medium text-stone-800 mb-1" style="font-family:'Noto Serif',serif; font-size:1.05rem;">

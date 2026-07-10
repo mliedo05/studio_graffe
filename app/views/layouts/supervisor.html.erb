@@ -40,8 +40,19 @@
     }
     .sv-nav-section { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
       color: rgba(255,255,255,0.3); padding: 16px 20px 6px; }
-    .sv-sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; color: rgba(255,255,255,0.4); }
-    .sv-sidebar-footer a { color: #C9A96E; text-decoration: none; }
+    .sv-sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .sv-sidebar-footer .footer-name { font-weight: 600; color: #fff; margin-bottom: 10px; }
+    .sv-sidebar-footer .footer-actions { display: flex; flex-direction: column; gap: 4px; }
+    .sv-sidebar-footer .footer-btn {
+      display: block; padding: 7px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
+      text-decoration: none; text-align: left; cursor: pointer;
+      color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); transition: background 0.15s;
+    }
+    .sv-sidebar-footer .footer-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .sv-sidebar-footer .footer-btn.gold { color: #C9A96E; border-color: rgba(201,169,110,0.3); }
+    .sv-sidebar-footer .footer-btn.gold:hover { background: rgba(201,169,110,0.12); }
+    .sv-sidebar-footer form { margin: 0; }
 
     /* Main */
     .sv-main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
@@ -66,6 +77,8 @@
     /* Cards */
     .sv-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
     .sv-card { background: #fff; border: 1px solid #E5E5E0; border-radius: 10px; padding: 20px; }
+    .sv-card-clickable { cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+    .sv-card-clickable:hover { border-color: #dc2626; box-shadow: 0 4px 12px rgba(220,38,38,0.10); }
     .sv-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 8px; }
     .sv-card-value { font-size: 26px; font-weight: 800; color: #1A1A1A; line-height: 1; }
     .sv-card-sub   { font-size: 13px; color: #9ca3af; margin-top: 6px; }
@@ -135,6 +148,8 @@
       <%= link_to "📋 Registro atenciones", supervisor_attendances_path,
             class: "#{controller_path == "supervisor/attendances" ? "active" : ""}" %>
       <%= link_to "➕ Nueva atención", new_supervisor_attendance_path %>
+      <%= link_to "👤 Clientes", supervisor_clients_path,
+            class: "#{controller_path == "supervisor/clients" ? "active" : ""}" %>
 
       <p class="sv-nav-section">Reportes</p>
       <%= link_to "💵 Caja", supervisor_caja_path,
@@ -145,14 +160,14 @@
             class: "#{controller_path == "supervisor/sales" ? "active" : ""}" %>
     </nav>
     <div class="sv-sidebar-footer">
-      <div><%= current_user.full_name %></div>
-      <div style="margin-top:4px;">
+      <div class="footer-name">👤 <%= current_user.full_name %></div>
+      <div class="footer-actions">
         <% if current_user.admin? %>
-          <%= link_to "⚙️ Panel Admin", admin_root_path %> ·
+          <%= link_to "⚙️ Panel Admin", admin_root_path, class: "footer-btn gold", data: { turbo: false } %>
         <% end %>
-        <%= link_to "← Sitio", root_path %> ·
-        <%= button_to "Salir", destroy_user_session_path, method: :delete,
-              style: "background:none; border:none; color:#C9A96E; cursor:pointer; font-size:12px; padding:0;" %>
+        <%= link_to "🏠 Ir al sitio", root_path, class: "footer-btn", data: { turbo: false } %>
+        <%= button_to "🚪 Cerrar sesión", destroy_user_session_path, method: :delete,
+              class: "footer-btn", style: "width:100%; text-align:left;" %>
       </div>
     </div>
   </aside>

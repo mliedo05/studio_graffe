@@ -1,0 +1,162 @@
+<% content_for :page_title, "Ficha Técnica — #{@attendance.number}" %>
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1 style="font-size:20px; font-weight:700;">🧪 Ficha Técnica</h1>
+    <p style="font-size:13px; color:#9ca3af; margin-top:4px;">
+      Atención <code style="background:#f3f4f6; padding:2px 8px; border-radius:4px;"><%= @attendance.number %></code>
+      · <%= @attendance.display_client_name %>
+      · <%= @attendance.attended_on.strftime("%d/%m/%Y") %>
+    </p>
+  </div>
+  <%= link_to "← Volver a la atención", supervisor_attendance_path(@attendance), class: "btn btn-outline" %>
+</div>
+
+<div style="max-width:720px;">
+  <%= form_with model: @sheet,
+                url: supervisor_technical_sheet_path(@attendance),
+                method: :patch,
+                html: { style: "display:flex; flex-direction:column; gap:20px;" } do |f| %>
+
+    <%# ── Técnica ─────────────────────────────────────────────── %>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head"><h3>✂️ Técnica aplicada</h3></div>
+      <div style="padding:20px;">
+        <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+          Técnica
+        </label>
+        <%= f.select :technique,
+              options_for_select(AttendanceTechnicalSheet::TECHNIQUES.map { |t| [t.humanize, t] }, @sheet.technique),
+              { include_blank: "— Seleccionar técnica —" },
+              style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; background:#fff;" %>
+      </div>
+    </div>
+
+    <%# ── Coloración ──────────────────────────────────────────── %>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head"><h3>🎨 Coloración / Tinte</h3></div>
+      <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+            Marca del tinte
+          </label>
+          <%= f.text_field :tint_brand,
+                placeholder: "Ej: Wella, L'Oréal, Majirel…",
+                style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;" %>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+            Fórmula / Color aplicado
+          </label>
+          <%= f.text_area :tint_formula,
+                rows: 2,
+                placeholder: "Ej: 7.3 + 20vol, mezcla con 8.0…",
+                style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; resize:vertical; box-sizing:border-box;" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Decoloración ────────────────────────────────────────── %>
+    <div class="sv-table-wrap" id="decolorization-section">
+      <div class="sv-table-head">
+        <h3>⚡ Decoloración</h3>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; cursor:pointer; margin-left:auto;">
+          <%= f.check_box :decolorization_applied,
+                id: "decolorization_toggle",
+                style: "width:16px; height:16px; cursor:pointer; accent-color:#C9A96E;" %>
+          Se aplicó decoloración
+        </label>
+      </div>
+      <div id="decolorization-fields" style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px; <%= @sheet.decolorization_applied? ? "" : "display:none;" %>">
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+            Altura de decoloración
+          </label>
+          <%= f.select :decolorization_height,
+                options_for_select(AttendanceTechnicalSheet::DECOLORIZATION_HEIGHTS.map { |k, v| [v, k] }, @sheet.decolorization_height),
+                { include_blank: "— Seleccionar —" },
+                style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; background:#fff;" %>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+              Nivel de partida (1–10)
+            </label>
+            <%= f.number_field :decolorization_level_start,
+                  min: 1, max: 10,
+                  placeholder: "Ej: 4",
+                  style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;" %>
+          </div>
+          <div>
+            <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+              Nivel alcanzado (1–10)
+            </label>
+            <%= f.number_field :decolorization_level_achieved,
+                  min: 1, max: 10,
+                  placeholder: "Ej: 8",
+                  style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; box-sizing:border-box;" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Estado del cabello ──────────────────────────────────── %>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head"><h3>💆 Estado del cabello</h3></div>
+      <div style="padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+            Elasticidad
+          </label>
+          <%= f.select :hair_elasticity,
+                options_for_select(AttendanceTechnicalSheet::ELASTICITY_OPTIONS.map { |k, v| [v, k] }, @sheet.hair_elasticity),
+                { include_blank: "— Seleccionar —" },
+                style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; background:#fff;" %>
+        </div>
+        <div>
+          <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">
+            Porosidad
+          </label>
+          <%= f.select :hair_porosity,
+                options_for_select(AttendanceTechnicalSheet::POROSITY_OPTIONS.map { |k, v| [v, k] }, @sheet.hair_porosity),
+                { include_blank: "— Seleccionar —" },
+                style: "width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; background:#fff;" %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Notas ───────────────────────────────────────────────── %>
+    <div class="sv-table-wrap">
+      <div class="sv-table-head"><h3>📝 Notas adicionales</h3></div>
+      <div style="padding:20px;">
+        <%= f.text_area :notes,
+              rows: 4,
+              placeholder: "Observaciones generales, sensibilidad del cuero cabelludo, recomendaciones para la próxima visita…",
+              style: "width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; resize:vertical; box-sizing:border-box;" %>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <%= f.submit "💾 Guardar ficha técnica", class: "btn btn-gold", style: "padding:10px 24px; font-size:15px;" %>
+      <%= link_to "Cancelar", supervisor_attendance_path(@attendance), class: "btn btn-outline" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener("turbo:load", bindDecolorization);
+document.addEventListener("turbo:render", bindDecolorization);
+
+function bindDecolorization() {
+  const toggle = document.getElementById("decolorization_toggle");
+  const fields = document.getElementById("decolorization-fields");
+  if (!toggle || !fields) return;
+
+  function syncVisibility() {
+    fields.style.display = toggle.checked ? "grid" : "none";
+  }
+
+  syncVisibility();
+  toggle.addEventListener("change", syncVisibility);
+}
+</script>

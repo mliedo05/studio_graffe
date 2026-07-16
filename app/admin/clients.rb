@@ -51,7 +51,7 @@ ActiveAdmin.register User, as: "Client" do
   # ── Vista detalle ─────────────────────────────────────────────────
   show title: proc { |u| u.full_name } do
     attendances = resource.attendances_as_client
-                          .includes(:attendance_items, :attendance_payments)
+                          .includes(:attendance_items, :attendance_payments, :technical_sheet)
                           .ordered
     orders = resource.orders
                      .where(status: %w[paid shipped delivered])
@@ -108,6 +108,21 @@ ActiveAdmin.register User, as: "Client" do
                   status_tag("Cerrada", class: "yes")
                 else
                   status_tag("Abierta")
+                end
+              end
+              column("🧪 Ficha técnica") do |a|
+                sheet = a.technical_sheet
+                if sheet
+                  parts = []
+                  parts << content_tag(:strong, sheet.technique.humanize) if sheet.technique.present?
+                  parts << sheet.tint_brand if sheet.tint_brand.present?
+                  parts << "⚡ Nivel #{sheet.decolorization_level_achieved}" if sheet.decolorization_applied? && sheet.decolorization_level_achieved.present?
+                  if sheet.hair_elasticity == "elastico"
+                    parts << content_tag(:span, "Elástico ⚠️", style: "color:#dc2626; font-weight:bold;")
+                  end
+                  safe_join(parts, content_tag(:span, " · ", style: "color:#d1d5db;"))
+                else
+                  content_tag(:span, "—", style: "color:#d1d5db;")
                 end
               end
             end

@@ -62,7 +62,10 @@ Rails.application.routes.draw do
   namespace :supervisor do
     root to: "dashboard#index"
     resources :attendances, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
-      member { patch :close }
+      member do
+        patch :close
+        resource :technical_sheet, only: [ :edit, :update ], module: :attendances
+      end
       collection do
         get  :search_client
         post :create_client

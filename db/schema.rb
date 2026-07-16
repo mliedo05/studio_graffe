@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_163943) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,6 +127,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
     t.string "payment_method", null: false
     t.datetime "updated_at", null: false
     t.index ["attendance_id"], name: "index_attendance_payments_on_attendance_id"
+  end
+
+  create_table "attendance_technical_sheets", force: :cascade do |t|
+    t.bigint "attendance_id", null: false
+    t.datetime "created_at", null: false
+    t.boolean "decolorization_applied"
+    t.string "decolorization_height"
+    t.integer "decolorization_level_achieved"
+    t.integer "decolorization_level_start"
+    t.string "hair_elasticity"
+    t.string "hair_porosity"
+    t.text "notes"
+    t.string "technique"
+    t.string "tint_brand"
+    t.text "tint_formula"
+    t.datetime "updated_at", null: false
+    t.index ["attendance_id"], name: "index_attendance_technical_sheets_on_attendance_id"
   end
 
   create_table "attendances", force: :cascade do |t|
@@ -343,6 +360,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   add_foreign_key "attendance_items", "services"
   add_foreign_key "attendance_items", "users", column: "stylist_id"
   add_foreign_key "attendance_payments", "attendances"
+  add_foreign_key "attendance_technical_sheets", "attendances"
   add_foreign_key "attendances", "users", column: "client_id"
   add_foreign_key "attendances", "users", column: "registered_by_id"
   add_foreign_key "commissions", "appointments"

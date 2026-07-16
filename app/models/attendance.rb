@@ -3,9 +3,11 @@ class Attendance < ApplicationRecord
   belongs_to :registered_by, class_name: "User"
   has_many   :attendance_items,    dependent: :destroy
   has_many   :attendance_payments, dependent: :destroy
+  has_one    :technical_sheet, class_name: "AttendanceTechnicalSheet", dependent: :destroy
 
   accepts_nested_attributes_for :attendance_items,    allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :attendance_payments, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :technical_sheet
 
   monetize :total_cents
   monetize :paid_cents

@@ -153,6 +153,83 @@
         </span>
       </div>
     </div>
+
+    <!-- Ficha técnica -->
+    <% sheet = @attendance.technical_sheet %>
+    <div style="background:#fff; border:1px solid #E5E5E0; border-radius:10px; overflow:hidden;">
+      <div style="padding:14px 16px; background:#fefce8; border-bottom:1px solid #fef08a; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:13px; font-weight:700; color:#713f12;">🧪 Ficha técnica</span>
+        <%= link_to "✏️ #{sheet ? "Editar" : "Completar"}",
+              edit_supervisor_technical_sheet_path(@attendance),
+              style: "font-size:12px; color:#92400e; font-weight:600; text-decoration:none; background:#fef3c7; padding:4px 10px; border-radius:6px; border:1px solid #fde68a;" %>
+      </div>
+      <% if sheet %>
+        <div style="padding:14px 16px; font-size:13px; display:flex; flex-direction:column; gap:8px;">
+          <% if sheet.technique.present? %>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#6b7280;">Técnica</span>
+              <span style="font-weight:600; color:#111827;"><%= sheet.technique.humanize %></span>
+            </div>
+          <% end %>
+          <% if sheet.tint_brand.present? %>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#6b7280;">Marca</span>
+              <span style="font-weight:600; color:#111827;"><%= sheet.tint_brand %></span>
+            </div>
+          <% end %>
+          <% if sheet.tint_formula.present? %>
+            <div style="display:flex; justify-content:space-between; gap:12px;">
+              <span style="color:#6b7280; white-space:nowrap;">Fórmula</span>
+              <span style="font-weight:500; color:#111827; text-align:right;"><%= sheet.tint_formula %></span>
+            </div>
+          <% end %>
+          <% if sheet.decolorization_applied? %>
+            <div style="border-top:1px solid #f3f4f6; padding-top:8px; margin-top:2px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="color:#6b7280;">Decoloración</span>
+                <span style="font-weight:600; color:#92400e;">⚡ Sí</span>
+              </div>
+              <% if sheet.decolorization_height.present? %>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:#6b7280;">Altura</span>
+                  <span style="font-weight:500;"><%= sheet.decolorization_height_label %></span>
+                </div>
+              <% end %>
+              <% if sheet.decolorization_level_start.present? || sheet.decolorization_level_achieved.present? %>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:#6b7280;">Niveles</span>
+                  <span style="font-weight:500;"><%= sheet.decolorization_level_start || "?" %> → <%= sheet.decolorization_level_achieved || "?" %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+          <% if sheet.hair_elasticity.present? %>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#6b7280;">Elasticidad</span>
+              <span style="font-weight:500; <%= sheet.hair_elasticity == "elastico" ? "color:#dc2626;" : "color:#111827;" %>">
+                <%= sheet.elasticity_label %>
+              </span>
+            </div>
+          <% end %>
+          <% if sheet.hair_porosity.present? %>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#6b7280;">Porosidad</span>
+              <span style="font-weight:500;"><%= sheet.porosity_label %></span>
+            </div>
+          <% end %>
+          <% if sheet.notes.present? %>
+            <div style="border-top:1px solid #f3f4f6; padding-top:8px; margin-top:2px;">
+              <span style="color:#6b7280; display:block; margin-bottom:4px;">Notas</span>
+              <p style="color:#374151; font-size:13px; margin:0; line-height:1.5;"><%= sheet.notes %></p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div style="padding:16px; text-align:center; color:#9ca3af; font-size:13px;">
+          Sin ficha técnica. <%= link_to "Completar ahora →", edit_supervisor_technical_sheet_path(@attendance), style: "color:#C9A96E;" %>
+        </div>
+      <% end %>
+    </div>
   </div>
 
 </div>

@@ -1,0 +1,12 @@
+ficha_balayage:
+  attendance: atencion_cerrada
+  technique: balayage
+  tint_brand: Wella
+  tint_formula: "9.1 + 9% + Blondor 60gr"
+  decolorization_applied: true
+  decolorization_height: tres_cuartos
+  decolorization_level_start: 5
+  decolorization_level_achieved: 9
+  hair_elasticity: bien
+  hair_porosity: normal
+  notes: "Cabello en buen estado. Aplicar mascarilla antes de la próxima decoloración."

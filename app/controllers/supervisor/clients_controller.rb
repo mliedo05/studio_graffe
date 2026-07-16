@@ -12,7 +12,7 @@ module Supervisor
 
     def show
       @client = User.clients.find(params[:id])
-      @attendances = @client.attendances_as_client.includes(:attendance_items, :attendance_payments).ordered
+      @attendances = @client.attendances_as_client.includes(:attendance_items, :attendance_payments, :technical_sheet).ordered
       @orders = @client.orders.where(status: %w[paid shipped delivered]).order(created_at: :desc)
       @total_spent_attendances = @attendances.sum(:total_cents)
       @total_spent_orders      = @orders.sum(:total_cents)

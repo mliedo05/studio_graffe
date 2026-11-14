@@ -2,7 +2,28 @@
 
 <% content_for :head do %>
 <style>
-  .hero-overlay { background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.55) 100%); }
+  /* ── Hero 3D: recorrido por el salón en line art ── */
+  .salon-hero { height: 400vh; position: relative; background: #EDE4D5; }
+  .salon-hero__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; }
+  .salon-hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .salon-hero__intro { position: relative; z-index: 2; width: 100%; max-width: 72rem; margin: 0 auto; padding: 0 1.5rem; }
+  .salon-hero__intro h1 { font-family: 'Noto Serif', serif; font-size: clamp(2.6rem, 7vw, 5.6rem); line-height: 1.03; letter-spacing: -0.02em; color: #2B241C; max-width: 46rem; margin-bottom: 1.5rem; text-shadow: 0 0 24px #EDE4D5, 0 0 10px #EDE4D5; }
+  .salon-hero__intro h1 em, .salon-hero__step h2 em { color: #8B7355; }
+  .salon-hero__intro p { font-family: 'Inter', sans-serif; max-width: 28rem; color: #5C4B39; font-size: 1.05rem; line-height: 1.7; margin-bottom: 2.25rem; text-shadow: 0 0 12px #EDE4D5, 0 0 6px #EDE4D5; }
+  .salon-hero__step { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 1.5rem; pointer-events: none; opacity: 0; }
+  .salon-hero__step--low { align-items: flex-end; padding-bottom: 14vh; }
+  .salon-hero__step h2 { font-family: 'Noto Serif', serif; font-size: clamp(2.4rem, 7vw, 6rem); line-height: 1.05; color: #3E3226; text-shadow: 0 0 30px #EDE4D5, 0 0 12px #EDE4D5; }
+  .salon-hero__step p { font-family: 'Inter', sans-serif; margin-top: 1rem; font-size: 12px; letter-spacing: .35em; text-transform: uppercase; color: #5C4B39; text-shadow: 0 0 12px #EDE4D5, 0 0 6px #EDE4D5; }
+  .salon-hero__step a { pointer-events: auto; }
+  .salon-hero__progress { position: absolute; right: 1.75rem; top: 50%; transform: translateY(-50%); z-index: 3; display: flex; flex-direction: column; gap: 10px; }
+  .salon-hero__progress i { width: 2px; height: 28px; background: rgba(139,115,85,.25); display: block; transition: background .3s; }
+  .salon-hero__progress i.on { background: #C9A96E; }
+  .salon-hero__hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 2; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: #8B7355; transition: opacity .4s; }
+  /* Sin WebGL: portada fija con el texto principal */
+  .salon-hero.is-static { height: auto; }
+  .salon-hero.is-static .salon-hero__stage { position: relative; min-height: 100vh; }
+  .salon-hero.is-static .salon-hero__step, .salon-hero.is-static .salon-hero__progress { display: none; }
+  @media (max-width: 760px) { .salon-hero__progress { display: none; } }
   .service-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
   .product-card:hover { transform: translateY(-3px); }
   .ig-card:hover .ig-overlay { opacity: 1; }
@@ -17,41 +38,47 @@
 <% end %>
 
 <!-- ═══════════════════════════════════════════════
-     HERO — Full screen
+     HERO — Recorrido 3D por el salón (line art)
+     El scroll mueve la cámara; salon_hero_controller carga Three.js solo aquí.
 ════════════════════════════════════════════════ -->
-<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-  <!-- Background image placeholder — reemplazar src con foto real del salón -->
-  <div class="absolute inset-0 bg-stone-800"
-       style="background-image: url('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1920&q=80'); background-size:cover; background-position:center;">
-  </div>
-  <div class="hero-overlay absolute inset-0"></div>
+<section class="salon-hero" data-controller="salon-hero" aria-label="Recorrido por Studio Graffé">
+  <div class="salon-hero__stage">
+    <canvas class="salon-hero__canvas" data-salon-hero-target="canvas" aria-hidden="true"></canvas>
 
-  <div class="relative z-10 text-center px-6 max-w-4xl mx-auto fade-in">
-    <p class="font-label-caps text-[11px] tracking-[0.25em] text-amber-300 uppercase mb-6">Santiago · Chile</p>
-    <h1 class="text-white mb-6" style="font-family:'Noto Serif',serif; font-size:clamp(2.5rem,7vw,5rem); line-height:1.1; letter-spacing:-0.02em;">
-      Belleza con intención.<br>Estilo con identidad.
-    </h1>
-    <p class="text-white/80 text-lg mb-12 max-w-xl mx-auto fade-in-2" style="font-family:'Inter',sans-serif;">
-      Un espacio donde cada detalle importa y cada clienta es única.
-    </p>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center fade-in-3">
-      <%= link_to new_appointment_path,
-            class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105",
-            style: "background:#C9A96E; color:#fff; border-radius:2px;" do %>
-        Reservar Cita
-      <% end %>
-      <%= link_to shop_path,
-            class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase border border-white/70 text-white hover:bg-white/10 transition-all duration-300",
-            style: "border-radius:2px;" do %>
-        Ver Productos
-      <% end %>
+    <div class="salon-hero__intro" data-salon-hero-target="step">
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-6" style="color:#8B7355; text-shadow:none; margin-bottom:1.5rem;">Salón boutique · Santiago</p>
+      <h1>El arte del <em>color,</em><br>hecho a tu medida</h1>
+      <p>Un espacio donde cada detalle importa y cada clienta es única.</p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <%= link_to new_appointment_path, class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105 text-center", style: "background:#C9A96E; color:#fff; border-radius:2px;" do %>
+          Reservar Cita
+        <% end %>
+        <%= link_to shop_path, class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105 text-center border", style: "border-color:#8B7355; color:#5C4B39; border-radius:2px; background:rgba(237,228,213,.6);" do %>
+          Ver Productos
+        <% end %>
+      </div>
     </div>
-  </div>
 
-  <!-- Scroll indicator -->
-  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50">
-    <span class="font-label-caps text-[10px] tracking-widest uppercase">Descubrir</span>
-    <div class="w-px h-12 bg-white/30 animate-pulse"></div>
+    <div class="salon-hero__step salon-hero__step--low" data-salon-hero-target="step">
+      <div><h2>Bienvenida a <em>Graffé</em></h2><p>Studio Graffé · Santiago</p></div>
+    </div>
+    <div class="salon-hero__step" data-salon-hero-target="step">
+      <div><h2>Tu espejo,<br><em>tu momento</em></h2><p>Estaciones con luz natural y vista a la ciudad</p></div>
+    </div>
+    <div class="salon-hero__step" data-salon-hero-target="step">
+      <div>
+        <h2>Relájate,<br><em>nosotras nos encargamos</em></h2>
+        <p style="margin-bottom:2rem;">Lavado, color y cuidado de principio a fin</p>
+        <%= link_to new_appointment_path, class: "px-10 py-4 font-label-caps text-[11px] tracking-[0.2em] uppercase transition-all duration-300 hover:scale-105 inline-block", style: "background:#C9A96E; color:#fff; border-radius:2px;" do %>
+          Reservar Cita
+        <% end %>
+      </div>
+    </div>
+
+    <div class="salon-hero__progress" aria-hidden="true">
+      <i class="on" data-salon-hero-target="bar"></i><i data-salon-hero-target="bar"></i><i data-salon-hero-target="bar"></i><i data-salon-hero-target="bar"></i>
+    </div>
+    <div class="salon-hero__hint" data-salon-hero-target="hint">Desliza para entrar ↓</div>
   </div>
 </section>
 

@@ -53,6 +53,23 @@ class ShopControllerTest < ActionDispatch::IntegrationTest
     Rails.cache.delete("instagram_feed_v3")
   end
 
+  test "GET / muestra el recorrido 3D del salón con los enlaces de reserva y tienda" do
+    get root_path
+    assert_response :success
+    assert_select "section.salon-hero[data-controller='salon-hero']" do
+      assert_select "canvas[data-salon-hero-target='canvas']", 1
+      assert_select "[data-salon-hero-target='step']", 4
+      assert_select "a[href='#{new_appointment_path}']", minimum: 2
+      assert_select "a[href='#{shop_path}']", 1
+    end
+  end
+
+  test "Three.js no se precarga en el resto del sitio" do
+    get shop_path
+    assert_response :success
+    assert_no_match %r{rel="modulepreload"[^>]*three}, response.body
+  end
+
   test "GET /inicio también devuelve 200" do
     get landing_path
     assert_response :success

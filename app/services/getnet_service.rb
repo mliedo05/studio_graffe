@@ -11,8 +11,8 @@ class GetnetService
 
   def initialize
     credentials = Rails.application.credentials.dig(:getnet) || {}
-    @login      = credentials[:login]      || ENV.fetch("GETNET_LOGIN",      "7ffbb7bf1f7361b1200b2e8d74e1d76f")
-    @secret_key = credentials[:secret_key] || ENV.fetch("GETNET_SECRET_KEY", "SnZP3D63n3I9dH9O")
+    @login      = credentials[:login].presence      || ENV["GETNET_LOGIN"].presence      || sandbox_default(:login)
+    @secret_key = credentials[:secret_key].presence || ENV["GETNET_SECRET_KEY"].presence || sandbox_default(:secret_key)
     @base_url   = Rails.env.production? ? PRODUCTION_URL : SANDBOX_URL
   end
 
@@ -71,6 +71,17 @@ class GetnetService
   end
 
   private
+
+  # Credenciales públicas de sandbox: solo para desarrollo y tests.
+  # En producción no hay valor por defecto: si faltan, falla con un error claro.
+  SANDBOX_CREDENTIALS = { login: "7ffbb7bf1f7361b1200b2e8d74e1d76f", secret_key: "SnZP3D63n3I9dH9O" }.freeze
+
+  def sandbox_default(key)
+    if Rails.env.production?
+      raise GetnetError, "Falta la credencial de Getnet '#{key}'. Configúrala en credentials (getnet.#{key}) o en GETNET_#{key.to_s.upcase}."
+    end
+    SANDBOX_CREDENTIALS.fetch(key)
+  end
 
   # Builds the auth object per Getnet spec:
   # tranKey = Base64(SHA-256(nonce_raw + seed + secret_key))

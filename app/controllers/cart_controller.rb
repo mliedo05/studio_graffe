@@ -20,6 +20,7 @@ class CartController < ApplicationController
       {
         id:          item.id,
         name:        item.product.name,
+        brand:       item.product.brand,
         quantity:    item.quantity,
         unit_price:  helpers.humanized_money_with_symbol(item.unit_price),
         total_price: helpers.humanized_money_with_symbol(item.total_price),

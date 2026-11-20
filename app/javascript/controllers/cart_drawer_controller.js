@@ -80,22 +80,22 @@ export default class extends Controller {
     this.footerTarget.classList.remove("hidden")
 
     this.itemsTarget.innerHTML = items.map(item => `
-      <div class="flex items-center gap-3">
-        <div class="w-14 h-14 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-100">
+      <div class="sx-drawer__item">
+        <div class="sx-drawer__thumb">
           ${item.image_url
-            ? `<img src="${item.image_url}" alt="${this.esc(item.name)}" class="w-full h-full object-cover">`
-            : `<div class="w-full h-full flex items-center justify-center">
-                 <span class="material-symbols-outlined text-stone-300 text-xl">inventory_2</span>
-               </div>`
-          }
+            ? `<img src="${this.esc(item.image_url)}" alt="${this.esc(item.name)}">`
+            : ""}
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-stone-800 truncate">${this.esc(item.name)}</p>
-          <p class="text-xs text-stone-400 mt-0.5">${this.esc(item.unit_price)} × ${item.quantity}</p>
+        <div class="flex-1 min-w-0 flex flex-col">
+          ${item.brand ? `<p class="sx-drawer__brand">${this.esc(item.brand)}</p>` : ""}
+          <p class="sx-drawer__name">${this.esc(item.name)}</p>
+          <div class="flex items-end mt-auto gap-3">
+            <span class="sx-drawer__qty">Cant. ${Number(item.quantity)}</span>
+            <span class="sx-drawer__price">${this.esc(item.total_price)}</span>
+          </div>
         </div>
-        <p class="text-sm font-semibold text-stone-900 shrink-0">${this.esc(item.total_price)}</p>
       </div>
-    `).join('<div class="border-t border-stone-100 my-1"></div>')
+    `).join("")
 
     if (this.hasSubtotalTarget) this.subtotalTarget.textContent = subtotal
   }

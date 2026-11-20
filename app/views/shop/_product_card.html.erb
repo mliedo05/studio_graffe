@@ -1,0 +1,38 @@
+<%# Tarjeta de producto de la tienda (index, categoría y marca) %>
+<% path = shop_product_path(product.product_category.slug, product.slug) %>
+<% image = if product.image.attached?
+             url_for(product.image)
+           elsif product.respond_to?(:image_url) && product.image_url.present?
+             product.image_url
+           end %>
+<article class="sx-card group <%= 'is-out' unless product.in_stock? %>" id="product-<%= product.id %>">
+  <div class="sx-card__media">
+    <%= link_to path, class: "sx-card__img", tabindex: -1, aria: { hidden: true } do %>
+      <% if image %>
+        <img src="<%= image %>" alt="<%= product.name %>" loading="lazy">
+      <% else %>
+        <span class="sx-card__ph"><%= product.brand.presence || product.name %></span>
+      <% end %>
+    <% end %>
+
+    <% if !product.in_stock? %>
+      <span class="sx-badge sx-badge--dark">Sin stock</span>
+    <% elsif product.respond_to?(:featured?) && product.featured? %>
+      <span class="sx-badge">Destacado</span>
+    <% end %>
+
+    <div class="sx-card__action">
+      <% if product.in_stock? %>
+        <%= render "cart_items/add_to_cart", product: product, cart_item: @cart_items_by_product&.[](product.id) %>
+      <% else %>
+        <%= link_to "Avísame", path, class: "sx-btn sx-btn--light" %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= link_to path, class: "sx-card__info" do %>
+    <% if product.brand.present? %><p class="sx-card__brand"><%= product.brand %></p><% end %>
+    <h3 class="sx-card__name"><%= product.name %></h3>
+    <p class="sx-card__price"><%= humanized_money_with_symbol(product.price) %></p>
+  <% end %>
+</article>

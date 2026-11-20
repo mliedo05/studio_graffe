@@ -20,44 +20,7 @@
       <!-- Product Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
         <% @products.each do |product| %>
-          <article class="group" id="product-<%= product.id %>">
-            <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "block" do %>
-              <div class="aspect-square relative overflow-hidden bg-surface-container-low rounded-xl transition-transform duration-500 group-hover:scale-[1.01]">
-                <% if product.image.attached? %>
-                  <%= image_tag product.image, alt: product.name, class: "w-full h-full object-cover #{product.in_stock? ? '' : 'grayscale'}" %>
-                <% else %>
-                  <div class="w-full h-full flex items-center justify-center bg-surface-container">
-                    <span class="material-symbols-outlined text-6xl text-stone-300">inventory_2</span>
-                  </div>
-                <% end %>
-                <% unless product.in_stock? %>
-                  <div class="absolute top-4 left-4">
-                    <span class="bg-stone-200 text-stone-500 px-3 py-1 font-label-caps text-[10px] tracking-widest uppercase">Sin stock</span>
-                  </div>
-                <% end %>
-                <% if product.respond_to?(:featured?) && product.featured? %>
-                  <div class="absolute top-4 left-4">
-                    <span class="bg-black text-white px-3 py-1 font-label-caps text-[10px] tracking-widest uppercase">Destacado</span>
-                  </div>
-                <% end %>
-              </div>
-              <div class="mt-6 space-y-1">
-                <% if product.product_category.present? %>
-                  <p class="font-label-caps text-xs text-on-surface-variant uppercase tracking-widest"><%= product.product_category.name %></p>
-                <% end %>
-                <h3 class="font-h3 text-h3 text-on-surface <%= product.in_stock? ? '' : 'opacity-60' %>"><%= product.name %></h3>
-                <p class="font-body-md text-on-secondary-container <%= product.in_stock? ? '' : 'opacity-60' %>">
-                  <%= humanized_money_with_symbol(product.price) %>
-                </p>
-              </div>
-            <% end %>
-
-            <% if product.in_stock? %>
-              <div class="mt-4">
-                <%= render "cart_items/add_to_cart", product: product, cart_item: @cart_items_by_product[product.id] %>
-              </div>
-            <% end %>
-          </article>
+          <%= render "shop/product_card", product: product %>
         <% end %>
       </div>
 

@@ -121,11 +121,32 @@ class GetnetControllerTest < ActionDispatch::IntegrationTest
 
   test "notificación APPROVED confirma la orden" do
     order = checkout_order
+    stub_getnet_approved
     post getnet_notification_path,
          params:  { requestId: "REQ-123", status: { status: "APPROVED" } }.to_json,
          headers: { "Content-Type" => "application/json" }
     assert_response :ok
     assert_equal "paid", order.reload.status
+  end
+
+  test "notificación APPROVED falsa (Getnet dice que no) no marca la orden como pagada" do
+    order = checkout_order
+    stub_getnet_rejected
+    post getnet_notification_path,
+         params:  { requestId: "REQ-123", status: { status: "APPROVED" } }.to_json,
+         headers: { "Content-Type" => "application/json" }
+    assert_response :ok
+    assert_equal "checkout", order.reload.status
+  end
+
+  test "notificación APPROVED sin conexión con Getnet no marca la orden como pagada" do
+    order = checkout_order
+    stub_request(:post, "#{GETNET_BASE}/api/session/REQ-123").to_timeout
+    post getnet_notification_path,
+         params:  { requestId: "REQ-123", status: { status: "APPROVED" } }.to_json,
+         headers: { "Content-Type" => "application/json" }
+    assert_response :ok
+    assert_equal "checkout", order.reload.status
   end
 
   test "notificación REJECTED no cambia la orden" do

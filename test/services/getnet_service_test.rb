@@ -139,4 +139,17 @@ class GetnetServiceTest < ActiveSupport::TestCase
       )
     assert_not @service.approved?("12345")
   end
+
+  test "en producción sin credenciales falla con un error claro (no usa las de sandbox)" do
+    skip "hay credenciales de Getnet configuradas" if Rails.application.credentials.dig(:getnet).present?
+    original_env = Rails.env
+    saved = ENV.to_h.slice("GETNET_LOGIN", "GETNET_SECRET_KEY")
+    ENV.delete("GETNET_LOGIN"); ENV.delete("GETNET_SECRET_KEY")
+    Rails.env = "production"
+    error = assert_raises(GetnetService::GetnetError) { GetnetService.new }
+    assert_match "Falta la credencial de Getnet", error.message
+  ensure
+    Rails.env = original_env
+    saved&.each { |k, v| ENV[k] = v }
+  end
 end

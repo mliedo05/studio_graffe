@@ -38,10 +38,17 @@ class GetnetController < ApplicationController
     request_id = body.dig("requestId")&.to_s
     status     = body.dig("status", "status")
 
-    order = Order.find_by(payment_token: request_id)
+    order = Order.find_by(payment_token: request_id) if request_id.present?
 
+    # Nunca confiar en el cuerpo de la notificación: cualquiera puede enviar
+    # un POST a esta URL. Solo se confirma si Getnet, consultado directamente
+    # con nuestras credenciales, dice que la transacción está aprobada.
     if order && status == "APPROVED" && !order.paid?
-      confirm_order!(order)
+      if GetnetService.new.approved?(request_id)
+        confirm_order!(order)
+      else
+        Rails.logger.warn "[Getnet] Notificación APPROVED no confirmada por Getnet (requestId=#{request_id})"
+      end
     end
 
     head :ok

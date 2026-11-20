@@ -105,53 +105,78 @@
         <% end %>
       </div>
     </div>
-    <!-- Imagen con marco dorado offset -->
-    <div class="relative">
-      <div class="absolute -top-4 -right-4 w-full h-full border"
-           style="border-color:#C9A96E; border-width:1px;"></div>
-      <div class="relative overflow-hidden aspect-[4/5] bg-stone-200">
-        <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80"
-             alt="Equipo Studio Graffé"
-             class="w-full h-full object-cover">
+    <!-- Arco con insignia giratoria y foto superpuesta -->
+    <div class="gx-about" data-gx-parallax>
+      <div class="gx-about__arch">
+        <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=900&q=80"
+             alt="Equipo Studio Graffé" loading="lazy">
+      </div>
+      <svg class="gx-about__badge" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><path id="gx-circle" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
+        <text><textPath href="#gx-circle">STUDIO GRAFFÉ · BELLEZA · RITUAL ·</textPath></text>
+      </svg>
+      <div class="gx-about__polaroid" data-gx-speed="0.12">
+        <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80"
+             alt="Salón Studio Graffé" loading="lazy">
       </div>
     </div>
   </div>
 </section>
 
+<!-- Franja de servicios en movimiento -->
+<div class="gx-marquee" aria-hidden="true">
+  <div class="gx-marquee__track">
+    <% 2.times do %>
+      <% %w[Corte Color Balayage Faciales Peinados Tratamientos Manicure].each do |w| %>
+        <span><%= w %></span><i>✦</i>
+      <% end %>
+    <% end %>
+  </div>
+</div>
+
+<style>
+  .gx-about{position:relative;padding:0 0 3rem 2.5rem}
+  .gx-about__arch{aspect-ratio:4/5;border-radius:999px 999px 0 0;overflow:hidden;background:#B98A82}
+  .gx-about__arch img{width:100%;height:100%;object-fit:cover;transform:scale(1.08);transition:transform 1.6s cubic-bezier(.2,.8,.2,1)}
+  .gx-about:hover .gx-about__arch img{transform:scale(1.02)}
+  .gx-about__badge{position:absolute;top:2%;right:-4%;width:120px;height:120px;animation:gx-spin 18s linear infinite}
+  .gx-about__badge text{font-family:'Inter',sans-serif;font-size:9.5px;letter-spacing:.32em;fill:#8A7A68}
+  .gx-about__polaroid{position:absolute;left:0;bottom:0;width:38%;padding:8px;background:#fff;box-shadow:0 18px 40px rgba(40,28,18,.18);will-change:transform}
+  .gx-about__polaroid img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}
+  @keyframes gx-spin{to{transform:rotate(360deg)}}
+
+  .gx-marquee{background:#17120E;color:#F4EEE6;overflow:hidden;padding:1.4rem 0}
+  .gx-marquee__track{display:flex;width:max-content;align-items:center;gap:2.2rem;animation:gx-marquee 28s linear infinite}
+  .gx-marquee span{font-family:'Noto Serif',serif;font-style:italic;font-size:clamp(1.4rem,3vw,2rem)}
+  .gx-marquee i{font-style:normal;color:#C9A96E}
+  @keyframes gx-marquee{to{transform:translateX(-50%)}}
+  @media (max-width:640px){.gx-about{padding-left:1.25rem}.gx-about__badge{width:90px;height:90px;right:0}}
+  @media (prefers-reduced-motion:reduce){.gx-about__badge,.gx-marquee__track{animation:none}}
+</style>
+
 <!-- ═══════════════════════════════════════════════
      SERVICIOS DESTACADOS
 ════════════════════════════════════════════════ -->
-<section class="py-28 px-6" style="background:#F5F3F0;">
-  <div class="max-w-6xl mx-auto">
-    <div class="text-center mb-16">
-      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que ofrecemos</p>
-      <h2 style="font-family:'Noto Serif',serif; font-size:2.5rem; color:#1A1A1A;">Nuestros Servicios</h2>
-    </div>
+<section class="gx-services" style="background:#F5F3F0;">
+  <div class="gx-services__inner">
+    <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que ofrecemos</p>
+    <h2 class="gx-h2">Nuestros <em>servicios</em></h2>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <% @featured_services.each do |service| %>
-        <div class="service-card bg-white p-8 transition-all duration-300 cursor-default" style="border:1px solid #E8E5E2;">
-          <div class="w-10 h-10 mb-6 flex items-center justify-center" style="border:1px solid #C9A96E;">
-            <span class="material-symbols-outlined text-lg" style="color:#C9A96E;">content_cut</span>
-          </div>
-          <h3 class="font-medium mb-2" style="font-family:'Noto Serif',serif; font-size:1.1rem; color:#1A1A1A;">
-            <%= service.name %>
-          </h3>
-          <p class="text-xs text-stone-400 mb-4 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
-            <%= service.duration_minutes %> min
-          </p>
-          <p class="font-medium" style="color:#C9A96E; font-family:'Inter',sans-serif; font-size:0.95rem;">
-            desde <%= number_to_currency(service.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %>
-          </p>
-        </div>
+    <div class="gx-services__list">
+      <% @featured_services.each_with_index do |service, i| %>
+        <%= link_to new_appointment_path, class: "gx-row gx-reveal", style: "transition-delay:#{(i % 4) * 0.08}s" do %>
+          <span class="gx-row__num"><%= format("%02d", i + 1) %></span>
+          <span class="gx-row__title"><%= service.name %></span>
+          <span class="gx-row__meta">
+            <small><%= service.duration_minutes %> MIN</small>
+            <b>desde <%= number_to_currency(service.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %></b>
+          </span>
+          <span class="gx-row__arrow" aria-hidden="true">→</span>
+        <% end %>
       <% end %>
     </div>
 
-    <div class="text-center mt-12">
-      <%= link_to "Ver todos los servicios →", new_appointment_path,
-            class: "font-label-caps text-xs tracking-widest uppercase border-b pb-1 transition-all hover:tracking-[0.3em]",
-            style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
-    </div>
+    <%= link_to new_appointment_path, class: "gx-all" do %>Ver todos los servicios <span>→</span><% end %>
   </div>
 </section>
 
@@ -159,179 +184,249 @@
      CARRUSEL PRODUCTOS DESTACADOS
 ════════════════════════════════════════════════ -->
 <% if @featured_products.any? %>
-<section class="py-28 bg-[#FAFAF8]">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="flex items-end justify-between mb-12">
-      <div>
-        <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-3" style="color:#C9A96E;">Nuestra selección</p>
-        <h2 style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">Lo que usamos,<br>lo que vendemos.</h2>
-      </div>
-      <div class="hidden sm:flex items-center gap-6">
-        <div class="flex gap-2">
-          <button id="carousel-prev"
-                  class="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-200 hover:bg-[#C9A96E] hover:border-[#C9A96E] hover:text-white"
-                  style="border-color:#C9A96E; color:#C9A96E;"
-                  aria-label="Anterior">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
-          </button>
-          <button id="carousel-next"
-                  class="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-200 hover:bg-[#C9A96E] hover:border-[#C9A96E] hover:text-white"
-                  style="border-color:#C9A96E; color:#C9A96E;"
-                  aria-label="Siguiente">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
-          </button>
-        </div>
-        <%= link_to "Ver tienda completa →", shop_path,
-              class: "font-label-caps text-xs tracking-widest uppercase border-b pb-1",
-              style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
-      </div>
+<section class="gx-prod" data-gx-carousel>
+  <div class="gx-prod__head">
+    <div>
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-3" style="color:#C9A96E;">Nuestra selección</p>
+      <h2 class="gx-h2">Lo que usamos,<br><em>lo que vendemos.</em></h2>
     </div>
+    <div class="gx-prod__nav">
+      <button type="button" class="gx-prod__btn" data-gx-prev aria-label="Anterior">←</button>
+      <button type="button" class="gx-prod__btn" data-gx-next aria-label="Siguiente">→</button>
+    </div>
+  </div>
 
-    <!-- Ventana del carrusel: oculta lo que sobresale -->
-    <div style="overflow:hidden;">
-      <div id="product-carousel"
-           class="flex"
-           style="gap:24px; cursor:grab; user-select:none; will-change:transform;">
-        <% @featured_products.each do |product| %>
-          <%= link_to shop_product_path(product.product_category.slug, product.slug),
-                class: "product-card flex-none transition-opacity duration-300 hover:opacity-80",
-                style: "width: calc((100% - 72px) / 4);" do %>
-          <div class="aspect-square bg-stone-100 overflow-hidden mb-4 flex items-center justify-center rounded-sm">
-            <% if product.respond_to?(:images) && product.images.attached? && product.images.any? %>
-              <%= image_tag product.images.first, class: "w-full h-full object-cover" %>
-            <% elsif product.respond_to?(:image) && product.image.attached? %>
-              <%= image_tag product.image, class: "w-full h-full object-cover" %>
+  <div class="gx-prod__viewport">
+    <div class="gx-prod__track" data-gx-track>
+      <% @featured_products.each_with_index do |product, i| %>
+        <article class="gx-card" data-brand="<%= product.brand %>">
+          <div class="gx-card__media">
+            <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "gx-card__img", draggable: false do %>
+              <% if product.respond_to?(:images) && product.images.attached? && product.images.any? %>
+                <%= image_tag product.images.first, alt: product.name, loading: "lazy", draggable: false %>
+              <% elsif product.respond_to?(:image) && product.image.attached? %>
+                <%= image_tag product.image, alt: product.name, loading: "lazy", draggable: false %>
+              <% else %>
+                <span class="gx-card__brand-ph"><%= product.brand.presence || product.name %></span>
+              <% end %>
+            <% end %>
+            <span class="gx-card__num"><%= format("%02d", i + 1) %></span>
+            <% if product.in_stock? %>
+              <%= form_with url: cart_add_item_path, method: :post, data: { turbo_stream: true }, class: "gx-card__cart" do |f| %>
+                <%= f.hidden_field :product_id, value: product.id %>
+                <%= f.hidden_field :quantity, value: 1 %>
+                <%= f.submit "Añadir al carrito" %>
+              <% end %>
             <% else %>
-              <span class="material-symbols-outlined text-stone-300 text-5xl">inventory_2</span>
+              <span class="gx-card__badge">Sin stock</span>
             <% end %>
           </div>
-          <% unless product.in_stock? %>
-            <span class="text-[10px] tracking-widest uppercase text-stone-400 font-medium block mb-1"
-                  style="font-family:'Inter',sans-serif;">Sin stock</span>
-          <% end %>
-          <p class="font-medium text-stone-800 mb-1 leading-tight" style="font-family:'Inter',sans-serif; font-size:0.9rem;">
-            <%= product.name %>
-          </p>
-          <p class="text-xs text-stone-400 mb-2 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
-            <%= product.brand %>
-          </p>
-          <p class="font-medium" style="color:#1A1A1A; font-family:'Inter',sans-serif;">
-            <%= number_to_currency(product.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %>
-          </p>
-        <% end %>
+          <div class="gx-card__info">
+            <div>
+              <p class="gx-card__brand"><%= product.brand %></p>
+              <h3 class="gx-card__name"><%= link_to product.name, shop_product_path(product.product_category.slug, product.slug) %></h3>
+            </div>
+            <p class="gx-card__price"><%= number_to_currency(product.price_cents, unit: "$", separator: ",", delimiter: ".", precision: 0) %></p>
+          </div>
+        </article>
       <% end %>
-      </div><!-- /track -->
-    </div><!-- /overflow-hidden -->
-
-    <!-- Dots indicadores -->
-    <div id="carousel-dots" class="flex justify-center gap-2 mt-8"></div>
-
-    <!-- Link móvil -->
-    <div class="text-center mt-6 sm:hidden">
-      <%= link_to "Ver tienda completa →", shop_path,
-            class: "font-label-caps text-xs tracking-widest uppercase border-b pb-1",
-            style: "color:#C9A96E; border-color:#C9A96E; font-family:'Inter',sans-serif;" %>
     </div>
-  </div><!-- /max-w-6xl -->
+  </div>
+
+  <div class="gx-prod__foot">
+    <p class="gx-prod__count"><b data-gx-current>01</b> de <%= format("%02d", @featured_products.size) %> — <span data-gx-brand></span></p>
+    <div class="gx-prod__bars" data-gx-bars>
+      <% @featured_products.size.times do |i| %><button type="button" aria-label="Producto <%= i + 1 %>"></button><% end %>
+    </div>
+    <%= link_to shop_path, class: "gx-all" do %>Ver tienda completa <span>→</span><% end %>
+  </div>
 </section>
 
+<style>
+  .gx-prod{background:#FAFAF8;padding:7rem 0;overflow:hidden}
+  .gx-prod__head,.gx-prod__foot{max-width:72rem;margin:auto;padding:0 1.5rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
+  .gx-prod__head{margin-bottom:3rem}
+  .gx-prod__nav{display:flex;gap:.6rem}
+  .gx-prod__btn{width:44px;height:44px;border-radius:50%;border:1px solid #CFC3B4;background:transparent;color:#1A1A1A;font-size:16px;cursor:pointer;transition:background .3s,color .3s,border-color .3s}
+  .gx-prod__btn:hover{background:#17120E;color:#fff;border-color:#17120E}
+  .gx-prod__viewport{max-width:72rem;margin:auto;padding:0 1.5rem}
+  .gx-prod__track{display:flex;gap:1.5rem;cursor:grab;user-select:none;will-change:transform;transition:transform .8s cubic-bezier(.7,0,.2,1)}
+  .gx-prod__track.is-drag{transition:none;cursor:grabbing}
+  .gx-card{flex:none;width:clamp(240px,30vw,340px);opacity:.45;transform:scale(.94);transform-origin:bottom center;transition:opacity .8s,transform .8s cubic-bezier(.7,0,.2,1)}
+  .gx-card.is-active,.gx-card.is-near{opacity:1;transform:none}
+  .gx-card__media{position:relative;aspect-ratio:4/5;overflow:hidden;background:#EFE4DA}
+  .gx-card__img{display:block;width:100%;height:100%}
+  .gx-card__img img{width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+  .gx-card:hover .gx-card__img img{transform:scale(1.1)}
+  .gx-card__brand-ph{display:flex;align-items:center;justify-content:center;height:100%;padding:1rem;text-align:center;font-family:'Noto Serif',serif;font-style:italic;font-size:1.6rem;color:#8A7A68;background:linear-gradient(160deg,#F1E3D6,#E2CDBB)}
+  .gx-card__num{position:absolute;top:1rem;left:1.1rem;font-family:'Noto Serif',serif;font-style:italic;font-size:1.6rem;color:rgba(255,255,255,.75);mix-blend-mode:difference;pointer-events:none}
+  .gx-card__badge{position:absolute;top:1rem;right:1rem;background:#17120E;color:#fff;font-size:9px;letter-spacing:.25em;text-transform:uppercase;padding:.35rem .6rem}
+  .gx-card__cart{position:absolute;left:1rem;right:1rem;bottom:1rem;transform:translateY(140%);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .gx-card:hover .gx-card__cart,.gx-card:focus-within .gx-card__cart{transform:none}
+  .gx-card__cart input[type=submit]{width:100%;padding:.85rem;background:rgba(255,255,255,.92);border:0;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#1A1A1A;cursor:pointer;transition:background .3s,color .3s}
+  .gx-card__cart input[type=submit]:hover{background:#17120E;color:#fff}
+  .gx-card__info{display:flex;justify-content:space-between;gap:1rem;padding-top:1rem}
+  .gx-card__brand{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:#C9A96E}
+  .gx-card__name{font-family:'Noto Serif',serif;font-size:1.1rem;margin-top:.3rem;color:#1A1A1A}
+  .gx-card__price{font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;white-space:nowrap}
+  .gx-prod__foot{margin-top:2.5rem;align-items:center}
+  .gx-prod__count{font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#8A7A68}
+  .gx-prod__count b{font-family:'Noto Serif',serif;font-style:italic;font-weight:400;font-size:1.4rem;letter-spacing:0;color:#1A1A1A;margin-right:.3rem}
+  .gx-prod__bars{flex:1;display:flex;gap:.4rem;max-width:18rem}
+  .gx-prod__bars button{flex:1;height:2px;border:0;padding:6px 0;background:linear-gradient(#DDD2C4,#DDD2C4) center/100% 2px no-repeat;cursor:pointer}
+  .gx-prod__bars button.is-on{background-image:linear-gradient(#17120E,#17120E)}
+  .gx-prod .gx-all{margin-top:0}
+  @media (max-width:640px){
+    .gx-card{width:78vw}
+    .gx-card__cart{transform:none}
+    .gx-prod__foot{flex-wrap:wrap}
+    .gx-prod__bars{order:3;max-width:none;flex-basis:100%}
+  }
+</style>
+
 <script>
-(function() {
-  const track    = document.getElementById('product-carousel');
-  const prevBtn  = document.getElementById('carousel-prev');
-  const nextBtn  = document.getElementById('carousel-next');
-  const dotsWrap = document.getElementById('carousel-dots');
+  (() => {
+    const root = document.querySelector("[data-gx-carousel]");
+    if (!root) return;
+    const track = root.querySelector("[data-gx-track]");
+    const cards = [...track.children];
+    const bars  = [...root.querySelectorAll("[data-gx-bars] button")];
+    const curEl = root.querySelector("[data-gx-current]");
+    const brEl  = root.querySelector("[data-gx-brand]");
+    let i = 0, timer = null;
 
-  if (!track) return;
+    const step = () => cards[1] ? cards[1].offsetLeft - cards[0].offsetLeft : 0;
+    function go(n) {
+      i = (n + cards.length) % cards.length;
+      track.style.transform = `translateX(${-i * step()}px)`;
+      cards.forEach((c, k) => { c.classList.toggle("is-active", k === i); c.classList.toggle("is-near", k > i && k <= i + 2); });
+      bars.forEach((b, k) => b.classList.toggle("is-on", k === i));
+      curEl.textContent = String(i + 1).padStart(2, "0");
+      brEl.textContent  = cards[i].dataset.brand || "";
+    }
+    const auto  = () => { clearInterval(timer); timer = setInterval(() => go(i + 1), 4500); };
 
-  const VISIBLE   = 4;   // tarjetas visibles a la vez
-  const GAP       = 24;  // gap en px (gap:24px)
-  const total     = track.children.length;
-  const dotCount  = Math.max(total - VISIBLE + 1, 1);
-  let current     = 0;
-  let autoTimer   = null;
-  let isDragging  = false;
-  let dragStartX  = 0;
+    root.querySelector("[data-gx-prev]").addEventListener("click", () => { go(i - 1); auto(); });
+    root.querySelector("[data-gx-next]").addEventListener("click", () => { go(i + 1); auto(); });
+    bars.forEach((b, k) => b.addEventListener("click", () => { go(k); auto(); }));
+    root.addEventListener("mouseenter", () => clearInterval(timer));
+    root.addEventListener("mouseleave", auto);
 
-  // Calcula el ancho real de una tarjeta una vez el DOM está pintado
-  function cardStep() {
-    const c = track.children[0];
-    return c ? c.offsetWidth + GAP : 0;
-  }
+    // Arrastre con mouse y swipe táctil
+    let x0 = null, moved = 0;
+    const down = x => { x0 = x; moved = 0; track.classList.add("is-drag"); };
+    const move = x => { if (x0 === null) return; moved = x - x0; track.style.transform = `translateX(${-i * step() + moved}px)`; };
+    const up   = () => { if (x0 === null) return; track.classList.remove("is-drag"); x0 = null;
+                         go(moved < -60 ? i + 1 : moved > 60 ? i - 1 : i); auto(); };
+    track.addEventListener("pointerdown", e => { if (e.target.closest("form")) return; down(e.clientX); });
+    window.addEventListener("pointermove", e => move(e.clientX));
+    window.addEventListener("pointerup", up);
+    track.addEventListener("click", e => { if (Math.abs(moved) > 8) { e.preventDefault(); moved = 0; } }, true);
+    window.addEventListener("resize", () => go(i));
 
-  // Dots
-  const dots = [];
-  for (let i = 0; i < dotCount; i++) {
-    const d = document.createElement('button');
-    d.style.cssText = 'height:6px; border-radius:9999px; border:none; padding:0; background:#D4B896; transition: width 0.3s, background 0.3s; cursor:pointer;';
-    d.addEventListener('click', () => { resetAuto(); goTo(i); });
-    dotsWrap.appendChild(d);
-    dots.push(d);
-  }
+    go(0); auto();
+    document.addEventListener("turbo:before-render", () => clearInterval(timer), { once: true });
+  })();
 
-  function updateDots() {
-    dots.forEach((d, i) => {
-      d.style.width      = i === current ? '24px' : '6px';
-      d.style.background = i === current ? '#C9A96E' : '#D4B896';
+  // Parallax de la foto pequeña de "Sobre nosotras"
+  (() => {
+    const els = document.querySelectorAll("[data-gx-speed]");
+    if (!els.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const run = () => els.forEach(el => {
+      const r = el.parentElement.getBoundingClientRect();
+      el.style.transform = `translateY(${(r.top + r.height / 2 - innerHeight / 2) * -el.dataset.gxSpeed}px)`;
     });
-  }
-
-  function goTo(index) {
-    current = Math.max(0, Math.min(index, dotCount - 1));
-    const offset = current * cardStep();
-    track.style.transition = 'transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-    track.style.transform  = 'translateX(-' + offset + 'px)';
-    updateDots();
-  }
-
-  function next() { goTo(current >= dotCount - 1 ? 0 : current + 1); }
-  function prev() { goTo(current <= 0 ? dotCount - 1 : current - 1); }
-
-  if (nextBtn) nextBtn.addEventListener('click', () => { resetAuto(); next(); });
-  if (prevBtn) prevBtn.addEventListener('click', () => { resetAuto(); prev(); });
-
-  function startAuto() { autoTimer = setInterval(next, 3500); }
-  function resetAuto()  { clearInterval(autoTimer); startAuto(); }
-
-  // Pausa al hover
-  track.parentElement.addEventListener('mouseenter', () => clearInterval(autoTimer));
-  track.parentElement.addEventListener('mouseleave', startAuto);
-
-  // Arrastre mouse
-  track.addEventListener('mousedown', (e) => {
-    isDragging = true; dragStartX = e.pageX;
-    track.style.transition = 'none';
-    track.style.cursor = 'grabbing';
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    const diff = dragStartX - e.pageX;
-    track.style.transform = 'translateX(-' + (current * cardStep() + diff) + 'px)';
-  });
-  document.addEventListener('mouseup', (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    track.style.cursor = 'grab';
-    const diff = dragStartX - e.pageX;
-    if (diff > 60) next(); else if (diff < -60) prev(); else goTo(current);
-    resetAuto();
-  });
-
-  // Swipe táctil
-  let touchStartX = 0;
-  track.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
-  track.addEventListener('touchend', (e) => {
-    const diff = touchStartX - e.changedTouches[0].clientX;
-    if (diff > 50) next(); else if (diff < -50) prev();
-    resetAuto();
-  });
-
-  updateDots();
-  startAuto();
-})();
+    addEventListener("scroll", run, { passive: true }); run();
+  })();
 </script>
 <% end %>
+
+<!-- ═══════════════════════════════════════════════
+     NUESTRAS ESTILISTAS
+════════════════════════════════════════════════ -->
+<section class="gx-team">
+  <div class="gx-team__head">
+    <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">El equipo</p>
+    <h2 class="gx-h2">Manos que <em>transforman</em></h2>
+  </div>
+
+  <div class="gx-team__grid">
+    <% @stylists.each_with_index do |stylist, i| %>
+      <%= link_to new_appointment_path, class: "gx-member gx-reveal", style: "transition-delay:#{(i % 4) * 0.12}s" do %>
+        <div class="gx-arch">
+          <% if stylist.avatar.attached? %>
+            <%= image_tag url_for(stylist.avatar), class: "gx-arch__ph", alt: stylist.full_name, loading: "lazy" %>
+          <% elsif stylist.avatar_url.present? %>
+            <%= image_tag stylist.avatar_url, class: "gx-arch__ph", alt: stylist.full_name, loading: "lazy" %>
+          <% else %>
+            <div class="gx-arch__ph gx-arch__ph--initial"><%= stylist.first_name[0] %></div>
+          <% end %>
+        </div>
+        <h3 class="gx-member__name"><%= stylist.full_name %></h3>
+        <p class="gx-member__role">Estilista</p>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<style>
+  .gx-h2{font-family:'Noto Serif',serif;font-weight:400;font-size:clamp(2rem,4.5vw,3rem);line-height:1.15}
+  .gx-h2 em{font-style:italic;color:#C9A96E}
+  .gx-reveal{opacity:0;transform:translateY(60px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.2,.8,.2,1)}
+  .gx-reveal.is-in{opacity:1;transform:none}
+
+  /* Equipo */
+  .gx-team{background:#17120E;color:#F4EEE6;padding:7rem 1rem 8rem;overflow:hidden}
+  .gx-team__head{text-align:center;margin-bottom:4rem}
+  .gx-team__grid{max-width:72rem;margin:auto;display:grid;gap:2.5rem 2rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),250px));justify-content:center}
+  .gx-member{display:block;text-align:center;color:inherit;text-decoration:none}
+  .gx-arch{position:relative;aspect-ratio:3/4;border-radius:999px 999px 6px 6px;overflow:hidden;background:#2A221B}
+  .gx-arch__ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);transform:scale(1.12);transition:filter .9s ease,transform 1.4s cubic-bezier(.2,.8,.2,1)}
+  .gx-arch__ph--initial{display:flex;align-items:center;justify-content:center;font-family:'Noto Serif',serif;font-size:4rem;background:linear-gradient(160deg,#C9A96E,#5A3E2C)}
+  .gx-member.is-in .gx-arch__ph{transform:scale(1)}
+  .gx-member:hover .gx-arch__ph,.gx-member:focus-visible .gx-arch__ph{filter:grayscale(0);transform:scale(1.05)}
+  .gx-arch::after{content:"";position:absolute;inset:10px;border:1px solid transparent;border-radius:inherit;transition:border-color .6s;pointer-events:none}
+  .gx-member:hover .gx-arch::after{border-color:rgba(201,169,110,.75)}
+  .gx-member__name{font-family:'Noto Serif',serif;font-size:1.5rem;margin-top:1.4rem}
+  .gx-member__role{font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:#C9A96E;margin-top:.4rem}
+  @media (max-width:640px){
+    .gx-team__grid{grid-template-columns:minmax(0,320px)}
+    .gx-member.is-in .gx-arch__ph{filter:grayscale(0)} /* sin cursor: a color al aparecer */
+  }
+
+  /* Servicios */
+  .gx-services{padding:7rem 1rem}
+  .gx-services__inner{max-width:56rem;margin:auto}
+  .gx-services__list{margin-top:2.5rem;border-bottom:1px solid #DDD2C4}
+  .gx-row{position:relative;display:flex;align-items:center;gap:1.4rem;padding:1.75rem 1.1rem;border-top:1px solid #DDD2C4;color:#1A1A1A;text-decoration:none;overflow:hidden;transform:translateX(-40px)}
+  .gx-row::before{content:"";position:absolute;inset:0;background:#FFFAF3;transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.7,0,.2,1)}
+  .gx-row::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:#C9A96E;transform:scaleY(0);transition:transform .45s .1s}
+  .gx-row:hover::before,.gx-row:focus-visible::before{transform:scaleX(1)}
+  .gx-row:hover::after,.gx-row:focus-visible::after{transform:scaleY(1)}
+  .gx-row>*{position:relative}
+  .gx-row__num{font-size:11px;color:#8A7A68;width:1.5rem}
+  .gx-row__title{flex:1;font-family:'Noto Serif',serif;font-size:clamp(1.3rem,3vw,1.9rem);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .gx-row:hover .gx-row__title,.gx-row:focus-visible .gx-row__title{font-style:italic;transform:translateX(14px)}
+  .gx-row__meta{text-align:right;font-family:'Inter',sans-serif}
+  .gx-row__meta small{display:block;font-size:10px;letter-spacing:.3em;color:#8A7A68}
+  .gx-row__meta b{font-weight:500;font-size:.9rem}
+  .gx-row__arrow{width:0;opacity:0;color:#C9A96E;transition:width .4s,opacity .4s}
+  .gx-row:hover .gx-row__arrow{width:1.4rem;opacity:1}
+  .gx-all{display:inline-block;margin-top:2rem;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#1A1A1A;border-bottom:1px solid currentColor;padding-bottom:4px}
+  .gx-all span{display:inline-block;transition:transform .3s}.gx-all:hover span{transform:translateX(6px)}
+  @media (max-width:640px){.gx-row{padding:1.4rem .5rem;gap:.8rem}}
+  @media (prefers-reduced-motion:reduce){.gx-reveal,.gx-row{opacity:1!important;transform:none!important;transition:none!important}}
+</style>
+<script>
+  (() => {
+    const els = document.querySelectorAll(".gx-reveal:not(.is-in)");
+    if (!("IntersectionObserver" in window)) { els.forEach(e => e.classList.add("is-in")); return; }
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+    }), { threshold: 0.15 });
+    els.forEach(e => io.observe(e));
+  })();
+</script>
 
 <!-- ═══════════════════════════════════════════════
      INSTAGRAM FEED
@@ -412,48 +507,6 @@
         <%= ig_svg %>
         Ver más en Instagram
       </a>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════
-     NUESTRAS ESTILISTAS
-════════════════════════════════════════════════ -->
-<section class="py-28 px-6 bg-[#FAFAF8]">
-  <div class="max-w-4xl mx-auto text-center">
-    <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">El equipo</p>
-    <h2 class="mb-16" style="font-family:'Noto Serif',serif; font-size:2.2rem; color:#1A1A1A;">Nuestras Estilistas</h2>
-
-    <div class="flex flex-wrap justify-center gap-12">
-      <% @stylists.each do |stylist| %>
-        <%= link_to new_appointment_path, class: "group flex flex-col items-center gap-4 cursor-pointer" do %>
-          <div class="w-36 h-36 rounded-full overflow-hidden border-2 transition-all duration-300 group-hover:border-amber-400"
-               style="border-color:#E8E5E2;">
-            <% if stylist.avatar.attached? %>
-              <%= image_tag url_for(stylist.avatar),
-                    class: "w-full h-full object-cover",
-                    alt: stylist.full_name %>
-            <% elsif stylist.avatar_url.present? %>
-              <%= image_tag stylist.avatar_url,
-                    class: "w-full h-full object-cover",
-                    alt: stylist.full_name %>
-            <% else %>
-              <div class="w-full h-full flex items-center justify-center text-3xl font-light text-white"
-                   style="background:linear-gradient(135deg, #C9A96E, #8B7355);">
-                <%= stylist.first_name[0] %>
-              </div>
-            <% end %>
-          </div>
-          <div>
-            <p class="font-medium text-stone-800 mb-1" style="font-family:'Noto Serif',serif; font-size:1.05rem;">
-              <%= stylist.full_name %>
-            </p>
-            <p class="text-xs text-stone-400 uppercase tracking-wider" style="font-family:'Inter',sans-serif;">
-              Estilista
-            </p>
-          </div>
-        <% end %>
-      <% end %>
     </div>
   </div>
 </section>

@@ -10,18 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_21_144433) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "active_admin_comments", force: :cascade do |t|
-    t.bigint "author_id"
-    t.string "author_type"
-    t.text "body"
-    t.datetime "created_at", null: false
     t.string "namespace"
-    t.bigint "resource_id"
+    t.text "body"
     t.string "resource_type"
+    t.bigint "resource_id"
+    t.string "author_type"
+    t.bigint "author_id"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["author_type", "author_id"], name: "index_active_admin_comments_on_author"
     t.index ["namespace"], name: "index_active_admin_comments_on_namespace"
@@ -29,24 +29,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.bigint "record_id", null: false
-    t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
-    t.bigint "byte_size", null: false
-    t.string "checksum"
-    t.string "content_type"
-    t.datetime "created_at", null: false
-    t.string "filename", null: false
     t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
     t.text "metadata"
     t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
@@ -57,35 +57,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.string "apartment"
-    t.string "city", null: false
-    t.string "comuna", null: false
-    t.datetime "created_at", null: false
-    t.boolean "default", default: false, null: false
+    t.bigint "user_id", null: false
     t.string "label", default: "Mi dirección", null: false
-    t.string "phone", null: false
     t.string "recipient_name", null: false
+    t.string "phone", null: false
     t.string "region", null: false
+    t.string "comuna", null: false
+    t.string "city", null: false
     t.string "street", null: false
     t.string "street_number", null: false
+    t.string "apartment"
+    t.boolean "default", default: false, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["user_id", "default"], name: "index_addresses_on_user_id_and_default"
     t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
   create_table "appointments", force: :cascade do |t|
     t.bigint "client_id", null: false
-    t.boolean "commission_paid", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "ends_at", null: false
-    t.text "notes"
-    t.string "number", null: false
-    t.integer "price_cents", default: 0, null: false
+    t.bigint "stylist_id", null: false
     t.bigint "service_id", null: false
     t.datetime "starts_at", null: false
+    t.datetime "ends_at", null: false
     t.string "status", default: "pending", null: false
-    t.bigint "stylist_id", null: false
+    t.text "notes"
+    t.integer "price_cents", default: 0, null: false
+    t.string "number", null: false
+    t.boolean "commission_paid", default: false, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["client_id"], name: "index_appointments_on_client_id"
     t.index ["number"], name: "index_appointments_on_number", unique: true
@@ -97,20 +97,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
 
   create_table "attendance_items", force: :cascade do |t|
     t.bigint "attendance_id", null: false
-    t.integer "commission_cents", default: 0, null: false
-    t.integer "commission_percent", null: false
-    t.bigint "consumed_product_id"
-    t.datetime "created_at", null: false
-    t.string "description", null: false
-    t.decimal "grams_used", precision: 8, scale: 2
-    t.string "item_type", null: false
-    t.integer "price_cents", null: false
-    t.integer "product_cost_cents", default: 0, null: false
-    t.bigint "product_id"
-    t.bigint "service_id"
-    t.boolean "stock_deducted", default: false, null: false
     t.bigint "stylist_id", null: false
+    t.string "item_type", null: false
+    t.bigint "service_id"
+    t.bigint "product_id"
+    t.string "description", null: false
+    t.integer "price_cents", null: false
+    t.integer "commission_percent", null: false
+    t.integer "commission_cents", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "consumed_product_id"
+    t.decimal "grams_used", precision: 8, scale: 2
+    t.integer "product_cost_cents", default: 0, null: false
+    t.boolean "stock_deducted", default: false, null: false
     t.index ["attendance_id"], name: "index_attendance_items_on_attendance_id"
     t.index ["consumed_product_id"], name: "index_attendance_items_on_consumed_product_id"
     t.index ["item_type"], name: "index_attendance_items_on_item_type"
@@ -120,26 +120,43 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "attendance_payments", force: :cascade do |t|
-    t.integer "amount_cents", null: false
     t.bigint "attendance_id", null: false
-    t.datetime "created_at", null: false
-    t.string "note"
     t.string "payment_method", null: false
+    t.integer "amount_cents", null: false
+    t.string "note"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["attendance_id"], name: "index_attendance_payments_on_attendance_id"
   end
 
+  create_table "attendance_technical_sheets", force: :cascade do |t|
+    t.bigint "attendance_id", null: false
+    t.string "technique"
+    t.string "tint_brand"
+    t.text "tint_formula"
+    t.boolean "decolorization_applied"
+    t.string "decolorization_height"
+    t.integer "decolorization_level_start"
+    t.integer "decolorization_level_achieved"
+    t.string "hair_elasticity"
+    t.string "hair_porosity"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attendance_id"], name: "index_attendance_technical_sheets_on_attendance_id"
+  end
+
   create_table "attendances", force: :cascade do |t|
-    t.date "attended_on", null: false
+    t.string "number", null: false
     t.bigint "client_id"
     t.string "client_name"
-    t.datetime "created_at", null: false
-    t.text "notes"
-    t.string "number", null: false
-    t.integer "paid_cents", default: 0, null: false
     t.bigint "registered_by_id", null: false
-    t.string "status", default: "open", null: false
+    t.date "attended_on", null: false
+    t.text "notes"
     t.integer "total_cents", default: 0, null: false
+    t.integer "paid_cents", default: 0, null: false
+    t.string "status", default: "open", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["attended_on"], name: "index_attendances_on_attended_on"
     t.index ["client_id"], name: "index_attendances_on_client_id"
@@ -149,13 +166,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "commissions", force: :cascade do |t|
-    t.integer "amount_cents", default: 0, null: false
+    t.bigint "stylist_id", null: false
     t.bigint "appointment_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "paid_at"
+    t.integer "amount_cents", default: 0, null: false
     t.integer "percentage", null: false
     t.string "status", default: "pending", null: false
-    t.bigint "stylist_id", null: false
+    t.datetime "paid_at"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["appointment_id"], name: "index_commissions_on_appointment_id"
     t.index ["status"], name: "index_commissions_on_status"
@@ -163,61 +180,61 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "inventory_entries", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "invoice_number", null: false
-    t.text "notes"
     t.bigint "product_id", null: false
     t.integer "quantity_received", null: false
     t.integer "quantity_remaining", null: false
-    t.datetime "received_at", null: false
-    t.string "supplier", null: false
     t.integer "unit_cost_cents", null: false
+    t.string "supplier", null: false
+    t.string "invoice_number", null: false
+    t.datetime "received_at", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["product_id", "received_at"], name: "index_inventory_entries_on_product_id_and_received_at"
     t.index ["product_id"], name: "index_inventory_entries_on_product_id"
   end
 
   create_table "order_items", force: :cascade do |t|
-    t.datetime "created_at", null: false
     t.bigint "order_id", null: false
     t.bigint "product_id", null: false
     t.integer "quantity", default: 1, null: false
-    t.integer "total_cost_cents"
-    t.integer "total_price_cents", default: 0, null: false
-    t.integer "unit_cost_cents"
     t.integer "unit_price_cents", default: 0, null: false
+    t.integer "total_price_cents", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "unit_cost_cents"
+    t.integer "total_cost_cents"
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["product_id"], name: "index_order_items_on_product_id"
   end
 
   create_table "orders", force: :cascade do |t|
-    t.string "billing_document_number"
-    t.string "billing_document_type"
-    t.string "billing_email"
-    t.string "billing_first_name"
-    t.string "billing_last_name"
-    t.string "billing_phone"
-    t.datetime "created_at", null: false
+    t.bigint "user_id", null: false
     t.string "number", null: false
-    t.string "payment_method"
-    t.string "payment_status", default: "pending", null: false
-    t.string "payment_token"
-    t.string "shipping_apartment"
-    t.string "shipping_city"
-    t.string "shipping_comuna"
-    t.string "shipping_phone"
-    t.string "shipping_recipient_name"
-    t.string "shipping_region"
-    t.string "shipping_street"
-    t.string "shipping_street_number"
-    t.string "shipping_type", default: "pickup"
     t.string "status", default: "cart", null: false
+    t.string "payment_status", default: "pending", null: false
+    t.string "payment_method"
+    t.string "payment_token"
+    t.string "transaction_id"
     t.integer "subtotal_cents", default: 0, null: false
     t.integer "total_cents", default: 0, null: false
-    t.string "transaction_id"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.string "billing_first_name"
+    t.string "billing_last_name"
+    t.string "billing_document_type"
+    t.string "billing_document_number"
+    t.string "billing_email"
+    t.string "billing_phone"
+    t.string "shipping_type", default: "pickup"
+    t.string "shipping_recipient_name"
+    t.string "shipping_phone"
+    t.string "shipping_region"
+    t.string "shipping_comuna"
+    t.string "shipping_city"
+    t.string "shipping_street"
+    t.string "shipping_street_number"
+    t.string "shipping_apartment"
     t.index ["number"], name: "index_orders_on_number", unique: true
     t.index ["payment_status"], name: "index_orders_on_payment_status"
     t.index ["shipping_type"], name: "index_orders_on_shipping_type"
@@ -226,33 +243,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "product_categories", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.text "description"
     t.string "name", null: false
-    t.integer "position", default: 0, null: false
     t.string "slug", null: false
+    t.text "description"
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_product_categories_on_slug", unique: true
   end
 
   create_table "products", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.string "brand", null: false
-    t.integer "cost_per_gram_cents", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.integer "default_commission_percent", default: 10, null: false
-    t.text "description"
-    t.boolean "featured", default: false, null: false
-    t.string "name", null: false
-    t.integer "position", default: 0, null: false
-    t.integer "price_cents", default: 0, null: false
     t.bigint "product_category_id", null: false
-    t.string "sku"
+    t.string "name", null: false
+    t.string "brand", null: false
     t.string "slug", null: false
+    t.text "description"
+    t.string "sku"
+    t.integer "price_cents", default: 0, null: false
     t.integer "stock_quantity", default: 0, null: false
-    t.boolean "track_in_grams", default: false, null: false
+    t.boolean "featured", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "cost_per_gram_cents", default: 0, null: false
+    t.boolean "track_in_grams", default: false, null: false
+    t.integer "default_commission_percent", default: 10, null: false
     t.index ["active"], name: "index_products_on_active"
     t.index ["featured"], name: "index_products_on_featured"
     t.index ["product_category_id"], name: "index_products_on_product_category_id"
@@ -261,74 +278,78 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   end
 
   create_table "services", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.string "category", null: false
-    t.datetime "created_at", null: false
-    t.integer "default_commission_percent", default: 40, null: false
-    t.text "description"
-    t.integer "duration_minutes", default: 60, null: false
     t.string "name", null: false
-    t.integer "position", default: 0, null: false
+    t.string "category", null: false
+    t.text "description"
     t.integer "price_cents", default: 0, null: false
+    t.integer "duration_minutes", default: 60, null: false
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "default_commission_percent", default: 40, null: false
     t.index ["active"], name: "index_services_on_active"
     t.index ["category"], name: "index_services_on_category"
   end
 
   create_table "stylist_blocked_times", force: :cascade do |t|
-    t.datetime "created_at", null: false
+    t.bigint "stylist_id", null: false
+    t.datetime "starts_at", null: false
     t.datetime "ends_at", null: false
     t.string "reason"
-    t.datetime "starts_at", null: false
-    t.bigint "stylist_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["stylist_id"], name: "index_stylist_blocked_times_on_stylist_id"
   end
 
   create_table "stylist_profiles", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.text "bio"
-    t.integer "commission_percentage", default: 35, null: false
-    t.datetime "created_at", null: false
-    t.string "instagram_handle"
-    t.string "specialties", default: [], array: true
     t.bigint "stylist_id", null: false
+    t.text "bio"
+    t.string "specialties", default: [], array: true
+    t.integer "commission_percentage", default: 35, null: false
+    t.boolean "active", default: true, null: false
+    t.string "instagram_handle"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["stylist_id"], name: "index_stylist_profiles_on_stylist_id"
   end
 
   create_table "stylist_schedules", force: :cascade do |t|
+    t.bigint "stylist_id", null: false
+    t.integer "day_of_week", null: false
+    t.time "start_time", null: false
+    t.time "end_time", null: false
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
-    t.integer "day_of_week", null: false
-    t.time "end_time", null: false
-    t.time "start_time", null: false
-    t.bigint "stylist_id", null: false
     t.datetime "updated_at", null: false
     t.index ["stylist_id", "day_of_week"], name: "index_stylist_schedules_on_stylist_id_and_day_of_week", unique: true
     t.index ["stylist_id"], name: "index_stylist_schedules_on_stylist_id"
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "avatar_url"
-    t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
     t.string "first_name", null: false
     t.string "last_name", null: false
     t.string "phone"
-    t.string "provider"
-    t.datetime "remember_created_at"
-    t.datetime "reset_password_sent_at"
-    t.string "reset_password_token"
     t.string "role", default: "client", null: false
-    t.string "uid"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "provider"
+    t.string "uid"
+    t.string "avatar_url"
     t.boolean "walk_in", default: false, null: false
+    t.integer "failed_attempts", default: 0, null: false
+    t.string "unlock_token"
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["role"], name: "index_users_on_role"
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -343,6 +364,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_220317) do
   add_foreign_key "attendance_items", "services"
   add_foreign_key "attendance_items", "users", column: "stylist_id"
   add_foreign_key "attendance_payments", "attendances"
+  add_foreign_key "attendance_technical_sheets", "attendances"
   add_foreign_key "attendances", "users", column: "client_id"
   add_foreign_key "attendances", "users", column: "registered_by_id"
   add_foreign_key "commissions", "appointments"

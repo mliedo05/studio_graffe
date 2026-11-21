@@ -21,8 +21,9 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Fotos de productos y avatares en Cloudflare R2 (ver config/storage.yml).
+  # El disco del hosting se borra en cada despliegue, por eso no se usa :local.
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "cloudflare").to_sym
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -63,7 +64,9 @@ Rails.application.configure do
   config.action_mailer.default_url_options  = { host: ENV.fetch("APP_HOST", "studiograffe.cl") }
   config.action_mailer.delivery_method      = :smtp
   config.action_mailer.perform_deliveries   = true
-  config.action_mailer.raise_delivery_errors = false
+  # Si Resend falla, el job de envío falla, queda en el log y se reintenta
+  # (ver config/initializers/mail_delivery.rb). Antes el error se perdía.
+  config.action_mailer.raise_delivery_errors = true
 
   # ── Opción A: Resend (recomendado — gratis hasta 3.000 emails/mes)
   #    1. Crea cuenta en https://resend.com

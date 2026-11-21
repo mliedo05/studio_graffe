@@ -16,7 +16,7 @@ class InstagramServiceTest < ActiveSupport::TestCase
       @call_count  = 0
     end
 
-    def fetch_from_api(limit:)
+    def fetch_from_api(limit:, raise_errors: false)
       @call_count += 1
       raise @stub_error if @stub_error
       @stub_result
@@ -86,5 +86,34 @@ class InstagramServiceTest < ActiveSupport::TestCase
     ensure
       Rails.cache = original_cache
     end
+  end
+  def with_memory_cache
+    original = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+    yield Rails.cache
+  ensure
+    Rails.cache = original
+  end
+
+  test "si la API falla, muestra la última copia buena guardada" do
+    with_memory_cache do |cache|
+      StubService.new(result: SAMPLE_POSTS).fetch_posts
+      cache.delete(InstagramService::CACHE_KEY) # vence la copia fresca
+
+      assert_equal SAMPLE_POSTS, StubService.new(error: SocketError.new("caída")).fetch_posts
+      assert_equal SAMPLE_POSTS, StubService.new(result: []).fetch_posts
+    end
+  end
+
+  test "refresh! guarda la copia fresca y el respaldo" do
+    with_memory_cache do |cache|
+      StubService.new(result: SAMPLE_POSTS).refresh!
+      assert_equal SAMPLE_POSTS, cache.read(InstagramService::CACHE_KEY)
+      assert_equal SAMPLE_POSTS, cache.read(InstagramService::BACKUP_KEY)
+    end
+  end
+
+  test "refresh! lanza FetchError si no hay publicaciones" do
+    assert_raises(InstagramService::FetchError) { StubService.new(result: []).refresh! }
   end
 end

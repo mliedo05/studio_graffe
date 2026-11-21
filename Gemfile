@@ -90,3 +90,7 @@ group :test do
   # Stub HTTP requests in tests
   gem "webmock"
 end
+
+# Producción: almacenamiento en Cloudflare R2 (API S3) y límite de intentos
+gem "aws-sdk-s3", require: false
+gem "rack-attack"

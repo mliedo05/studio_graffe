@@ -85,11 +85,18 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
+  # En Render (u otro hosting) basta con definir DATABASE_URL.
+  # Se toman de ahí el servidor, usuario y clave; las bases de cache, cola y
+  # cable se crean en ese mismo servidor con otro nombre (bin/rails db:prepare
+  # las crea). El nombre de la principal sale de la URL.
+  <% db_url = URI.parse(ENV.fetch("DATABASE_URL", "postgres://localhost/studio_graffe_production")) %>
   primary: &primary_production
     <<: *default
-    database: studio_graffe_production
-    username: studio_graffe
-    password: <%= ENV["STUDIO_GRAFFE_DATABASE_PASSWORD"] %>
+    host: <%= db_url.host %>
+    port: <%= db_url.port || 5432 %>
+    username: <%= URI.decode_www_form_component(db_url.user.to_s) %>
+    password: <%= URI.decode_www_form_component(db_url.password.to_s) %>
+    database: <%= db_url.path.delete_prefix("/").presence || "studio_graffe_production" %>
   cache:
     <<: *primary_production
     database: studio_graffe_production_cache

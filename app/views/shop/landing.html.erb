@@ -159,9 +159,15 @@
 ════════════════════════════════════════════════ -->
 <section class="gx-services" style="background:#F5F3F0;">
   <div class="gx-services__inner">
-    <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que ofrecemos</p>
-    <h2 class="gx-h2">Nuestros <em>servicios</em></h2>
-
+    <div class="gx-services__aside gx-reveal">
+      <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-4" style="color:#C9A96E;">Lo que ofrecemos</p>
+      <h2 class="gx-h2">Nuestros <em>servicios</em></h2>
+      <p class="gx-services__lead">Cada visita empieza con una conversación. Elige tu servicio y reserva con la estilista que prefieras.</p>
+      <div class="gx-services__photo">
+        <img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=700&q=80" alt="Interior de Studio Graffé" loading="lazy">
+      </div>
+    </div>
+    <div class="gx-services__main">
     <div class="gx-services__list">
       <% @featured_services.each_with_index do |service, i| %>
         <%= link_to new_appointment_path, class: "gx-row gx-reveal", style: "transition-delay:#{(i % 4) * 0.08}s" do %>
@@ -177,6 +183,7 @@
     </div>
 
     <%= link_to new_appointment_path, class: "gx-all" do %>Ver todos los servicios <span>→</span><% end %>
+    </div>
   </div>
 </section>
 
@@ -190,16 +197,13 @@
       <p class="font-label-caps text-[11px] tracking-[0.25em] uppercase mb-3" style="color:#C9A96E;">Nuestra selección</p>
       <h2 class="gx-h2">Lo que usamos,<br><em>lo que vendemos.</em></h2>
     </div>
-    <div class="gx-prod__nav">
-      <button type="button" class="gx-prod__btn" data-gx-prev aria-label="Anterior">←</button>
-      <button type="button" class="gx-prod__btn" data-gx-next aria-label="Siguiente">→</button>
-    </div>
   </div>
 
-  <div class="gx-prod__viewport">
+  <div class="gx-prod__viewport" data-gx-viewport>
     <div class="gx-prod__track" data-gx-track>
-      <% @featured_products.each_with_index do |product, i| %>
-        <article class="gx-card" data-brand="<%= product.brand %>">
+      <% (@featured_products.to_a * 2).each_with_index do |product, j| %>
+        <% i = j % @featured_products.size; copy = j >= @featured_products.size %>
+        <article class="gx-card" <%= 'aria-hidden=true' if copy %> <%= 'inert' if copy %>>
           <div class="gx-card__media">
             <%= link_to shop_product_path(product.product_category.slug, product.slug), class: "gx-card__img", draggable: false do %>
               <% if product.respond_to?(:images) && product.images.attached? && product.images.any? %>
@@ -234,26 +238,20 @@
   </div>
 
   <div class="gx-prod__foot">
-    <p class="gx-prod__count"><b data-gx-current>01</b> de <%= format("%02d", @featured_products.size) %> — <span data-gx-brand></span></p>
-    <div class="gx-prod__bars" data-gx-bars>
-      <% @featured_products.size.times do |i| %><button type="button" aria-label="Producto <%= i + 1 %>"></button><% end %>
-    </div>
+    <p class="gx-prod__hint">Mouse a un lado para girar · al centro para detener</p>
+    <div class="gx-prod__progress"><span data-gx-progress></span></div>
     <%= link_to shop_path, class: "gx-all" do %>Ver tienda completa <span>→</span><% end %>
   </div>
 </section>
 
 <style>
-  .gx-prod{background:#FAFAF8;padding:7rem 0;overflow:hidden}
+  .gx-prod{background:#FAFAF8;padding:5.5rem 0;overflow:hidden}
   .gx-prod__head,.gx-prod__foot{max-width:72rem;margin:auto;padding:0 1.5rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
-  .gx-prod__head{margin-bottom:3rem}
-  .gx-prod__nav{display:flex;gap:.6rem}
-  .gx-prod__btn{width:44px;height:44px;border-radius:50%;border:1px solid #CFC3B4;background:transparent;color:#1A1A1A;font-size:16px;cursor:pointer;transition:background .3s,color .3s,border-color .3s}
-  .gx-prod__btn:hover{background:#17120E;color:#fff;border-color:#17120E}
-  .gx-prod__viewport{max-width:72rem;margin:auto;padding:0 1.5rem}
-  .gx-prod__track{display:flex;gap:1.5rem;cursor:grab;user-select:none;will-change:transform;transition:transform .8s cubic-bezier(.7,0,.2,1)}
-  .gx-prod__track.is-drag{transition:none;cursor:grabbing}
-  .gx-card{flex:none;width:clamp(240px,30vw,340px);opacity:.45;transform:scale(.94);transform-origin:bottom center;transition:opacity .8s,transform .8s cubic-bezier(.7,0,.2,1)}
-  .gx-card.is-active,.gx-card.is-near{opacity:1;transform:none}
+  .gx-prod__head{margin-bottom:2.5rem}
+.gx-prod__viewport{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);touch-action:pan-y}
+.gx-prod__track{display:flex;gap:1.5rem;width:max-content;padding:0 1.5rem;user-select:none;will-change:transform}
+.gx-card{flex:none;width:clamp(220px,24vw,300px);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.gx-card:hover{transform:translateY(-8px)}
   .gx-card__media{position:relative;aspect-ratio:4/5;overflow:hidden;background:#EFE4DA}
   .gx-card__img{display:block;width:100%;height:100%}
   .gx-card__img img{width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
@@ -270,63 +268,84 @@
   .gx-card__name{font-family:'Noto Serif',serif;font-size:1.1rem;margin-top:.3rem;color:#1A1A1A}
   .gx-card__price{font-family:'Inter',sans-serif;font-weight:500;font-size:.9rem;white-space:nowrap}
   .gx-prod__foot{margin-top:2.5rem;align-items:center}
-  .gx-prod__count{font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#8A7A68}
-  .gx-prod__count b{font-family:'Noto Serif',serif;font-style:italic;font-weight:400;font-size:1.4rem;letter-spacing:0;color:#1A1A1A;margin-right:.3rem}
-  .gx-prod__bars{flex:1;display:flex;gap:.4rem;max-width:18rem}
-  .gx-prod__bars button{flex:1;height:2px;border:0;padding:6px 0;background:linear-gradient(#DDD2C4,#DDD2C4) center/100% 2px no-repeat;cursor:pointer}
-  .gx-prod__bars button.is-on{background-image:linear-gradient(#17120E,#17120E)}
+.gx-prod__hint{font-family:'Inter',sans-serif;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#8A7A68}
+.gx-prod__progress{flex:1;max-width:18rem;height:2px;background:#DDD2C4;overflow:hidden}
+.gx-prod__progress span{display:block;height:100%;width:100%;background:#17120E;transform-origin:left;transform:scaleX(0)}
   .gx-prod .gx-all{margin-top:0}
   @media (max-width:640px){
     .gx-card{width:78vw}
     .gx-card__cart{transform:none}
     .gx-prod__foot{flex-wrap:wrap}
-    .gx-prod__bars{order:3;max-width:none;flex-basis:100%}
+    .gx-prod__hint{display:none}
+    .gx-prod__progress{order:3;max-width:none;flex-basis:100%}
   }
 </style>
 
 <script>
-  (() => {
-    const root = document.querySelector("[data-gx-carousel]");
-    if (!root) return;
-    const track = root.querySelector("[data-gx-track]");
-    const cards = [...track.children];
-    const bars  = [...root.querySelectorAll("[data-gx-bars] button")];
-    const curEl = root.querySelector("[data-gx-current]");
-    const brEl  = root.querySelector("[data-gx-brand]");
-    let i = 0, timer = null;
+// Carrusel infinito: gira solo, se detiene sobre un producto y la
+// dirección/velocidad sigue al mouse (derecha → avanza, izquierda → retrocede).
+(() => {
+  const root = document.querySelector("[data-gx-carousel]");
+  if (!root) return;
+  const vp    = root.querySelector("[data-gx-viewport]");
+  const track = root.querySelector("[data-gx-track]");
+  const bar   = root.querySelector("[data-gx-progress]");
+  const BASE = 40, MAX = 420;          // px/s
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let half = 0, x = 0, v = reduce ? 0 : BASE, target = v, last = 0, raf = 0;
+  let onCard = false, drag = null, moved = 0, visible = true;
 
-    const step = () => cards[1] ? cards[1].offsetLeft - cards[0].offsetLeft : 0;
-    function go(n) {
-      i = (n + cards.length) % cards.length;
-      track.style.transform = `translateX(${-i * step()}px)`;
-      cards.forEach((c, k) => { c.classList.toggle("is-active", k === i); c.classList.toggle("is-near", k > i && k <= i + 2); });
-      bars.forEach((b, k) => b.classList.toggle("is-on", k === i));
-      curEl.textContent = String(i + 1).padStart(2, "0");
-      brEl.textContent  = cards[i].dataset.brand || "";
-    }
-    const auto  = () => { clearInterval(timer); timer = setInterval(() => go(i + 1), 4500); };
+  const measure = () => { half = track.scrollWidth / 2; };
+  const wrap = () => { if (half) { x = ((x % half) + half) % half; } };
 
-    root.querySelector("[data-gx-prev]").addEventListener("click", () => { go(i - 1); auto(); });
-    root.querySelector("[data-gx-next]").addEventListener("click", () => { go(i + 1); auto(); });
-    bars.forEach((b, k) => b.addEventListener("click", () => { go(k); auto(); }));
-    root.addEventListener("mouseenter", () => clearInterval(timer));
-    root.addEventListener("mouseleave", auto);
+  function frame(t) {
+    const dt = Math.min((t - (last || t)) / 1000, 0.05); last = t;
+    const goal = onCard || drag ? 0 : target;
+    v += (goal - v) * Math.min(1, dt * 4);
+    if (!drag) x += v * dt;
+    wrap();
+    track.style.transform = `translate3d(${-x}px,0,0)`;
+    if (bar && half) bar.style.transform = `scaleX(${x / half})`;
+    raf = visible ? requestAnimationFrame(frame) : 0;
+  }
 
-    // Arrastre con mouse y swipe táctil
-    let x0 = null, moved = 0;
-    const down = x => { x0 = x; moved = 0; track.classList.add("is-drag"); };
-    const move = x => { if (x0 === null) return; moved = x - x0; track.style.transform = `translateX(${-i * step() + moved}px)`; };
-    const up   = () => { if (x0 === null) return; track.classList.remove("is-drag"); x0 = null;
-                         go(moved < -60 ? i + 1 : moved > 60 ? i - 1 : i); auto(); };
-    track.addEventListener("pointerdown", e => { if (e.target.closest("form")) return; down(e.clientX); });
-    window.addEventListener("pointermove", e => move(e.clientX));
-    window.addEventListener("pointerup", up);
-    track.addEventListener("click", e => { if (Math.abs(moved) > 8) { e.preventDefault(); moved = 0; } }, true);
-    window.addEventListener("resize", () => go(i));
+  vp.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse" || drag) return;
+    const r = vp.getBoundingClientRect();
+    const rel = ((e.clientX - r.left) / r.width - 0.5) * 2;   // -1 … 1
+    // Zona central: sobre un producto se detiene para mirarlo.
+    // Hacia los bordes acelera en esa dirección.
+    const edge = Math.max(0, (Math.abs(rel) - 0.4) / 0.6);
+    onCard = edge === 0 && !!e.target.closest(".gx-card");
+    target = edge === 0 ? Math.sign(target || 1) * BASE : Math.sign(rel) * (BASE + edge * (MAX - BASE));
+  });
+  vp.addEventListener("pointerleave", () => { onCard = false; target = Math.sign(target || 1) * BASE; });
 
-    go(0); auto();
-    document.addEventListener("turbo:before-render", () => clearInterval(timer), { once: true });
-  })();
+  // Arrastre táctil / con el mouse
+  vp.addEventListener("pointerdown", e => {
+    if (e.target.closest("form")) return;
+    drag = { x: e.clientX, start: x }; moved = 0;
+  });
+  addEventListener("pointermove", e => {
+    if (!drag) return;
+    moved = e.clientX - drag.x;
+    x = drag.start - moved; wrap();
+  });
+  addEventListener("pointerup", () => { if (drag) { drag = null; onCard = false; } });
+  vp.addEventListener("click", e => { if (Math.abs(moved) > 8) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, true);
+  vp.addEventListener("dragstart", e => e.preventDefault());
+
+  // Pausa cuando no está en pantalla
+  new IntersectionObserver(([en]) => {
+    visible = en.isIntersecting;
+    if (visible && !raf) { last = 0; raf = requestAnimationFrame(frame); }
+  }).observe(root);
+
+  addEventListener("resize", measure);
+  addEventListener("load", measure);
+  measure(); raf = requestAnimationFrame(frame);
+  document.addEventListener("turbo:before-render", () => { cancelAnimationFrame(raf); visible = false; }, { once: true });
+})();
 
   // Parallax de la foto pequeña de "Sobre nosotras"
   (() => {
@@ -395,10 +414,16 @@
   }
 
   /* Servicios */
-  .gx-services{padding:7rem 1rem}
-  .gx-services__inner{max-width:56rem;margin:auto}
-  .gx-services__list{margin-top:2.5rem;border-bottom:1px solid #DDD2C4}
-  .gx-row{position:relative;display:flex;align-items:center;gap:1.4rem;padding:1.75rem 1.1rem;border-top:1px solid #DDD2C4;color:#1A1A1A;text-decoration:none;overflow:hidden;transform:translateX(-40px)}
+  .gx-services{padding:5rem 1.5rem}
+  .gx-services__inner{max-width:72rem;margin:auto;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:4rem;align-items:start}
+  .gx-services__aside{position:sticky;top:7rem}
+  .gx-services__lead{margin-top:1.2rem;max-width:22rem;font-family:'Inter',sans-serif;font-size:.95rem;line-height:1.7;color:#6B5D50}
+  .gx-services__photo{margin-top:2rem;aspect-ratio:4/3;overflow:hidden;border-radius:999px 999px 0 0;background:#EFE4DA;max-width:22rem}
+  .gx-services__photo img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+  .gx-services__photo:hover img{transform:scale(1.05)}
+  .gx-services__list{border-bottom:1px solid #DDD2C4}
+  @media (max-width:900px){.gx-services__inner{grid-template-columns:1fr;gap:2rem}.gx-services__aside{position:static}.gx-services__photo{display:none}}
+  .gx-row{position:relative;display:flex;align-items:center;gap:1.4rem;padding:1.35rem 1.1rem;border-top:1px solid #DDD2C4;color:#1A1A1A;text-decoration:none;overflow:hidden;transform:translateX(-40px)}
   .gx-row::before{content:"";position:absolute;inset:0;background:#FFFAF3;transform:scaleX(0);transform-origin:left;transition:transform .55s cubic-bezier(.7,0,.2,1)}
   .gx-row::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:#C9A96E;transform:scaleY(0);transition:transform .45s .1s}
   .gx-row:hover::before,.gx-row:focus-visible::before{transform:scaleX(1)}
